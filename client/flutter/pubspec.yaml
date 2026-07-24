@@ -1,0 +1,133 @@
+name: charo_messenger
+description: ЧАРО — мессенджер нового поколения. Быстрый. Приватный. Мощный. Красивый.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.6.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # Architecture
+  flutter_bloc: ^8.1.6
+  equatable: ^2.0.7
+  get_it: ^7.7.0
+  injectable: ^2.4.4
+  dartz: ^0.10.1
+
+  # Navigation
+  go_router: ^14.6.2
+
+  # Network
+  dio: ^5.7.0
+  web_socket_channel: ^3.0.1
+  connectivity_plus: ^6.1.2
+
+  # Storage
+  drift: ^2.22.1
+  drift_flutter: ^0.2.1
+  hive_flutter: ^1.1.0
+  flutter_secure_storage: ^9.2.4
+  shared_preferences: ^2.3.4
+
+  # Crypto
+  pointycastle: ^3.9.1
+  signal_protocol_dart: ^0.7.0
+
+  # UI
+  cupertino_icons: ^1.0.8
+  cached_network_image: ^3.4.1
+  shimmer: ^3.0.0
+  flutter_slidable: ^3.1.2
+  photo_view: ^0.15.0
+  lottie: ^3.2.0
+  flutter_svg: ^2.0.16
+  scrollable_positioned_list: ^0.3.8
+  flutter_staggered_grid_view: ^0.7.0
+
+  # Media
+  image_picker: ^1.1.2
+  file_picker: ^8.1.6
+  video_player: ^2.9.2
+  audioplayers: ^6.1.0
+  audio_waveforms: ^1.1.1
+  record: ^5.1.2
+  photo_manager: ^3.6.2
+  image_cropper: ^8.1.0
+
+  # Calls
+  flutter_webrtc: ^0.12.5
+  livekit_client: ^2.3.3
+
+  # Maps & Location
+  flutter_map: ^7.0.2
+  geolocator: ^13.0.2
+  osm_nominatim: ^3.0.0
+
+  # AI
+  google_generative_ai: ^0.4.6
+
+  # Notifications
+  flutter_local_notifications: ^18.0.1
+  firebase_messaging: ^15.2.4
+  firebase_core: ^3.8.1
+
+  # Auth
+  local_auth: ^2.3.0
+  google_sign_in: ^6.2.2
+  sign_in_with_apple: ^6.1.4
+
+  # Utils
+  intl: ^0.19.0
+  slang: ^4.4.1
+  slang_flutter: ^4.4.1
+  logger: ^2.5.0
+  url_launcher: ^6.3.1
+  share_plus: ^10.1.4
+  path_provider: ^2.1.5
+  uuid: ^4.5.1
+  permission_handler: ^11.3.1
+  qr_flutter: ^4.1.0
+  mobile_scanner: ^6.0.5
+  mime: ^1.0.6
+  filesize: ^2.0.1
+  timeago: ^3.7.0
+  infinite_scroll_pagination: ^4.1.0
+  swipe_to: ^1.0.6
+  emoji_picker_flutter: ^4.3.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  build_runner: ^2.4.14
+  drift_dev: ^2.22.1
+  injectable_generator: ^2.6.2
+  bloc_test: ^9.1.7
+  mocktail: ^1.0.4
+  golden_toolkit: ^0.15.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/icons/
+    - assets/emoji/
+    - assets/fonts/
+    - assets/stickers/
+    - assets/sounds/
+
+  fonts:
+    - family: CharoSans
+      fonts:
+        - asset: assets/fonts/CharoSans-Regular.ttf
+        - asset: assets/fonts/CharoSans-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/CharoSans-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/CharoSans-Bold.ttf
+          weight: 700

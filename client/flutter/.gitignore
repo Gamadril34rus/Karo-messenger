@@ -1,0 +1,19 @@
+# ─── Charo Flutter Client — .gitignore ──────────────────────────
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+*.g.dart
+*.freezed.dart
+*.config.dart
+pubspec.lock
+.idea/
+.vscode/
+*.iml
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+.env
+.env.local

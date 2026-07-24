@@ -1,0 +1,62 @@
+# ─── Charo Messenger — .gitignore ───────────────────────────────────
+
+# Dependencies
+node_modules/
+.venv/
+
+# Build artifacts
+dist/
+build/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+pubspec.lock
+*.g.dart
+*.freezed.dart
+*.config.dart
+
+# IDE
+.vscode/
+.idea/
+*.iml
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Environment
+.env
+.env.local
+.env.production
+
+# Logs
+*.log
+npm-debug.log*
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Cache
+.cache/
+.parcel-cache/
+.ruff_cache/
+
+# Docker volumes
+postgres_data/
+redis_data/
+minio_data/
+
+# Generated
+*.g.dart
+local_db.g.dart

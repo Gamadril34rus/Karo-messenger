@@ -1,0 +1,11 @@
+# ─── Charo Server — .gitignore ──────────────────────────────────
+node_modules/
+dist/
+.env
+.env.local
+.env.production
+*.log
+npm-debug.log*
+coverage/
+.nyc_output/
+prisma/migrations/

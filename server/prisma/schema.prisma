@@ -1,0 +1,641 @@
+// Charo Messenger — Prisma Schema
+// База данных: PostgreSQL 16
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Пользователи ──────────────────────────────────────────────────
+
+enum AccountStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+model User {
+  id            String       @id @default(uuid()) @db.Uuid
+  phone         String?      @unique
+  email         String?      @unique
+  username      String       @unique @db.VarChar(64)
+  displayName   String?      @map("display_name") @db.VarChar(128)
+  bio           String?      @db.VarChar(256)
+  avatarUrl     String?      @map("avatar_url") @db.VarChar(512)
+  passwordHash  String?      @map("password_hash")
+  twoFactorSecret String?    @map("two_factor_secret")
+  isOnline      Boolean      @default(false) @map("is_online")
+  lastSeen      DateTime?    @map("last_seen")
+  language      String       @default("ru") @db.VarChar(10)
+  status        AccountStatus @default(ACTIVE)
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime?    @updatedAt @map("updated_at")
+  deletedAt     DateTime?    @map("deleted_at")
+
+  // Relations
+  sentMessages     Message[]
+  chatMemberships  ChatMember[]
+  contacts         Contact[]  @relation("UserContacts")
+  contactOf        Contact[]  @relation("ContactOf")
+  sentReactions    Reaction[]
+  devices          Device[]
+  stories          Story[]
+  calls            Call[]     @relation("CallCaller")
+  aiConversations  AiConversation[]
+  privacySettings  PrivacySettings?
+  pushSettings     PushSettings?
+  blockedUsers     BlockedUser[] @relation("Blocker")
+  blockedBy        BlockedUser[] @relation("Blocked")
+
+  // MLS relations
+  mlsGroupMemberships MlsGroupMember[]
+  mlsCommits          MlsCommit[]
+  mlsMessages         MlsMessage[]
+  mlsProposals        MlsProposal[]
+  userKeys            UserKey[]
+  keyRequestsMade     KeyRequest[] @relation("KeyRequester")
+  keyRequestsReceived KeyRequest[] @relation("KeyTarget")
+
+  @@map("users")
+}
+
+// ─── Чаты ──────────────────────────────────────────────────────────
+
+enum ChatType {
+  PRIVATE
+  GROUP
+  CHANNEL
+  SECRET
+}
+
+model Chat {
+  id              String    @id @default(uuid()) @db.Uuid
+  type            ChatType
+  title           String?   @db.VarChar(255)
+  avatarUrl       String?   @map("avatar_url") @db.VarChar(512)
+  description     String?   @db.VarChar(2048)
+  createdBy       String?   @map("created_by") @db.Uuid
+  isDisappearing  Boolean   @default(false) @map("is_disappearing")
+  disappearTimer  Int       @default(0) @map("disappear_timer") // seconds
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime? @updatedAt @map("updated_at")
+
+  // Relations
+  members    ChatMember[]
+  messages   Message[]
+  calls      Call[]
+
+  createdByUser User? @relation(fields: [createdBy], references: [id])
+
+  @@map("chats")
+}
+
+// ─── Участники чатов ───────────────────────────────────────────────
+
+enum MemberRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+model ChatMember {
+  id         String     @id @default(uuid()) @db.Uuid
+  chatId     String     @map("chat_id") @db.Uuid
+  userId     String     @map("user_id") @db.Uuid
+  role       MemberRole @default(MEMBER)
+  joinedAt   DateTime   @default(now()) @map("joined_at")
+  lastReadAt DateTime?  @map("last_read_at")
+  isMuted    Boolean    @default(false) @map("is_muted")
+
+  chat Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([chatId, userId])
+  @@map("chat_members")
+}
+
+// ─── Сообщения ─────────────────────────────────────────────────────
+
+enum MessageType {
+  TEXT
+  IMAGE
+  VIDEO
+  VOICE
+  VIDEO_NOTE
+  FILE
+  STICKER
+  GIF
+  LOCATION
+  CONTACT
+  POLL
+  STORY_REPLY
+  AI_REPLY
+  SYSTEM
+}
+
+model Message {
+  id             String      @id @default(uuid()) @db.Uuid
+  chatId         String      @map("chat_id") @db.Uuid
+  senderId       String      @map("sender_id") @db.Uuid
+  type           MessageType
+  content        Json?       // Гибкая структура для разных типов
+  replyToId      String?     @map("reply_to_id") @db.Uuid
+  forwardedFromId String?    @map("forwarded_from_id") @db.Uuid
+  isEdited       Boolean     @default(false) @map("is_edited")
+  isPinned       Boolean     @default(false) @map("is_pinned")
+  isDeleted      Boolean     @default(false) @map("is_deleted")
+  disappearAt    DateTime?   @map("disappear_at")
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime?   @updatedAt @map("updated_at")
+
+  // Relations
+  chat           Chat        @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  sender         User        @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  replyTo        Message?    @relation("MessageReplies", fields: [replyToId], references: [id])
+  replies        Message[]   @relation("MessageReplies")
+  statuses       MessageStatus[]
+  reactions      Reaction[]
+  media          Media[]
+
+  @@index([chatId, createdAt])
+  @@index([senderId])
+  @@map("messages")
+}
+
+// ─── Статусы доставки ──────────────────────────────────────────────
+
+enum DeliveryStatus {
+  SENT
+  DELIVERED
+  READ
+}
+
+model MessageStatus {
+  id        String         @id @default(uuid()) @db.Uuid
+  messageId String         @map("message_id") @db.Uuid
+  userId    String         @map("user_id") @db.Uuid
+  status    DeliveryStatus @default(SENT)
+  timestamp DateTime       @default(now())
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@map("message_status")
+}
+
+// ─── Реакции ───────────────────────────────────────────────────────
+
+model Reaction {
+  id        String   @id @default(uuid()) @db.Uuid
+  messageId String   @map("message_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  emoji     String   @db.VarChar(32)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId, emoji])
+  @@map("reactions")
+}
+
+// ─── Медиа-файлы ───────────────────────────────────────────────────
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  AUDIO
+  FILE
+  STICKER
+  GIF
+}
+
+model Media {
+  id           String    @id @default(uuid()) @db.Uuid
+  messageId    String?   @map("message_id") @db.Uuid
+  type         MediaType
+  url          String    @db.VarChar(512)
+  thumbnailUrl String?   @map("thumbnail_url") @db.VarChar(512)
+  mimeType     String?   @map("mime_type") @db.VarChar(128)
+  sizeBytes    BigInt?   @map("size_bytes")
+  width        Int?
+  height       Int?
+  durationMs   Int?      @map("duration_ms")
+  uploadedAt   DateTime  @default(now()) @map("uploaded_at")
+
+  message Message? @relation(fields: [messageId], references: [id], onDelete: SetNull)
+
+  @@map("media")
+}
+
+// ─── Контакты ──────────────────────────────────────────────────────
+
+model Contact {
+  id            String  @id @default(uuid()) @db.Uuid
+  userId        String  @map("user_id") @db.Uuid
+  contactUserId String  @map("contact_user_id") @db.Uuid
+  displayName   String? @map("display_name") @db.VarChar(128)
+  isBlocked     Boolean @default(false) @map("is_blocked")
+  addedAt       DateTime @default(now()) @map("added_at")
+
+  user         User  @relation("UserContacts", fields: [userId], references: [id], onDelete: Cascade)
+  contactUser  User  @relation("ContactOf", fields: [contactUserId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, contactUserId])
+  @@map("contacts")
+}
+
+// ─── Настройки приватности ─────────────────────────────────────────
+
+enum PrivacyLevel {
+  EVERYONE
+  CONTACTS
+  NOBODY
+}
+
+model PrivacySettings {
+  userId               String       @id @db.Uuid
+  profileVisibility    PrivacyLevel @default(EVERYONE) @map("profile_visibility")
+  lastSeenVisibility   PrivacyLevel @default(EVERYONE) @map("last_seen_visibility")
+  avatarVisibility     PrivacyLevel @default(EVERYONE) @map("avatar_visibility")
+  phoneVisibility      PrivacyLevel @default(CONTACTS) @map("phone_visibility")
+  whoCanMessage        PrivacyLevel @default(EVERYONE) @map("who_can_message")
+  whoCanAddToGroups    PrivacyLevel @default(CONTACTS) @map("who_can_add_to_groups")
+  whoCanCall           PrivacyLevel @default(EVERYONE) @map("who_can_call")
+  readReceipts         Boolean      @default(true) @map("read_receipts")
+  typingIndicator      Boolean      @default(true) @map("typing_indicator")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("privacy_settings")
+}
+
+// ─── Истории ───────────────────────────────────────────────────────
+
+enum StoryType {
+  IMAGE
+  VIDEO
+  TEXT
+}
+
+model Story {
+  id             String    @id @default(uuid()) @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+  type           StoryType
+  mediaUrl       String?   @map("media_url") @db.VarChar(512)
+  content        String?
+  backgroundColor String?  @map("background_color") @db.VarChar(20)
+  expiresAt      DateTime  @map("expires_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  user    User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  views   StoryView[]
+
+  @@map("stories")
+}
+
+model StoryView {
+  id        String   @id @default(uuid()) @db.Uuid
+  storyId   String   @map("story_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  viewedAt  DateTime @default(now()) @map("viewed_at")
+
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([storyId, userId])
+  @@map("story_views")
+}
+
+// ─── Звонки ────────────────────────────────────────────────────────
+
+enum CallType {
+  VOICE
+  VIDEO
+}
+
+enum CallStatus {
+  RINGING
+  ACTIVE
+  ENDED
+  MISSED
+  DECLINED
+}
+
+model Call {
+  id          String     @id @default(uuid()) @db.Uuid
+  chatId      String?    @map("chat_id") @db.Uuid
+  callerId    String     @map("caller_id") @db.Uuid
+  type        CallType
+  status      CallStatus @default(RINGING)
+  startedAt   DateTime?  @map("started_at")
+  endedAt     DateTime?  @map("ended_at")
+  durationSec Int?       @map("duration_sec")
+
+  chat    Chat?  @relation(fields: [chatId], references: [id])
+  caller  User   @relation("CallCaller", fields: [callerId], references: [id])
+  members CallMember[]
+
+  @@map("calls")
+}
+
+model CallMember {
+  id     String @id @default(uuid()) @db.Uuid
+  callId String @map("call_id") @db.Uuid
+  userId String @map("user_id") @db.Uuid
+
+  call Call @relation(fields: [callId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([callId, userId])
+  @@map("call_members")
+}
+
+// ─── Устройства / Сессии ───────────────────────────────────────────
+
+model Device {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  deviceType   String   @map("device_type") @db.VarChar(32)
+  deviceName   String?  @map("device_name") @db.VarChar(128)
+  pushToken    String?  @map("push_token") @db.VarChar(512)
+  lastActive   DateTime @default(now()) @map("last_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("devices")
+}
+
+// ─── Стикер-паки ───────────────────────────────────────────────────
+
+enum StickerSource {
+  CHARO
+  TELEGRAM
+  WHATSAPP
+  VIBER
+  VK
+  CUSTOM
+}
+
+model StickerPack {
+  id           String        @id @default(uuid()) @db.Uuid
+  name         String        @db.VarChar(128)
+  source       StickerSource @default(CHARO)
+  sourceId     String?       @map("source_id") @db.VarChar(128)
+  thumbnailUrl String?       @map("thumbnail_url") @db.VarChar(512)
+  isFeatured   Boolean       @default(false) @map("is_featured")
+  createdAt    DateTime      @default(now()) @map("created_at")
+
+  stickers Sticker[]
+
+  @@map("sticker_packs")
+}
+
+model Sticker {
+  id         String   @id @default(uuid()) @db.Uuid
+  packId     String   @map("pack_id") @db.Uuid
+  imageUrl   String   @map("image_url") @db.VarChar(512)
+  emoji      String?  @db.VarChar(64)
+  sortOrder  Int      @map("sort_order")
+  width      Int?
+  height     Int?
+
+  pack StickerPack @relation(fields: [packId], references: [id], onDelete: Cascade)
+
+  @@map("stickers")
+}
+
+// ─── AI-ассистент ──────────────────────────────────────────────────
+
+model AiConversation {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  title     String?  @db.VarChar(255)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages AiMessage[]
+
+  @@map("ai_conversations")
+}
+
+enum AiRole {
+  USER
+  ASSISTANT
+}
+
+model AiMessage {
+  id             String   @id @default(uuid()) @db.Uuid
+  conversationId String   @map("conversation_id") @db.Uuid
+  role           AiRole
+  content        String
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  conversation AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@map("ai_messages")
+}
+
+// ─── Push-настройки ────────────────────────────────────────────────
+
+model PushSettings {
+  id             String  @id @default(uuid()) @db.Uuid
+  userId         String  @unique @map("user_id") @db.Uuid
+  pushEnabled    Boolean @default(true) @map("push_enabled")
+  soundEnabled   Boolean @default(true) @map("sound_enabled")
+  vibrationEnabled Boolean @default(true) @map("vibration_enabled")
+  previewEnabled Boolean @default(true) @map("preview_enabled")
+  groupMentions  Boolean @default(true) @map("group_mentions")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("push_settings")
+}
+
+// ─── Заблокированные пользователи ──────────────────────────────────
+
+model BlockedUser {
+  id            String   @id @default(uuid()) @db.Uuid
+  blockerId     String   @map("blocker_id") @db.Uuid
+  blockedUserId String   @map("blocked_user_id") @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  blocker     User @relation("Blocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blockedUser User @relation("Blocked", fields: [blockedUserId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerId, blockedUserId])
+  @@map("blocked_users")
+}
+
+// ─── OTP-коды ──────────────────────────────────────────────────────
+
+model OtpCode {
+  id         String   @id @default(uuid()) @db.Uuid
+  identifier String   @db.VarChar(255)
+  code       String   @db.VarChar(10)
+  method     String   @db.VarChar(20) // phone, email
+  expiresAt  DateTime @map("expires_at")
+  isUsed     Boolean  @default(false) @map("is_used")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([identifier, code])
+  @@map("otp_codes")
+}
+
+// ─── MLS (Messaging Layer Security) ──────────────────────────────
+
+model MlsGroup {
+  id            String    @id @default(uuid()) @db.Uuid
+  name          String    @db.VarChar(255)
+  cipherSuite   String    @default("MLS128_DHKEMX25519_AES128GCM_SHA256_Ed25519") @map("cipher_suite") @db.VarChar(128)
+  epoch         Int       @default(0)
+  treeData      Json      @map("tree_data")
+  confirmationKey String? @map("confirmation_key") @db.VarChar(512)
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime? @updatedAt @map("updated_at")
+
+  members    MlsGroupMember[]
+  commits    MlsCommit[]
+  messages   MlsMessage[]
+  proposals  MlsProposal[]
+  treeNodes  RatchetTreeNode[]
+
+  @@map("mls_groups")
+}
+
+model MlsGroupMember {
+  id       String   @id @default(uuid()) @db.Uuid
+  groupId  String   @map("group_id") @db.Uuid
+  userId   String   @map("user_id") @db.Uuid
+  leafIndex Int?    @map("leaf_index")
+  joinedAt DateTime @default(now()) @map("joined_at")
+
+  group MlsGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, userId])
+  @@map("mls_group_members")
+}
+
+model MlsCommit {
+  id               String   @id @default(uuid()) @db.Uuid
+  groupId          String   @map("group_id") @db.Uuid
+  epoch            Int
+  proposals        Json
+  updatePath       Json?    @map("update_path")
+  confirmationTag  String   @map("confirmation_tag") @db.VarChar(512)
+  senderId         String   @map("sender_id") @db.Uuid
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  group MlsGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  sender User    @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([groupId, epoch])
+  @@map("mls_commits")
+}
+
+model MlsMessage {
+  id               String          @id @default(uuid()) @db.Uuid
+  groupId          String          @map("group_id") @db.Uuid
+  epoch            Int
+  type             MlsMessageType
+  encryptedContent String          @map("encrypted_content") @db.VarChar(8192)
+  signature        String          @db.VarChar(512)
+  senderId         String          @map("sender_id") @db.Uuid
+  createdAt        DateTime        @default(now()) @map("created_at")
+
+  group  MlsGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  sender User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([groupId, createdAt])
+  @@map("mls_messages")
+}
+
+enum MlsMessageType {
+  PROPOSAL
+  COMMIT
+  APPLICATION
+}
+
+model MlsProposal {
+  id           String          @id @default(uuid()) @db.Uuid
+  groupId      String          @map("group_id") @db.Uuid
+  epoch        Int
+  type         MlsProposalType
+  senderId     String          @map("sender_id") @db.Uuid
+  targetUserId String?         @map("target_user_id") @db.Uuid
+  reference    String?         @db.VarChar(128)
+  isValid      Boolean         @default(true) @map("is_valid")
+  createdAt    DateTime        @default(now()) @map("created_at")
+
+  group     MlsGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  targetUser User?   @relation(fields: [targetUserId], references: [id], onDelete: Cascade)
+
+  @@index([groupId, epoch])
+  @@map("mls_proposals")
+}
+
+enum MlsProposalType {
+  ADD
+  REMOVE
+  UPDATE
+  EXTERNAL_INIT
+}
+
+// ─── E2EE Keys ────────────────────────────────────────────────────
+
+model UserKey {
+  id                 String   @id @default(uuid()) @db.Uuid
+  userId             String   @unique @map("user_id") @db.Uuid
+  identityKeyPublic  String   @map("identity_key_public") @db.VarChar(512)
+  signedPreKeyId     Int      @map("signed_prekey_id")
+  signedPreKeyPublic String   @map("signed_prekey_public") @db.VarChar(512)
+  signedPreKeySignature String @map("signed_prekey_signature") @db.VarChar(512)
+  registrationId     Int      @map("registration_id")
+  preKeyBundle       Json?    @map("prekey_bundle")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime? @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_keys")
+}
+
+model KeyRequest {
+  id          String   @id @default(uuid()) @db.Uuid
+  requesterId String  @map("requester_id") @db.Uuid
+  targetId    String  @map("target_id") @db.Uuid
+  status      String   @default("pending") @db.VarChar(20) // pending, fulfilled, expired
+  createdAt   DateTime @default(now()) @map("created_at")
+  fulfilledAt DateTime? @map("fulfilled_at")
+
+  requester User @relation("KeyRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  target    User @relation("KeyTarget", fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@index([requesterId, targetId])
+  @@map("key_requests")
+}
+
+model RatchetTreeNode {
+  id         String   @id @default(uuid()) @db.Uuid
+  groupId    String   @map("group_id") @db.Uuid
+  index      Int
+  type       String   @db.VarChar(20) // leaf, parent
+  publicKey  String   @map("public_key") @db.VarChar(512)
+  privateKey String?  @map("private_key") @db.VarChar(512)
+  userId     String?  @map("user_id") @db.Uuid
+  isBlank    Boolean  @default(false) @map("is_blank")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  group MlsGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, index])
+  @@map("ratchet_tree_nodes")
+}

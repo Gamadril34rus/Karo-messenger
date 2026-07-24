@@ -1,0 +1,241 @@
+name: Charo Messenger CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  FLUTTER_VERSION: '3.24.5'
+  NODE_VERSION: '20'
+
+jobs:
+  # ─── Tests ─────────────────────────────────────────────────────────
+  test:
+    name: Tests & Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install Flutter dependencies
+        working-directory: client/flutter
+        run: flutter pub get
+
+      - name: Install Server dependencies
+        working-directory: server
+        run: npm ci
+
+      - name: Generate Prisma Client
+        working-directory: server
+        run: npx prisma generate
+
+      - name: Flutter Analyze
+        working-directory: client/flutter
+        run: flutter analyze --no-fatal-infos
+
+      - name: Flutter Test
+        working-directory: client/flutter
+        run: flutter test --coverage
+
+      - name: Server Lint
+        working-directory: server
+        run: npm run lint
+
+      - name: Server Test
+        working-directory: server
+        run: npm test
+
+      - name: Upload Coverage
+        uses: codecov/codecov-action@v4
+        with:
+          files: client/flutter/coverage/lcov.info,server/coverage/lcov.info
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+  # ─── Build Android ─────────────────────────────────────────────────
+  build-android:
+    name: Build Android APK
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Install dependencies
+        working-directory: client/flutter
+        run: flutter pub get
+
+      - name: Build APK
+        working-directory: client/flutter
+        run: flutter build apk --release --split-per-abi
+
+      - name: Build App Bundle
+        working-directory: client/flutter
+        run: flutter build appbundle --release
+
+      - name: Upload APK artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: charo-android-apk
+          path: client/flutter/build/app/outputs/flutter-apk/*.apk
+
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: charo-android-aab
+          path: client/flutter/build/app/outputs/bundle/release/app-release.aab
+
+  # ─── Build iOS ─────────────────────────────────────────────────────
+  build-ios:
+    name: Build iOS IPA
+    needs: test
+    runs-on: macos-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+
+      - name: Install dependencies
+        working-directory: client/flutter
+        run: flutter pub get
+
+      - name: Install CocoaPods
+        working-directory: client/flutter/ios
+        run: pod install
+
+      - name: Build iOS
+        working-directory: client/flutter
+        run: flutter build ios --release --no-codesign
+
+      - name: Upload iOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: charo-ios-ipa
+          path: client/flutter/build/ios/ipa/*.ipa
+
+  # ─── Deploy Web ────────────────────────────────────────────────────
+  deploy-web:
+    name: Deploy Web to GitHub Pages
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+
+      - name: Install dependencies
+        working-directory: client/flutter
+        run: flutter pub get
+
+      - name: Build Web
+        working-directory: client/flutter
+        run: flutter build web --release --web-renderer canvaskit
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: client/flutter/build/web
+          publish_branch: gh-pages
+
+  # ─── Build Server ──────────────────────────────────────────────────
+  build-server:
+    name: Build Server Docker Image
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and Push Server Image
+        uses: docker/build-push-action@v6
+        with:
+          context: server
+          push: true
+          tags: |
+            charo-messenger/server:${{ github.sha }}
+            charo-messenger/server:latest
+
+      - name: Build and Push Nginx Image
+        uses: docker/build-push-action@v6
+        with:
+          context: infra/nginx
+          push: true
+          tags: |
+            charo-messenger/nginx:${{ github.sha }}
+            charo-messenger/nginx:latest
+
+  # ─── Legacy Name & Stubs Check ─────────────────────────────────────
+  charo-check:
+    name: Verify Zero Legacy Remnants & Stubs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for legacy name references (Nexus or Aura/Аура)
+        run: |
+          echo "Checking for legacy name remnants (Nexus or Aura)..."
+          legacy_count=$(grep -rnE "Nexus|NEXUS|nexus|Aura|Аура|AURA" --include="*.dart" --include="*.ts" --include="*.prisma" --include="*.yaml" --include="*.json" --include="*.md" --include="*.yml" --include="*.conf" --include="*.sh" . | grep -v ".git/" | grep -v "node_modules" | wc -l)
+          echo "Found $legacy_count legacy name references"
+          if [ "$legacy_count" -gt "0" ]; then
+            echo "❌ Legacy name remnants found! Details:"
+            grep -rnE "Nexus|NEXUS|nexus|Aura|Аура|AURA" --include="*.dart" --include="*.ts" --include="*.prisma" --include="*.yaml" --include="*.json" --include="*.md" --include="*.yml" . | grep -v ".git/" | grep -v "node_modules"
+            exit 1
+          fi
+          echo "✅ Zero legacy name remnants confirmed"
+
+      - name: Check for TODO stubs
+        run: |
+          echo "Checking for TODO stubs..."
+          todo_count=$(grep -rn "TODO\|todo\|FIXME\|fixme" --include="*.dart" --include="*.ts" --include="*.prisma" . | grep -v ".git/" | wc -l)
+          echo "Found $todo_count TODO/FIXME references"
+          if [ "$todo_count" -gt "0" ]; then
+            echo "❌ TODO stubs found! Details:"
+            grep -rn "TODO\|FIXME" --include="*.dart" --include="*.ts" --include="*.prisma" . | grep -v ".git/"
+            exit 1
+          fi
+          echo "✅ Zero TODO stubs confirmed"
