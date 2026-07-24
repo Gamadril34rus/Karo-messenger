@@ -1,0 +1,27 @@
+{
+  "id": "roll_eyes",
+  "name": "Закатывает глаза",
+  "frames": 7,
+  "fps": 12,
+  "loop": true,
+  "unicode": "🙄",
+  "description": "ICQ animated emoji — Закатывает глаза",
+  "frameFiles": [
+    "frame_0.png",
+    "frame_1.png",
+    "frame_2.png",
+    "frame_3.png",
+    "frame_4.png",
+    "frame_5.png",
+    "frame_6.png"
+  ],
+  "frameOrder": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+  ]
+}

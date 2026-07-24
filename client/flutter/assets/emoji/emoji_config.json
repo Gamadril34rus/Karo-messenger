@@ -15,7 +15,14 @@
     {"id": "icq_rofl", "file": "icq_classic/rofl.png", "unicode": "🤣", "label": "РОФЛ"},
     {"id": "icq_think", "file": "icq_classic/think.png", "unicode": "🤔", "label": "Думает"}
   ],
-  "categories": {
+  "animatedEmoji": [
+    {"id": "bang_wall", "name": "Бьётся об стену", "unicode": "😩", "fps": 12, "frames": 8, "assetPrefix": "assets/emoji/icq_animated/bang_wall", "description": "Classic ICQ — character bangs head against brick wall repeatedly"},
+    {"id": "wave", "name": "Машет рукой", "unicode": "👋", "fps": 10, "frames": 6, "assetPrefix": "assets/emoji/icq_animated/wave", "description": "ICQ — friendly waving hand animation"},
+    {"id": "pushup", "name": "Отжимается", "unicode": "💪", "fps": 8, "frames": 6, "assetPrefix": "assets/emoji/icq_animated/pushup", "description": "ICQ — character doing pushups"},
+    {"id": "roll_eyes", "name": "Закатывает глаза", "unicode": "🙄", "fps": 12, "frames": 7, "assetPrefix": "assets/emoji/icq_animated/roll_eyes", "description": "ICQ — eyes rolling upward then back"},
+    {"id": "walk_away", "name": "Уходит", "unicode": "🚶", "fps": 8, "frames": 6, "assetPrefix": "assets/emoji/icq_animated/walk_away", "description": "ICQ — character walking away with fading trail"},
+    {"id": "bloom", "name": "Расцветает", "unicode": "🌸", "fps": 6, "frames": 7, "assetPrefix": "assets/emoji/icq_animated/bloom", "description": "ICQ — flower growing from stem to full bloom"}
+  ]
     "icq_smileys": {
       "name": "ICQ Смайлы",
       "emoji": ["😊","😎","😢","😈","💐","😉","😍","😡","🤣","🤔","😂","🥺","😴","🤗","😏","🥰","😘","🤩","😜","😝","🤑","🤗","🤭","🤫","🤥","😬","🙄","😯","😦","😧","😮","😲","🥱","😴","🤤","😷","🤒","🤕","🤢","🤮","🥵","🥶","🥴","😵","🤯","🤠","🥳","🥸","😈","👿","👹","👺","💀","☠️","👻","👽","🤖","💩","😺","😸","😹","😻","😼","😽","🙀","😿","😾"]
