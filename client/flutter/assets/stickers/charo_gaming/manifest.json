@@ -1,0 +1,80 @@
+{
+  "id": "charo_gaming",
+  "name": "ЧАРО Геймер",
+  "source": "CHARO",
+  "description": "GG, лол, rage quit, лаги, Win, стрим, киберспорт, рейтинг, команда, афк",
+  "icon": "gg.png",
+  "isFeatured": false,
+  "stickers": [
+    {
+      "id": "gg",
+      "file": "gg.png",
+      "emoji": "🎮",
+      "label": "GG!",
+      "sortOrder": 1
+    },
+    {
+      "id": "lol_game",
+      "file": "lol_game.png",
+      "emoji": "😂",
+      "label": "Лол!",
+      "sortOrder": 2
+    },
+    {
+      "id": "rage_quit",
+      "file": "rage_quit.png",
+      "emoji": "🤬",
+      "label": "Rage Quit!",
+      "sortOrder": 3
+    },
+    {
+      "id": "lag",
+      "file": "lag.png",
+      "emoji": "🐢",
+      "label": "Лаги!",
+      "sortOrder": 4
+    },
+    {
+      "id": "win",
+      "file": "win.png",
+      "emoji": "🏆",
+      "label": "Win!",
+      "sortOrder": 5
+    },
+    {
+      "id": "stream",
+      "file": "stream.png",
+      "emoji": "📹",
+      "label": "Стрим!",
+      "sortOrder": 6
+    },
+    {
+      "id": "esport",
+      "file": "esport.png",
+      "emoji": "🏅",
+      "label": "Киберспорт!",
+      "sortOrder": 7
+    },
+    {
+      "id": "rating",
+      "file": "rating.png",
+      "emoji": "⭐",
+      "label": "Рейтинг!",
+      "sortOrder": 8
+    },
+    {
+      "id": "team",
+      "file": "team.png",
+      "emoji": "👥",
+      "label": "Команда!",
+      "sortOrder": 9
+    },
+    {
+      "id": "afk",
+      "file": "afk.png",
+      "emoji": "💤",
+      "label": "AFK...",
+      "sortOrder": 10
+    }
+  ]
+}

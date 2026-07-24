@@ -1,0 +1,80 @@
+{
+  "id": "charo_retro_icq",
+  "name": "ЧАРО Ретро ICQ",
+  "source": "CHARO",
+  "description": "ICQ flower online, uh-oh incoming, Away, N/A, DND, Occupied, Free for Chat, Invisible, Offline, подключение",
+  "icon": "online.png",
+  "isFeatured": true,
+  "stickers": [
+    {
+      "id": "online",
+      "file": "online.png",
+      "emoji": "🟢",
+      "label": "Online!",
+      "sortOrder": 1
+    },
+    {
+      "id": "uh_oh",
+      "file": "uh_oh.png",
+      "emoji": "🔔",
+      "label": "Uh-Oh!",
+      "sortOrder": 2
+    },
+    {
+      "id": "away",
+      "file": "away.png",
+      "emoji": "🟡",
+      "label": "Away",
+      "sortOrder": 3
+    },
+    {
+      "id": "na",
+      "file": "na.png",
+      "emoji": "🔴",
+      "label": "N/A",
+      "sortOrder": 4
+    },
+    {
+      "id": "dnd",
+      "file": "dnd.png",
+      "emoji": "⛔",
+      "label": "DND",
+      "sortOrder": 5
+    },
+    {
+      "id": "occupied",
+      "file": "occupied.png",
+      "emoji": "🟠",
+      "label": "Occupied",
+      "sortOrder": 6
+    },
+    {
+      "id": "free_chat",
+      "file": "free_chat.png",
+      "emoji": "🟣",
+      "label": "Free4Chat!",
+      "sortOrder": 7
+    },
+    {
+      "id": "invisible",
+      "file": "invisible.png",
+      "emoji": "⚪",
+      "label": "Invisible",
+      "sortOrder": 8
+    },
+    {
+      "id": "offline",
+      "file": "offline.png",
+      "emoji": "⚫",
+      "label": "Offline",
+      "sortOrder": 9
+    },
+    {
+      "id": "connecting",
+      "file": "connecting.png",
+      "emoji": "🔄",
+      "label": "Connecting...",
+      "sortOrder": 10
+    }
+  ]
+}

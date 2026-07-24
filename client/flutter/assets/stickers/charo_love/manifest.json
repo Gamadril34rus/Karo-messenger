@@ -1,0 +1,80 @@
+{
+  "id": "charo_love",
+  "name": "ЧАРО Любовь",
+  "source": "CHARO",
+  "description": "Цветы, поцелуй, свидание, обнимашки, свадьба, вечеринка, серенада, комплимент, письмо, кольцо",
+  "icon": "flowers.png",
+  "isFeatured": true,
+  "stickers": [
+    {
+      "id": "flowers",
+      "file": "flowers.png",
+      "emoji": "💐",
+      "label": "Цветы!",
+      "sortOrder": 1
+    },
+    {
+      "id": "kiss",
+      "file": "kiss.png",
+      "emoji": "💋",
+      "label": "Поцелуй!",
+      "sortOrder": 2
+    },
+    {
+      "id": "date",
+      "file": "date.png",
+      "emoji": "❤️",
+      "label": "Свидание!",
+      "sortOrder": 3
+    },
+    {
+      "id": "hug",
+      "file": "hug.png",
+      "emoji": "🤗",
+      "label": "Обнимашки!",
+      "sortOrder": 4
+    },
+    {
+      "id": "wedding",
+      "file": "wedding.png",
+      "emoji": "💒",
+      "label": "Свадьба!",
+      "sortOrder": 5
+    },
+    {
+      "id": "party",
+      "file": "party.png",
+      "emoji": "🎉",
+      "label": "Вечеринка!",
+      "sortOrder": 6
+    },
+    {
+      "id": "serenade",
+      "file": "serenade.png",
+      "emoji": "🎵",
+      "label": "Серенада!",
+      "sortOrder": 7
+    },
+    {
+      "id": "compliment",
+      "file": "compliment.png",
+      "emoji": "💖",
+      "label": "Комплимент!",
+      "sortOrder": 8
+    },
+    {
+      "id": "letter",
+      "file": "letter.png",
+      "emoji": "💌",
+      "label": "Письмо!",
+      "sortOrder": 9
+    },
+    {
+      "id": "ring",
+      "file": "ring.png",
+      "emoji": "💍",
+      "label": "Кольцо!",
+      "sortOrder": 10
+    }
+  ]
+}

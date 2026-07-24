@@ -1,0 +1,80 @@
+{
+  "id": "charo_food_ru",
+  "name": "ЧАРО Русская Еда",
+  "source": "CHARO",
+  "description": "Пельмени, борщ, шашлык, блины, пирог, квас, самовар, мороженое, торт, чебурек",
+  "icon": "pelmeni.png",
+  "isFeatured": false,
+  "stickers": [
+    {
+      "id": "pelmeni",
+      "file": "pelmeni.png",
+      "emoji": "🥟",
+      "label": "Пельмени!",
+      "sortOrder": 1
+    },
+    {
+      "id": "borsch",
+      "file": "borsch.png",
+      "emoji": "🥣",
+      "label": "Борщ!",
+      "sortOrder": 2
+    },
+    {
+      "id": "shashlik",
+      "file": "shashlik.png",
+      "emoji": "🍖",
+      "label": "Шашлык!",
+      "sortOrder": 3
+    },
+    {
+      "id": "bliny",
+      "file": "bliny.png",
+      "emoji": "🥞",
+      "label": "Блины!",
+      "sortOrder": 4
+    },
+    {
+      "id": "pirog",
+      "file": "pirog.png",
+      "emoji": "🥧",
+      "label": "Пирог!",
+      "sortOrder": 5
+    },
+    {
+      "id": "kvas",
+      "file": "kvas.png",
+      "emoji": "🥤",
+      "label": "Квас!",
+      "sortOrder": 6
+    },
+    {
+      "id": "samovar",
+      "file": "samovar.png",
+      "emoji": "🫖",
+      "label": "Самовар!",
+      "sortOrder": 7
+    },
+    {
+      "id": "icecream",
+      "file": "icecream.png",
+      "emoji": "🍦",
+      "label": "Мороженое!",
+      "sortOrder": 8
+    },
+    {
+      "id": "tort",
+      "file": "tort.png",
+      "emoji": "🎂",
+      "label": "Торт!",
+      "sortOrder": 9
+    },
+    {
+      "id": "cheburek",
+      "file": "cheburek.png",
+      "emoji": "🥟",
+      "label": "Чебурек!",
+      "sortOrder": 10
+    }
+  ]
+}

@@ -470,7 +470,11 @@ class StickerImportService {
     // Scan assets/stickers/ for manifest.json files
     final packs = <BuiltInStickerPack>[];
 
-    final packNames = ['charo_basics', 'charo_cats', 'charo_emotions', 'charo_food', 'charo_nature'];
+    final packNames = [
+      'charo_basics', 'charo_cats', 'charo_emotions', 'charo_food', 'charo_nature',
+      'charo_animals', 'charo_weather', 'charo_holidays', 'charo_meme', 'charo_work',
+      'charo_travel', 'charo_gaming', 'charo_love', 'charo_retro_icq', 'charo_food_ru',
+    ];
 
     for (final name in packNames) {
       try {

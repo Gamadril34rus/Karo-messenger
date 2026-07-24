@@ -1,0 +1,80 @@
+{
+  "id": "charo_weather",
+  "name": "ЧАРО Погода",
+  "source": "CHARO",
+  "description": "Солнце, дождь, снег, гроза, облака, ветер, град, туман, радуга, торнадо",
+  "icon": "sun.png",
+  "isFeatured": false,
+  "stickers": [
+    {
+      "id": "sun",
+      "file": "sun.png",
+      "emoji": "☀️",
+      "label": "Солнце",
+      "sortOrder": 1
+    },
+    {
+      "id": "rain",
+      "file": "rain.png",
+      "emoji": "🌧️",
+      "label": "Дождь",
+      "sortOrder": 2
+    },
+    {
+      "id": "snow",
+      "file": "snow.png",
+      "emoji": "❄️",
+      "label": "Снег",
+      "sortOrder": 3
+    },
+    {
+      "id": "storm",
+      "file": "storm.png",
+      "emoji": "⛈️",
+      "label": "Гроза",
+      "sortOrder": 4
+    },
+    {
+      "id": "clouds",
+      "file": "clouds.png",
+      "emoji": "☁️",
+      "label": "Облака",
+      "sortOrder": 5
+    },
+    {
+      "id": "wind",
+      "file": "wind.png",
+      "emoji": "💨",
+      "label": "Ветер",
+      "sortOrder": 6
+    },
+    {
+      "id": "hail",
+      "file": "hail.png",
+      "emoji": "🌨️",
+      "label": "Град",
+      "sortOrder": 7
+    },
+    {
+      "id": "fog",
+      "file": "fog.png",
+      "emoji": "🌫️",
+      "label": "Туман",
+      "sortOrder": 8
+    },
+    {
+      "id": "rainbow",
+      "file": "rainbow.png",
+      "emoji": "🌈",
+      "label": "Радуга",
+      "sortOrder": 9
+    },
+    {
+      "id": "tornado",
+      "file": "tornado.png",
+      "emoji": "🌪️",
+      "label": "Торнадо",
+      "sortOrder": 10
+    }
+  ]
+}

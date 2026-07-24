@@ -1,0 +1,80 @@
+{
+  "id": "charo_travel",
+  "name": "ЧАРО Путешествия",
+  "source": "CHARO",
+  "description": "Москва, Питер, Сочи, Байкал, Камчатка, Дальний Восток, Европа, Азия, пляж, горы",
+  "icon": "moscow.png",
+  "isFeatured": false,
+  "stickers": [
+    {
+      "id": "moscow",
+      "file": "moscow.png",
+      "emoji": "🏛️",
+      "label": "Москва!",
+      "sortOrder": 1
+    },
+    {
+      "id": "spb",
+      "file": "spb.png",
+      "emoji": "🌉",
+      "label": "Питер!",
+      "sortOrder": 2
+    },
+    {
+      "id": "sochi",
+      "file": "sochi.png",
+      "emoji": "☀️",
+      "label": "Сочи!",
+      "sortOrder": 3
+    },
+    {
+      "id": "baikal",
+      "file": "baikal.png",
+      "emoji": "🏔️",
+      "label": "Байкал!",
+      "sortOrder": 4
+    },
+    {
+      "id": "kamchatka",
+      "file": "kamchatka.png",
+      "emoji": "🌋",
+      "label": "Камчатка!",
+      "sortOrder": 5
+    },
+    {
+      "id": "fareast",
+      "file": "fareast.png",
+      "emoji": "🌊",
+      "label": "Дальний Восток!",
+      "sortOrder": 6
+    },
+    {
+      "id": "europe",
+      "file": "europe.png",
+      "emoji": "🇪🇺",
+      "label": "Европа!",
+      "sortOrder": 7
+    },
+    {
+      "id": "asia",
+      "file": "asia.png",
+      "emoji": "🇯🇵",
+      "label": "Азия!",
+      "sortOrder": 8
+    },
+    {
+      "id": "beach",
+      "file": "beach.png",
+      "emoji": "🏖️",
+      "label": "Пляж!",
+      "sortOrder": 9
+    },
+    {
+      "id": "mountains",
+      "file": "mountains.png",
+      "emoji": "⛰️",
+      "label": "Горы!",
+      "sortOrder": 10
+    }
+  ]
+}

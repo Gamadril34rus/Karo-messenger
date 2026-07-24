@@ -1,0 +1,80 @@
+{
+  "id": "charo_holidays",
+  "name": "ЧАРО Праздники",
+  "source": "CHARO",
+  "description": "НГ, 8 марта, 23 февраля, День рождения, Пасха, Масленица, 1 сентября, День Победы, Хэллоуин, Valentine",
+  "icon": "new_year.png",
+  "isFeatured": false,
+  "stickers": [
+    {
+      "id": "new_year",
+      "file": "new_year.png",
+      "emoji": "🎄",
+      "label": "НГ!",
+      "sortOrder": 1
+    },
+    {
+      "id": "march8",
+      "file": "march8.png",
+      "emoji": "🌸",
+      "label": "8 марта!",
+      "sortOrder": 2
+    },
+    {
+      "id": "feb23",
+      "file": "feb23.png",
+      "emoji": "🎖️",
+      "label": "23 февраля!",
+      "sortOrder": 3
+    },
+    {
+      "id": "birthday",
+      "file": "birthday.png",
+      "emoji": "🎂",
+      "label": "День рождения!",
+      "sortOrder": 4
+    },
+    {
+      "id": "easter",
+      "file": "easter.png",
+      "emoji": "🐣",
+      "label": "Пасха!",
+      "sortOrder": 5
+    },
+    {
+      "id": "maslenitsa",
+      "file": "maslenitsa.png",
+      "emoji": "🥞",
+      "label": "Масленица!",
+      "sortOrder": 6
+    },
+    {
+      "id": "sep1",
+      "file": "sep1.png",
+      "emoji": "📚",
+      "label": "1 сентября!",
+      "sortOrder": 7
+    },
+    {
+      "id": "victory",
+      "file": "victory.png",
+      "emoji": "🎖️",
+      "label": "День Победы!",
+      "sortOrder": 8
+    },
+    {
+      "id": "halloween",
+      "file": "halloween.png",
+      "emoji": "🎃",
+      "label": "Хэллоуин!",
+      "sortOrder": 9
+    },
+    {
+      "id": "valentine",
+      "file": "valentine.png",
+      "emoji": "❤️",
+      "label": "Valentine!",
+      "sortOrder": 10
+    }
+  ]
+}

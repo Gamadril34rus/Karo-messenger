@@ -1,0 +1,80 @@
+{
+  "id": "charo_work",
+  "name": "ЧАРО Работа",
+  "source": "CHARO",
+  "description": "Дедлайн, сова на работе, переговоры, кофе-брейк, done, уволен, начальник, фриланс, почта, отпуск",
+  "icon": "deadline.png",
+  "isFeatured": false,
+  "stickers": [
+    {
+      "id": "deadline",
+      "file": "deadline.png",
+      "emoji": "⏰",
+      "label": "Дедлайн!",
+      "sortOrder": 1
+    },
+    {
+      "id": "night_owl",
+      "file": "night_owl.png",
+      "emoji": "🦉",
+      "label": "Сова на работе",
+      "sortOrder": 2
+    },
+    {
+      "id": "meeting",
+      "file": "meeting.png",
+      "emoji": "🤝",
+      "label": "Переговоры",
+      "sortOrder": 3
+    },
+    {
+      "id": "coffee_break",
+      "file": "coffee_break.png",
+      "emoji": "☕",
+      "label": "Кофе-брейк",
+      "sortOrder": 4
+    },
+    {
+      "id": "done",
+      "file": "done.png",
+      "emoji": "✅",
+      "label": "Done!",
+      "sortOrder": 5
+    },
+    {
+      "id": "fired",
+      "file": "fired.png",
+      "emoji": "🚪",
+      "label": "Уволен...",
+      "sortOrder": 6
+    },
+    {
+      "id": "boss",
+      "file": "boss.png",
+      "emoji": "👔",
+      "label": "Начальник!",
+      "sortOrder": 7
+    },
+    {
+      "id": "freelance",
+      "file": "freelance.png",
+      "emoji": "💻",
+      "label": "Фриланс",
+      "sortOrder": 8
+    },
+    {
+      "id": "mail",
+      "file": "mail.png",
+      "emoji": "📧",
+      "label": "Почта!",
+      "sortOrder": 9
+    },
+    {
+      "id": "vacation",
+      "file": "vacation.png",
+      "emoji": "🏖️",
+      "label": "Отпуск!",
+      "sortOrder": 10
+    }
+  ]
+}

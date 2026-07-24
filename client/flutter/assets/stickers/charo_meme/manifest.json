@@ -1,0 +1,80 @@
+{
+  "id": "charo_meme",
+  "name": "ЧАРО Мемы",
+  "source": "CHARO",
+  "description": "This is fine, палец вверх, facepalm, сарказм, камень, ну всё, капут, ааа, OK, ВОТ ЭТО ДА",
+  "icon": "this_is_fine.png",
+  "isFeatured": true,
+  "stickers": [
+    {
+      "id": "this_is_fine",
+      "file": "this_is_fine.png",
+      "emoji": "🔥",
+      "label": "This is fine",
+      "sortOrder": 1
+    },
+    {
+      "id": "thumbs_up",
+      "file": "thumbs_up.png",
+      "emoji": "👍",
+      "label": "Палец вверх!",
+      "sortOrder": 2
+    },
+    {
+      "id": "facepalm",
+      "file": "facepalm.png",
+      "emoji": "🤦",
+      "label": "Facepalm",
+      "sortOrder": 3
+    },
+    {
+      "id": "sarcasm",
+      "file": "sarcasm.png",
+      "emoji": "😏",
+      "label": "Сарказм",
+      "sortOrder": 4
+    },
+    {
+      "id": "stone",
+      "file": "stone.png",
+      "emoji": "🗿",
+      "label": "Камень",
+      "sortOrder": 5
+    },
+    {
+      "id": "nu_vsyo",
+      "file": "nu_vsyo.png",
+      "emoji": "😤",
+      "label": "Ну всё!",
+      "sortOrder": 6
+    },
+    {
+      "id": "kaput",
+      "file": "kaput.png",
+      "emoji": "💀",
+      "label": "Капут!",
+      "sortOrder": 7
+    },
+    {
+      "id": "aaa",
+      "file": "aaa.png",
+      "emoji": "😱",
+      "label": "ААААА!",
+      "sortOrder": 8
+    },
+    {
+      "id": "ok",
+      "file": "ok.png",
+      "emoji": "👌",
+      "label": "OK!",
+      "sortOrder": 9
+    },
+    {
+      "id": "wow",
+      "file": "wow.png",
+      "emoji": "🤩",
+      "label": "ВОТ ЭТО ДА!",
+      "sortOrder": 10
+    }
+  ]
+}

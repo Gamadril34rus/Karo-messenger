@@ -125,6 +125,16 @@ flutter:
     - assets/stickers/charo_emotions/
     - assets/stickers/charo_food/
     - assets/stickers/charo_nature/
+    - assets/stickers/charo_animals/
+    - assets/stickers/charo_weather/
+    - assets/stickers/charo_holidays/
+    - assets/stickers/charo_meme/
+    - assets/stickers/charo_work/
+    - assets/stickers/charo_travel/
+    - assets/stickers/charo_gaming/
+    - assets/stickers/charo_love/
+    - assets/stickers/charo_retro_icq/
+    - assets/stickers/charo_food_ru/
     - assets/sounds/
 
   fonts:
