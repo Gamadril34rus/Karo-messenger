@@ -1,0 +1,16 @@
+{
+  "id": "charo_food",
+  "name": "ЧАРО Еда",
+  "source": "CHARO",
+  "description": "Еда ЧАРО — пицца, кофе, бургер, чай, торт и рамен",
+  "icon": "pizza.png",
+  "isFeatured": false,
+  "stickers": [
+    {"id": "pizza", "file": "pizza.png", "emoji": "🍕", "label": "Пицца!", "sortOrder": 1},
+    {"id": "coffee", "file": "coffee.png", "emoji": "☕", "label": "☕ Кофе!", "sortOrder": 2},
+    {"id": "burger", "file": "burger.png", "emoji": "🍔", "label": "🍔", "sortOrder": 3},
+    {"id": "tea", "file": "tea.png", "emoji": "🍵", "label": "🍵 Чай!", "sortOrder": 4},
+    {"id": "cake", "file": "cake.png", "emoji": "🍰", "label": "🍰 Торт!", "sortOrder": 5},
+    {"id": "ramen", "file": "ramen.png", "emoji": "🍜", "label": "🍜", "sortOrder": 6}
+  ]
+}

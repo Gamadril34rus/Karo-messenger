@@ -1,0 +1,16 @@
+{
+  "id": "charo_emotions",
+  "name": "ЧАРО Эмоции",
+  "source": "CHARO",
+  "description": "Эмоции ЧАРО — счастлив, плачет, злится, в шоке, чиллит и неловко",
+  "icon": "happy.png",
+  "isFeatured": true,
+  "stickers": [
+    {"id": "happy", "file": "happy.png", "emoji": "😊", "label": "Счастлив!", "sortOrder": 1},
+    {"id": "cry", "file": "cry.png", "emoji": "😭", "label": "😭", "sortOrder": 2},
+    {"id": "rage", "file": "rage.png", "emoji": "🤬", "label": "🤬", "sortOrder": 3},
+    {"id": "shocked", "file": "shocked.png", "emoji": "😱", "label": "😱", "sortOrder": 4},
+    {"id": "chill", "file": "chill.png", "emoji": "😌", "label": "Чилл", "sortOrder": 5},
+    {"id": "awkward", "file": "awkward.png", "emoji": "😅", "label": "😅", "sortOrder": 6}
+  ]
+}

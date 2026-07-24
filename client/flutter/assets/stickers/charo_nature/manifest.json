@@ -1,0 +1,16 @@
+{
+  "id": "charo_nature",
+  "name": "ЧАРО Природа",
+  "source": "CHARO",
+  "description": "Природа ЧАРО — солнце, дождь, деревья, горы, цветы и океан",
+  "icon": "sun.png",
+  "isFeatured": false,
+  "stickers": [
+    {"id": "sun", "file": "sun.png", "emoji": "☀️", "label": "☀️ Солнце!", "sortOrder": 1},
+    {"id": "rain", "file": "rain.png", "emoji": "🌧️", "label": "🌧️ Дождь", "sortOrder": 2},
+    {"id": "tree", "file": "tree.png", "emoji": "🌿", "label": "🌿 Природа", "sortOrder": 3},
+    {"id": "mountain", "file": "mountain.png", "emoji": "🏔️", "label": "🏔️ Горы", "sortOrder": 4},
+    {"id": "flower", "file": "flower.png", "emoji": "🌸", "label": "🌸 Цветок", "sortOrder": 5},
+    {"id": "ocean", "file": "ocean.png", "emoji": "🌊", "label": "🌊 Океан", "sortOrder": 6}
+  ]
+}

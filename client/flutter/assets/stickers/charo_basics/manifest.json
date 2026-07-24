@@ -1,0 +1,18 @@
+{
+  "id": "charo_basics",
+  "name": "ЧАРО Базовые",
+  "source": "CHARO",
+  "description": "Базовые стикеры ЧАРО — хамелеон приветствует, любит, прощается и смеётся",
+  "icon": "hello.png",
+  "isFeatured": true,
+  "stickers": [
+    {"id": "hello", "file": "hello.png", "emoji": "👋", "label": "Привет!", "sortOrder": 1},
+    {"id": "love_you", "file": "love_you.png", "emoji": "❤️", "label": "Люблю!", "sortOrder": 2},
+    {"id": "bye", "file": "bye.png", "emoji": "👋", "label": "Пока!", "sortOrder": 3},
+    {"id": "thanks", "file": "thanks.png", "emoji": "👍", "label": "Спасибо!", "sortOrder": 4},
+    {"id": "lol", "file": "lol.png", "emoji": "😂", "label": "😂", "sortOrder": 5},
+    {"id": "sorry", "file": "sorry.png", "emoji": "🙏", "label": "Прости!", "sortOrder": 6},
+    {"id": "cool", "file": "cool.png", "emoji": "😎", "label": "Круто!", "sortOrder": 7},
+    {"id": "miss_you", "file": "miss_you.png", "emoji": "🥺", "label": "Скучаю!", "sortOrder": 8}
+  ]
+}

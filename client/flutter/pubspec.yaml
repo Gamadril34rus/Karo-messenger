@@ -117,8 +117,14 @@ flutter:
   assets:
     - assets/icons/
     - assets/emoji/
+    - assets/emoji/icq_classic/
     - assets/fonts/
     - assets/stickers/
+    - assets/stickers/charo_basics/
+    - assets/stickers/charo_cats/
+    - assets/stickers/charo_emotions/
+    - assets/stickers/charo_food/
+    - assets/stickers/charo_nature/
     - assets/sounds/
 
   fonts:

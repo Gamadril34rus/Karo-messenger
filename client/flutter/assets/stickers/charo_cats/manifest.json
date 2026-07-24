@@ -1,0 +1,16 @@
+{
+  "id": "charo_cats",
+  "name": "ЧАРО Коты",
+  "source": "CHARO",
+  "description": "Котики ЧАРО — мяукают, спят, играют, любят и требуют еды",
+  "icon": "cat_hello.png",
+  "isFeatured": true,
+  "stickers": [
+    {"id": "cat_hello", "file": "cat_hello.png", "emoji": "🐱", "label": "Мяу-Привет!", "sortOrder": 1},
+    {"id": "cat_sleep", "file": "cat_sleep.png", "emoji": "😴", "label": "Сплю...", "sortOrder": 2},
+    {"id": "cat_play", "file": "cat_play.png", "emoji": "🎉", "label": "Играю!", "sortOrder": 3},
+    {"id": "cat_angry", "file": "cat_angry.png", "emoji": "😾", "label": "Мррр!", "sortOrder": 4},
+    {"id": "cat_love", "file": "cat_love.png", "emoji": "😻", "label": "Мяу-Люблю!", "sortOrder": 5},
+    {"id": "cat_food", "file": "cat_food.png", "emoji": "🐟", "label": "Корми!", "sortOrder": 6}
+  ]
+}
