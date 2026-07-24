@@ -1,8 +1,8 @@
 {
   "id": "charo_retro_icq",
-  "name": "ЧАРО Ретро ICQ",
+  "name": "charo_retro_icq",
   "source": "CHARO",
-  "description": "ICQ flower online, uh-oh incoming, Away, N/A, DND, Occupied, Free for Chat, Invisible, Offline, подключение",
+  "description": "Sticker pack: charo_retro_icq",
   "icon": "online.png",
   "isFeatured": true,
   "stickers": [

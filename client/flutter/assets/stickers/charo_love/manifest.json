@@ -1,23 +1,23 @@
 {
   "id": "charo_love",
-  "name": "ЧАРО Любовь",
+  "name": "charo_love",
   "source": "CHARO",
-  "description": "Цветы, поцелуй, свидание, обнимашки, свадьба, вечеринка, серенада, комплимент, письмо, кольцо",
-  "icon": "flowers.png",
+  "description": "Sticker pack: charo_love",
+  "icon": "kiss.png",
   "isFeatured": true,
   "stickers": [
-    {
-      "id": "flowers",
-      "file": "flowers.png",
-      "emoji": "💐",
-      "label": "Цветы!",
-      "sortOrder": 1
-    },
     {
       "id": "kiss",
       "file": "kiss.png",
       "emoji": "💋",
       "label": "Поцелуй!",
+      "sortOrder": 2
+    },
+    {
+      "id": "flowers",
+      "file": "flowers.png",
+      "emoji": "💐",
+      "label": "Цветы!",
       "sortOrder": 2
     },
     {

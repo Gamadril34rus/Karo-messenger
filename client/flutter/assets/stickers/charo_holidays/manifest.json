@@ -1,8 +1,8 @@
 {
   "id": "charo_holidays",
-  "name": "ЧАРО Праздники",
+  "name": "charo_holidays",
   "source": "CHARO",
-  "description": "НГ, 8 марта, 23 февраля, День рождения, Пасха, Масленица, 1 сентября, День Победы, Хэллоуин, Valentine",
+  "description": "Sticker pack: charo_holidays",
   "icon": "new_year.png",
   "isFeatured": false,
   "stickers": [

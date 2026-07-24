@@ -1,8 +1,8 @@
 {
   "id": "charo_weather",
-  "name": "ЧАРО Погода",
+  "name": "charo_weather",
   "source": "CHARO",
-  "description": "Солнце, дождь, снег, гроза, облака, ветер, град, туман, радуга, торнадо",
+  "description": "Sticker pack: charo_weather",
   "icon": "sun.png",
   "isFeatured": false,
   "stickers": [
@@ -11,55 +11,48 @@
       "file": "sun.png",
       "emoji": "☀️",
       "label": "Солнце",
-      "sortOrder": 1
+      "sortOrder": 2
     },
     {
       "id": "rain",
       "file": "rain.png",
       "emoji": "🌧️",
       "label": "Дождь",
-      "sortOrder": 2
+      "sortOrder": 3
     },
     {
       "id": "snow",
       "file": "snow.png",
       "emoji": "❄️",
       "label": "Снег",
-      "sortOrder": 3
+      "sortOrder": 4
     },
     {
       "id": "storm",
       "file": "storm.png",
       "emoji": "⛈️",
       "label": "Гроза",
-      "sortOrder": 4
+      "sortOrder": 5
     },
     {
       "id": "clouds",
       "file": "clouds.png",
       "emoji": "☁️",
       "label": "Облака",
-      "sortOrder": 5
+      "sortOrder": 6
     },
     {
       "id": "wind",
       "file": "wind.png",
       "emoji": "💨",
       "label": "Ветер",
-      "sortOrder": 6
+      "sortOrder": 7
     },
     {
       "id": "hail",
       "file": "hail.png",
       "emoji": "🌨️",
       "label": "Град",
-      "sortOrder": 7
-    },
-    {
-      "id": "fog",
-      "file": "fog.png",
-      "emoji": "🌫️",
-      "label": "Туман",
       "sortOrder": 8
     },
     {
@@ -67,6 +60,13 @@
       "file": "rainbow.png",
       "emoji": "🌈",
       "label": "Радуга",
+      "sortOrder": 9
+    },
+    {
+      "id": "fog",
+      "file": "fog.png",
+      "emoji": "🌫️",
+      "label": "Туман",
       "sortOrder": 9
     },
     {

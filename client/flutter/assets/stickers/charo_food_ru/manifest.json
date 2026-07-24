@@ -1,8 +1,8 @@
 {
   "id": "charo_food_ru",
-  "name": "ЧАРО Русская Еда",
+  "name": "charo_food_ru",
   "source": "CHARO",
-  "description": "Пельмени, борщ, шашлык, блины, пирог, квас, самовар, мороженое, торт, чебурек",
+  "description": "Sticker pack: charo_food_ru",
   "icon": "pelmeni.png",
   "isFeatured": false,
   "stickers": [

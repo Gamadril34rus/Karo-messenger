@@ -1,8 +1,8 @@
 {
   "id": "charo_animals",
-  "name": "ЧАРО Животные",
+  "name": "charo_animals",
   "source": "CHARO",
-  "description": "Собаки, кошки, птицы, рыбы, медведи, лисы, совы, дельфины, пингвины, еноты",
+  "description": "Sticker pack: charo_animals",
   "icon": "dog.png",
   "isFeatured": true,
   "stickers": [

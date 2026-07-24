@@ -1,8 +1,8 @@
 {
   "id": "charo_meme",
-  "name": "ЧАРО Мемы",
+  "name": "charo_meme",
   "source": "CHARO",
-  "description": "This is fine, палец вверх, facepalm, сарказм, камень, ну всё, капут, ааа, OK, ВОТ ЭТО ДА",
+  "description": "Sticker pack: charo_meme",
   "icon": "this_is_fine.png",
   "isFeatured": true,
   "stickers": [
@@ -11,13 +11,6 @@
       "file": "this_is_fine.png",
       "emoji": "🔥",
       "label": "This is fine",
-      "sortOrder": 1
-    },
-    {
-      "id": "thumbs_up",
-      "file": "thumbs_up.png",
-      "emoji": "👍",
-      "label": "Палец вверх!",
       "sortOrder": 2
     },
     {
@@ -25,6 +18,13 @@
       "file": "facepalm.png",
       "emoji": "🤦",
       "label": "Facepalm",
+      "sortOrder": 3
+    },
+    {
+      "id": "thumbs_up",
+      "file": "thumbs_up.png",
+      "emoji": "👍",
+      "label": "Палец вверх!",
       "sortOrder": 3
     },
     {

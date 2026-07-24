@@ -1,8 +1,8 @@
 {
   "id": "charo_travel",
-  "name": "ЧАРО Путешествия",
+  "name": "charo_travel",
   "source": "CHARO",
-  "description": "Москва, Питер, Сочи, Байкал, Камчатка, Дальний Восток, Европа, Азия, пляж, горы",
+  "description": "Sticker pack: charo_travel",
   "icon": "moscow.png",
   "isFeatured": false,
   "stickers": [
@@ -45,7 +45,7 @@
       "id": "fareast",
       "file": "fareast.png",
       "emoji": "🌊",
-      "label": "Дальний Восток!",
+      "label": "ДВ!",
       "sortOrder": 6
     },
     {
