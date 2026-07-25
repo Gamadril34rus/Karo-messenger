@@ -63,14 +63,25 @@ class _LoginScreenState extends State<LoginScreen>
               children: [
                 const SizedBox(height: 60),
 
-                // Логотип
+                // Логотип — premium gradient container
                 Center(
                   child: Container(
                     width: 80,
                     height: 80,
                     decoration: BoxDecoration(
-                      color: context.colors.primary,
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [context.colors.primary, context.colors.secondary],
+                      ),
                       borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: context.colors.primary.withOpacity(0.3),
+                          blurRadius: 16,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
                     ),
                     child: const Icon(
                       Icons.bolt,

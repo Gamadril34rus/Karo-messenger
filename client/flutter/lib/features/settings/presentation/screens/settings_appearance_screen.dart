@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
+
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../shared/widgets/charo_widgets.dart';
 
-/// Настройки внешнего вида — темы, оформление чатов, размер текста
+/// Настройки внешнего вида — премиальный grouped layout
 class SettingsAppearanceScreen extends StatefulWidget {
   const SettingsAppearanceScreen({super.key});
 
   @override
-  State<SettingsAppearanceScreen> createState() =>
-      _SettingsAppearanceScreenState();
+  State<SettingsAppearanceScreen> createState() => _SettingsAppearanceScreenState();
 }
 
 class _SettingsAppearanceScreenState extends State<SettingsAppearanceScreen> {
   String _themeMode = 'system';
   String _accentColor = 'blue';
-  String _chatBubbleStyle = 'rounded'; // rounded, modern, minimal
+  String _chatBubbleStyle = 'rounded';
   double _textScale = 1.0;
   String _chatBackground = 'default';
 
@@ -23,146 +24,167 @@ class _SettingsAppearanceScreenState extends State<SettingsAppearanceScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Оформление')),
       body: ListView(
+        padding: const EdgeInsets.only(bottom: 32),
         children: [
-          // ─── Тема ──────────────────────────────────────────────
-          _SectionHeader(title: 'Тема'),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: AppConstants.themeOptions.map((option) {
-                final isSelected = _themeMode == option['key'];
-                return Expanded(
-                  child: GestureDetector(
-                    onTap: () => setState(() => _themeMode = option['key']!),
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 4),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? context.colors.primary
-                            : context.colors.outlineVariant,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Column(
-                        children: [
-                          Icon(
-                            option['key'] == 'light'
-                                ? Icons.light_mode
-                                : option['key'] == 'dark'
-                                    ? Icons.dark_mode
-                                    : option['key'] == 'amoled'
-                                        ? Icons.nights_stay
-                                        : Icons.brightness_auto,
-                            color: isSelected ? Colors.white : context.colors.onSurface,
+          // ── Theme picker ──────────────────────────────────────
+          CharoSection(
+            title: 'Тема',
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  children: AppConstants.themeOptions.map((option) {
+                    final isSelected = _themeMode == option['key'];
+                    return Expanded(
+                      child: GestureDetector(
+                        onTap: () => setState(() => _themeMode = option['key']!),
+                        child: AnimatedContainer(
+                          duration: AppConstants.animationDurationMedium,
+                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? context.colors.primary
+                                : context.colors.outlineVariant,
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            option['label']!,
-                            style: TextStyle(
-                              color: isSelected ? Colors.white : context.colors.onSurface,
-                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                            ),
+                          child: Column(
+                            children: [
+                              Icon(
+                                option['key'] == 'light'
+                                    ? Icons.light_mode
+                                    : option['key'] == 'dark'
+                                        ? Icons.dark_mode
+                                        : option['key'] == 'amoled'
+                                            ? Icons.nights_stay
+                                            : Icons.brightness_auto,
+                                color: isSelected ? Colors.white : context.colors.onSurface,
+                                size: 24,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                option['label']!,
+                                style: TextStyle(
+                                  color: isSelected ? Colors.white : context.colors.onSurface,
+                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
           ),
 
-          const Divider(height: 32),
-
-          // ─── Цвет акцента ──────────────────────────────────────
-          _SectionHeader(title: 'Цвет акцента'),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Wrap(
-              spacing: 12,
-              runSpacing: 8,
-              children: [
-                _ColorOption(color: const Color(0xFF2563EB), name: 'Синий', isSelected: _accentColor == 'blue', onTap: () => setState(() => _accentColor = 'blue')),
-                _ColorOption(color: const Color(0xFF8B5CF6), name: 'Фиолетовый', isSelected: _accentColor == 'violet', onTap: () => setState(() => _accentColor = 'violet')),
-                _ColorOption(color: const Color(0xFF10B981), name: 'Зелёный', isSelected: _accentColor == 'green', onTap: () => setState(() => _accentColor = 'green')),
-                _ColorOption(color: const Color(0xFFF59E0B), name: 'Оранжевый', isSelected: _accentColor == 'orange', onTap: () => setState(() => _accentColor = 'orange')),
-                _ColorOption(color: const Color(0xFFEF4444), name: 'Красный', isSelected: _accentColor == 'red', onTap: () => setState(() => _accentColor = 'red')),
-                _ColorOption(color: const Color(0xFFEC4899), name: 'Розовый', isSelected: _accentColor == 'pink', onTap: () => setState(() => _accentColor = 'pink')),
-                _ColorOption(color: const Color(0xFF06B6D4), name: 'Голубой', isSelected: _accentColor == 'cyan', onTap: () => setState(() => _accentColor = 'cyan')),
-              ],
-            ),
-          ),
-
-          const Divider(height: 32),
-
-          // ─── Размер текста ─────────────────────────────────────
-          _SectionHeader(title: 'Размер текста'),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          // ── Accent color ──────────────────────────────────────
+          CharoSection(
+            title: 'Цвет акцента',
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Wrap(
+                  spacing: 12,
+                  runSpacing: 8,
                   children: [
-                    Text('А', style: context.typography.bodySmall),
-                    Text('А', style: context.typography.headlineLarge),
+                    _AccentColorOption(color: const Color(0xFF2563EB), name: 'Синий', key: 'blue', selectedKey: _accentColor, onSelect: (k) => setState(() => _accentColor = k)),
+                    _AccentColorOption(color: const Color(0xFF8B5CF6), name: 'Фиолетовый', key: 'violet', selectedKey: _accentColor, onSelect: (k) => setState(() => _accentColor = k)),
+                    _AccentColorOption(color: const Color(0xFF10B981), name: 'Зелёный', key: 'green', selectedKey: _accentColor, onSelect: (k) => setState(() => _accentColor = k)),
+                    _AccentColorOption(color: const Color(0xFFF59E0B), name: 'Оранжевый', key: 'orange', selectedKey: _accentColor, onSelect: (k) => setState(() => _accentColor = k)),
+                    _AccentColorOption(color: const Color(0xFFEF4444), name: 'Красный', key: 'red', selectedKey: _accentColor, onSelect: (k) => setState(() => _accentColor = k)),
+                    _AccentColorOption(color: const Color(0xFFEC4899), name: 'Розовый', key: 'pink', selectedKey: _accentColor, onSelect: (k) => setState(() => _accentColor = k)),
+                    _AccentColorOption(color: const Color(0xFF06B6D4), name: 'Голубой', key: 'cyan', selectedKey: _accentColor, onSelect: (k) => setState(() => _accentColor = k)),
                   ],
                 ),
-                Slider(
-                  value: _textScale,
-                  min: AppConstants.textScaleMin,
-                  max: AppConstants.textScaleMax,
-                  divisions: 10,
-                  label: _textScaleLabel(_textScale),
-                  onChanged: (v) => setState(() => _textScale = v),
+              ),
+            ],
+          ),
+
+          // ── Text scale ────────────────────────────────────────
+          CharoSection(
+            title: 'Размер текста',
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('А', style: context.typography.bodySmall),
+                        Text(_textScaleLabel(_textScale), style: context.typography.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: context.colors.primary,
+                        )),
+                        Text('А', style: context.typography.headlineLarge),
+                      ],
+                    ),
+                    Slider(
+                      value: _textScale,
+                      min: AppConstants.textScaleMin,
+                      max: AppConstants.textScaleMax,
+                      divisions: 10,
+                      onChanged: (v) => setState(() => _textScale = v),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: context.colors.outlineVariant,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        'Пример текста сообщения с текущим размером',
+                        style: TextStyle(fontSize: 14 * _textScale, height: 1.45),
+                      ),
+                    ),
+                  ],
                 ),
-                Text(
-                  'Пример текста сообщения с текущим размером',
-                  style: TextStyle(
-                    fontSize: 14 * _textScale,
-                    height: 1.45,
-                  ),
+              ),
+            ],
+          ),
+
+          // ── Chat decoration ───────────────────────────────────
+          CharoSection(
+            title: 'Оформление чатов',
+            children: [
+              CharoTile(
+                icon: Icons.chat_bubble_outline,
+                iconColor: context.colors.primary,
+                title: 'Стиль пузырьков',
+                subtitle: _bubbleStyleLabel(_chatBubbleStyle),
+                onTap: () => _showBubbleStylePicker(),
+              ),
+              CharoTile(
+                icon: Icons.wallpaper_outlined,
+                iconColor: const Color(0xFF10B981),
+                title: 'Фон чатов',
+                subtitle: 'По умолчанию',
+                onTap: () => _showWallpaperPicker(),
+              ),
+            ],
+          ),
+
+          // ── App icon ──────────────────────────────────────────
+          CharoSection(
+            title: 'Иконка приложения',
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    _AppIconOption(icon: Icons.bolt, isSelected: true, label: 'Базовая'),
+                    const SizedBox(width: 12),
+                    _AppIconOption(icon: Icons.flash_on, isSelected: false, label: 'Динамичная'),
+                    const SizedBox(width: 12),
+                    _AppIconOption(icon: Icons.auto_awesome, isSelected: false, label: 'Премиум'),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-
-          const Divider(height: 32),
-
-          // ─── Оформление чатов ──────────────────────────────────
-          _SectionHeader(title: 'Оформление чатов'),
-          ListTile(
-            leading: const Icon(Icons.chat_bubble_outline),
-            title: const Text('Стиль пузырьков'),
-            subtitle: Text(_bubbleStyleLabel(_chatBubbleStyle)),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => _showBubbleStylePicker(),
-          ),
-          ListTile(
-            leading: const Icon(Icons.wallpaper_outlined),
-            title: const Text('Фон чатов'),
-            subtitle: const Text('По умолчанию'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => _showWallpaperPicker(),
-          ),
-
-          const Divider(height: 32),
-
-          // ─── Иконка приложения ─────────────────────────────────
-          _SectionHeader(title: 'Иконка приложения'),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                _AppIconOption(icon: Icons.bolt, isSelected: true),
-                const SizedBox(width: 12),
-                _AppIconOption(icon: Icons.flash_on, isSelected: false),
-                const SizedBox(width: 12),
-                _AppIconOption(icon: Icons.auto_awesome, isSelected: false),
-              ],
-            ),
-          ),
-          const SizedBox(height: 32),
         ],
       ),
     );
@@ -189,57 +211,96 @@ class _SettingsAppearanceScreenState extends State<SettingsAppearanceScreen> {
   void _showBubbleStylePicker() {
     showModalBottomSheet(
       context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text('Стиль пузырьков', style: Theme.of(ctx).textTheme.titleLarge),
-            ),
-            _bubbleOption('rounded', 'Скруглённые', ctx),
-            _bubbleOption('modern', 'Современные', ctx),
-            _bubbleOption('minimal', 'Минималистичные', ctx),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Стиль пузырьков', style: context.typography.titleLarge?.copyWith(fontWeight: FontWeight.w600)),
+              const SizedBox(height: 12),
+              CharoTile(
+                title: 'Скруглённые',
+                trailing: _chatBubbleStyle == 'rounded' ? Icon(Icons.check_circle, color: context.colors.primary) : null,
+                onTap: () { setState(() => _chatBubbleStyle = 'rounded'); Navigator.pop(ctx); },
+              ),
+              CharoTile(
+                title: 'Современные',
+                trailing: _chatBubbleStyle == 'modern' ? Icon(Icons.check_circle, color: context.colors.primary) : null,
+                onTap: () { setState(() => _chatBubbleStyle = 'modern'); Navigator.pop(ctx); },
+              ),
+              CharoTile(
+                title: 'Минималистичные',
+                trailing: _chatBubbleStyle == 'minimal' ? Icon(Icons.check_circle, color: context.colors.primary) : null,
+                onTap: () { setState(() => _chatBubbleStyle = 'minimal'); Navigator.pop(ctx); },
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _bubbleOption(String key, String label, BuildContext ctx) {
-    return ListTile(
-      title: Text(label),
-      trailing: _chatBubbleStyle == key
-          ? Icon(Icons.check, color: Theme.of(ctx).colorScheme.primary)
-          : null,
-      onTap: () {
-        setState(() => _chatBubbleStyle = key);
-        Navigator.pop(ctx);
-      },
+  void _showWallpaperPicker() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Фон чатов', style: context.typography.titleLarge?.copyWith(fontWeight: FontWeight.w600)),
+              const SizedBox(height: 16),
+              GridView.count(
+                crossAxisCount: 3,
+                shrinkWrap: true,
+                mainAxisSpacing: 8,
+                crossAxisSpacing: 8,
+                children: [
+                  _WallpaperOption(label: 'По умолчанию', color: context.colors.outlineVariant, isSelected: _chatBackground == 'default'),
+                  _WallpaperOption(label: 'Тёмный', color: const Color(0xFF1A1A2E), isSelected: _chatBackground == 'dark'),
+                  _WallpaperOption(label: 'Градиент', color: context.colors.primary.withOpacity(0.2), isSelected: _chatBackground == 'gradient'),
+                  _WallpaperOption(label: 'Ночной', color: const Color(0xFF0F172A), isSelected: _chatBackground == 'night'),
+                  _WallpaperOption(label: 'Бумага', color: const Color(0xFFF5F5DC), isSelected: _chatBackground == 'paper'),
+                  _WallpaperOption(label: 'Свой', color: context.colors.outlineVariant, icon: Icons.add_photo_alternate_outlined, isSelected: false),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
 
-class _ColorOption extends StatelessWidget {
+/// Accent color option with animated selection ring
+class _AccentColorOption extends StatelessWidget {
   final Color color;
   final String name;
-  final bool isSelected;
-  final VoidCallback onTap;
+  final String key;
+  final String selectedKey;
+  final ValueChanged<String> onSelect;
 
-  const _ColorOption({
+  const _AccentColorOption({
     required this.color,
     required this.name,
-    required this.isSelected,
-    required this.onTap,
+    required this.key,
+    required this.selectedKey,
+    required this.onSelect,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isSelected = selectedKey == key;
     return GestureDetector(
-      onTap: onTap,
+      onTap: () => onSelect(key),
       child: Column(
         children: [
-          Container(
+          AnimatedContainer(
+            duration: AppConstants.animationDurationShort,
             width: 44,
             height: 44,
             decoration: BoxDecoration(
@@ -247,52 +308,91 @@ class _ColorOption extends StatelessWidget {
               shape: BoxShape.circle,
               border: isSelected
                   ? Border.all(color: context.colors.onSurface, width: 3)
-                  : null,
+                  : Border.all(color: context.colors.outline, width: 1),
             ),
             child: isSelected
-                ? const Icon(Icons.check, color: Colors.white)
+                ? const Icon(Icons.check, color: Colors.white, size: 20)
                 : null,
           ),
           const SizedBox(height: 4),
-          Text(name, style: context.typography.bodySmall),
+          Text(name, style: context.typography.bodySmall?.copyWith(
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+          )),
         ],
       ),
     );
   }
 }
 
+/// App icon option
 class _AppIconOption extends StatelessWidget {
   final IconData icon;
   final bool isSelected;
+  final String label;
 
-  const _AppIconOption({required this.icon, required this.isSelected});
+  const _AppIconOption({required this.icon, required this.isSelected, required this.label});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 56,
-      height: 56,
+    return AnimatedContainer(
+      duration: AppConstants.animationDurationShort,
+      width: 64,
+      height: 64,
       decoration: BoxDecoration(
         color: isSelected ? context.colors.primary : context.colors.outlineVariant,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: isSelected ? Border.all(color: context.colors.onSurface, width: 2) : null,
       ),
-      child: Icon(icon, color: isSelected ? Colors.white : context.colors.onSurface),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: isSelected ? Colors.white : context.colors.onSurface, size: 24),
+          const SizedBox(height: 2),
+          Text(label, style: context.typography.bodySmall?.copyWith(
+            color: isSelected ? Colors.white : context.colors.onSurface.withOpacity(0.6),
+            fontWeight: FontWeight.w500,
+            fontSize: 9,
+          )),
+        ],
+      ),
     );
   }
 }
 
-class _SectionHeader extends StatelessWidget {
-  final String title;
-  const _SectionHeader({required this.title});
+/// Wallpaper option
+class _WallpaperOption extends StatelessWidget {
+  final String label;
+  final Color color;
+  final IconData? icon;
+  final bool isSelected;
+
+  const _WallpaperOption({
+    required this.label,
+    required this.color,
+    this.icon,
+    required this.isSelected,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
-      child: Text(title, style: context.typography.labelMedium?.copyWith(
-        color: context.colors.primary,
-      )),
+    return Container(
+      height: 80,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(12),
+        border: isSelected ? Border.all(color: context.colors.primary, width: 2.5) : null,
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          if (icon != null)
+            Icon(icon!, color: context.colors.primary, size: 24)
+          else if (isSelected)
+            Icon(Icons.check_circle, color: context.colors.primary, size: 20),
+          const SizedBox(height: 4),
+          Text(label, style: context.typography.bodySmall?.copyWith(fontWeight: FontWeight.w500)),
+        ],
+      ),
     );
   }
 }

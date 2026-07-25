@@ -127,6 +127,7 @@ class ChatListBloc extends Bloc<ChatListEvent, ChatListState> {
                 unreadCount: json['unread_count'] as int? ?? 0,
                 isMuted: json['is_muted'] as bool? ?? false,
                 isPinned: json['is_pinned'] as bool? ?? false,
+                isOnline: json['is_online'] as bool? ?? false,
               ))
           .toList();
 

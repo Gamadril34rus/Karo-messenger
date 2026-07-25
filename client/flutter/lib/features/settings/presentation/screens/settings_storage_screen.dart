@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../shared/widgets/charo_widgets.dart';
 
-/// Настройки хранилища — кэш, автоскачивание, управление
+/// Настройки хранилища — премиальный UI с CharoProgressRing и grouped sections
 class SettingsStorageScreen extends StatefulWidget {
   const SettingsStorageScreen({super.key});
 
@@ -17,7 +19,6 @@ class _SettingsStorageScreenState extends State<SettingsStorageScreen> {
   double _filesSizeMB = 432.1;
   double _voiceSizeMB = 89.3;
   double _stickersSizeMB = 67.8;
-  double _cacheLimitGB = 1.0;
   bool _autoDownloadPhotos = true;
   bool _autoDownloadVoice = true;
   bool _autoDownloadVideos = false;
@@ -32,106 +33,223 @@ class _SettingsStorageScreenState extends State<SettingsStorageScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Хранилище')),
-      body: ListView(children: [
-        // Общее использование
-        Padding(padding: const EdgeInsets.all(24), child: Column(children: [
-          Stack(alignment: Alignment.center, children: [
-            SizedBox(width: 160, height: 160, child: CircularProgressIndicator(
-              value: _totalUsed / (1024 * 1024), // relative to 1TB
-              strokeWidth: 12,
-              backgroundColor: context.colors.outlineVariant,
-              color: context.colors.primary,
-            )),
-            Column(children: [
-              Text(_formatMB(_totalUsed), style: context.typography.headlineMedium),
-              Text('использовано', style: context.typography.bodySmall),
-            ]),
-          ]),
-          const SizedBox(height: 24),
-          Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-            _UsageItem(label: 'Фото', size: _photosSizeMB, color: Colors.blue, onClear: () => _clearCategory('photos')),
-            _UsageItem(label: 'Видео', size: _videosSizeMB, color: Colors.red, onClear: () => _clearCategory('videos')),
-            _UsageItem(label: 'Файлы', size: _filesSizeMB, color: Colors.purple, onClear: () => _clearCategory('files')),
-            _UsageItem(label: 'Голос', size: _voiceSizeMB, color: Colors.orange, onClear: () => _clearCategory('voice')),
-            _UsageItem(label: 'Кэш', size: _cacheSizeMB, color: Colors.grey, onClear: _clearCache),
-          ]),
-        ])),
-        const Divider(),
+      body: ListView(
+        padding: const EdgeInsets.only(bottom: 32),
+        children: [
+          // ── Circular progress with total used ────────────────
+          CharoCard(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            padding: const EdgeInsets.all(24),
+            radius: 20,
+            gradientColors: [
+              context.colors.primary.withOpacity(0.06),
+              context.colors.outlineVariant,
+            ],
+            child: Column(
+              children: [
+                CharoProgressRing(
+                  value: _totalUsed,
+                  max: 1024 * 1024,
+                  centerLabel: _formatMB(_totalUsed),
+                  centerSublabel: 'использовано',
+                  progressColor: context.colors.primary,
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _StorageBar(label: 'Фото', size: _photosSizeMB, color: Colors.blue),
+                    _StorageBar(label: 'Видео', size: _videosSizeMB, color: Colors.red),
+                    _StorageBar(label: 'Файлы', size: _filesSizeMB, color: Colors.purple),
+                    _StorageBar(label: 'Голос', size: _voiceSizeMB, color: Colors.orange),
+                    _StorageBar(label: 'Кэш', size: _cacheSizeMB, color: Colors.grey),
+                  ],
+                ),
+              ],
+            ),
+          ),
 
-        _Section(title: 'Автоскачивание'),
-        SwitchListTile(title: const Text('Фото'), subtitle: const Text('Скачивать автоматически'), value: _autoDownloadPhotos, onChanged: (v) => setState(() => _autoDownloadPhotos = v)),
-        SwitchListTile(title: const Text('Голосовые'), value: _autoDownloadVoice, onChanged: (v) => setState(() => _autoDownloadVoice = v)),
-        SwitchListTile(title: const Text('Видео'), subtitle: const Text('Может расходовать много трафика'), value: _autoDownloadVideos, onChanged: (v) => setState(() => _autoDownloadVideos = v)),
-        const Divider(),
+          // ── Auto-download ────────────────────────────────────
+          CharoSection(
+            title: 'Автоскачивание',
+            children: [
+              CharoSwitchTile(
+                icon: Icons.photo_outlined,
+                iconColor: Colors.blue,
+                title: 'Фото',
+                subtitle: 'Скачивать автоматически',
+                value: _autoDownloadPhotos,
+                onChanged: (v) => setState(() => _autoDownloadPhotos = v),
+              ),
+              CharoSwitchTile(
+                icon: Icons.headphones_outlined,
+                iconColor: Colors.orange,
+                title: 'Голосовые',
+                value: _autoDownloadVoice,
+                onChanged: (v) => setState(() => _autoDownloadVoice = v),
+              ),
+              CharoSwitchTile(
+                icon: Icons.videocam_outlined,
+                iconColor: Colors.red,
+                title: 'Видео',
+                subtitle: 'Может расходовать много трафика',
+                value: _autoDownloadVideos,
+                onChanged: (v) => setState(() => _autoDownloadVideos = v),
+              ),
+            ],
+          ),
 
-        _Section(title: 'Лимиты автоскачивания'),
-        ListTile(title: const Text('По Wi-Fi'), subtitle: Text('До $_autoDownloadWifiLimitMB МБ'), trailing: const Icon(Icons.chevron_right), onTap: _pickWifiLimit),
-        ListTile(title: const Text('По мобильной сети'), subtitle: Text('До $_autoDownloadMobileLimitMB МБ'), trailing: const Icon(Icons.chevron_right), onTap: _pickMobileLimit),
-        const Divider(),
+          // ── Limits ───────────────────────────────────────────
+          CharoSection(
+            title: 'Лимиты автоскачивания',
+            children: [
+              CharoTile(
+                icon: Icons.wifi_outlined,
+                iconColor: const Color(0xFF10B981),
+                title: 'По Wi-Fi',
+                subtitle: 'До $_autoDownloadWifiLimitMB МБ',
+                onTap: _pickWifiLimit,
+              ),
+              CharoTile(
+                icon: Icons.signal_cellular_alt_outlined,
+                iconColor: const Color(0xF59E0B),
+                title: 'По мобильной сети',
+                subtitle: 'До $_autoDownloadMobileLimitMB МБ',
+                onTap: _pickMobileLimit,
+              ),
+            ],
+          ),
 
-        _Section(title: 'Хранение медиа'),
-        ListTile(title: const Text('Хранить медиа'), subtitle: Text(_keepMediaDays == 0 ? 'Всегда' : '$_keepMediaDays дней'), trailing: const Icon(Icons.chevron_right), onTap: _pickKeepDays),
-        const Divider(),
+          // ── Media retention ─────────────────────────────────
+          CharoSection(
+            title: 'Хранение медиа',
+            children: [
+              CharoTile(
+                icon: Icons.auto_delete_outlined,
+                iconColor: context.colors.primary,
+                title: 'Хранить медиа',
+                subtitle: _keepMediaDays == 0 ? 'Всегда' : '$_keepMediaDays дней',
+                onTap: _pickKeepDays,
+              ),
+            ],
+          ),
 
-        Padding(padding: const EdgeInsets.all(16), child: OutlinedButton.icon(
-          onPressed: _clearCache,
-          icon: const Icon(Icons.cleaning_services),
-          label: Text('Очистить кэш (${_formatMB(_cacheSizeMB)})'),
-        )),
-      ]),
+          // ── Clear cache button ──────────────────────────────
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            child: FilledButton.icon(
+              onPressed: _clearCache,
+              icon: const Icon(Icons.cleaning_services_outlined),
+              label: Text('Очистить кэш (${_formatMB(_cacheSizeMB)})'),
+              style: FilledButton.styleFrom(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                minimumSize: const Size(double.infinity, 52),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   void _clearCache() => setState(() => _cacheSizeMB = 0);
-  void _clearCategory(String cat) => setState(() {
-    switch (cat) {
-      case 'photos': _photosSizeMB = 0; break;
-      case 'videos': _videosSizeMB = 0; break;
-      case 'files': _filesSizeMB = 0; break;
-      case 'voice': _voiceSizeMB = 0; break;
-    }
-  });
 
-  void _pickWifiLimit() => showModalBottomSheet(context: context, builder: (ctx) => SafeArea(child: Column(mainAxisSize: MainAxisSize.min, children: [5, 10, 25, 50, 100].map((v) => ListTile(
-    title: Text('До $v МБ'), trailing: _autoDownloadWifiLimitMB == v ? Icon(Icons.check, color: context.colors.primary) : null,
-    onTap: () { setState(() => _autoDownloadWifiLimitMB = v); Navigator.pop(ctx); },
-  )).toList())));
+  void _pickWifiLimit() => showModalBottomSheet(
+    context: context,
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+    builder: (ctx) => SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Лимит по Wi-Fi', style: context.typography.titleLarge?.copyWith(fontWeight: FontWeight.w600)),
+            const SizedBox(height: 12),
+            ...[5, 10, 25, 50, 100].map((v) => CharoTile(
+              title: 'До $v МБ',
+              trailing: _autoDownloadWifiLimitMB == v ? Icon(Icons.check_circle, color: context.colors.primary) : null,
+              onTap: () { setState(() => _autoDownloadWifiLimitMB = v); Navigator.pop(ctx); },
+            )),
+          ],
+        ),
+      ),
+    ),
+  );
 
-  void _pickMobileLimit() => showModalBottomSheet(context: context, builder: (ctx) => SafeArea(child: Column(mainAxisSize: MainAxisSize.min, children: [1, 5, 10, 25].map((v) => ListTile(
-    title: Text('До $v МБ'), trailing: _autoDownloadMobileLimitMB == v ? Icon(Icons.check, color: context.colors.primary) : null,
-    onTap: () { setState(() => _autoDownloadMobileLimitMB = v); Navigator.pop(ctx); },
-  )).toList())));
+  void _pickMobileLimit() => showModalBottomSheet(
+    context: context,
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+    builder: (ctx) => SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Лимит по мобильной сети', style: context.typography.titleLarge?.copyWith(fontWeight: FontWeight.w600)),
+            const SizedBox(height: 12),
+            ...[1, 5, 10, 25].map((v) => CharoTile(
+              title: 'До $v МБ',
+              trailing: _autoDownloadMobileLimitMB == v ? Icon(Icons.check_circle, color: context.colors.primary) : null,
+              onTap: () { setState(() => _autoDownloadMobileLimitMB = v); Navigator.pop(ctx); },
+            )),
+          ],
+        ),
+      ),
+    ),
+  );
 
-  void _pickKeepDays() => showModalBottomSheet(context: context, builder: (ctx) => SafeArea(child: Column(mainAxisSize: MainAxisSize.min, children: [
-    MapEntry(0, 'Всегда'), MapEntry(7, '7 дней'), MapEntry(30, '30 дней'), MapEntry(90, '90 дней'),
-  ].map((e) => ListTile(
-    title: Text(e.value), trailing: _keepMediaDays == e.key ? Icon(Icons.check, color: context.colors.primary) : null,
-    onTap: () { setState(() => _keepMediaDays = e.key); Navigator.pop(ctx); },
-  )).toList())));
+  void _pickKeepDays() => showModalBottomSheet(
+    context: context,
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+    builder: (ctx) => SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Хранение медиа', style: context.typography.titleLarge?.copyWith(fontWeight: FontWeight.w600)),
+            const SizedBox(height: 12),
+            ...[
+              MapEntry(0, 'Всегда'),
+              MapEntry(7, '7 дней'),
+              MapEntry(30, '30 дней'),
+              MapEntry(90, '90 дней'),
+            ].map((e) => CharoTile(
+              title: e.value,
+              trailing: _keepMediaDays == e.key ? Icon(Icons.check_circle, color: context.colors.primary) : null,
+              onTap: () { setState(() => _keepMediaDays = e.key); Navigator.pop(ctx); },
+            )),
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
-class _UsageItem extends StatelessWidget {
+/// Storage bar indicator
+class _StorageBar extends StatelessWidget {
   final String label;
   final double size;
   final Color color;
-  final VoidCallback onClear;
-  const _UsageItem({required this.label, required this.size, required this.color, required this.onClear});
+  const _StorageBar({required this.label, required this.size, required this.color});
 
   @override
   Widget build(BuildContext context) {
     final mb = size >= 1024 ? '${(size / 1024).toStringAsFixed(1)} Г' : '${size.toStringAsFixed(0)} М';
-    return GestureDetector(onTap: onClear, child: Column(children: [
-      Container(width: 8, height: 32, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(4))),
-      const SizedBox(height: 4),
-      Text(mb, style: context.typography.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
-      Text(label, style: context.typography.bodySmall),
-    ]));
+    return Column(
+      children: [
+        Container(
+          width: 8,
+          height: 32,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(mb, style: context.typography.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
+        Text(label, style: context.typography.bodySmall),
+      ],
+    );
   }
-}
-
-class _Section extends StatelessWidget {
-  final String title;
-  const _Section({required this.title});
-  @override
-  Widget build(BuildContext context) => Padding(padding: const EdgeInsets.fromLTRB(16, 20, 16, 4), child: Text(title, style: context.typography.labelMedium?.copyWith(color: context.colors.primary)));
 }

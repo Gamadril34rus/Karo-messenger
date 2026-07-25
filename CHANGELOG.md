@@ -6,6 +6,68 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.0] — 2026-07-25
+
+### Added — Premium UI Overhaul
+- **CharoWidgets library** (`shared/widgets/charo_widgets.dart`): 8 premium shared widgets
+  - `CharoCard` — glassmorphism/gradient card with rounded corners (16px radius), optional gradient background
+  - `CharoSection` — grouped settings section with title header and card body, auto-dividers between items
+  - `CharoTile` — premium list tile with 40×40 icon container (rounded 12px), proper visual hierarchy
+  - `CharoAvatar` — premium avatar with optional shimmer gradient ring, online indicator, edit badge overlay
+  - `CharoBadge` — animated unread count badge with scale animation on count change
+  - `CharoHeaderCard` — gradient header card for profile/about screens (rounded bottom corners)
+  - `CharoSwitchTile` — premium switch tile with icon container
+  - `CharoProgressRing` — premium circular progress ring with center label
+
+### Changed — Screen Upgrades
+- **Profile Screen**: Full premium redesign
+  - Gradient header with avatar (CharoHeaderCard + CharoAvatar with shimmer ring + edit badge)
+  - Grouped info sections with CharoSection/CharoTile
+  - Premium action buttons (rounded 16px corners, full-width FilledButton)
+  - BottomSheet edit dialog with rounded corners instead of AlertDialog
+  - Avatar change sheet with premium CharoTile items
+- **Settings Main Screen**: Premium grouped layout
+  - Profile header card with gradient background and CharoAvatar
+  - All sections converted from flat Divider+ListTile → CharoSection+CharoTile
+  - Each tile has colored 40×40 icon containers
+  - Delete account button with rounded 16px corners
+  - Fixed "О Ауре" → "О ЧАРО" (Aura remnant eliminated)
+- **Chat List Screen**: Premium redesign
+  - Logo header with gradient icon container + premium typography
+  - Chat tiles with CharoAvatar (online indicator, pinned shimmer ring)
+  - CharoBadge for animated unread count
+  - Pinned separator with label
+  - New chat bottom sheet with premium CharoTile items
+- **Chat Detail Screen**: Premium redesign
+  - AppBar with CharoAvatar for chat partner
+  - Premium input bar with rounded containers (20px top corners, shadow)
+  - Icon buttons in 40×40 rounded containers
+  - Animated scale transition on send/mic button swap
+  - Attach sheet with rounded icon containers
+  - Message actions sheet with CharoTile
+- **All Settings Sub-screens**: Converted to CharoSection/CharoTile/CharoSwitchTile
+  - Privacy: 6 grouped sections, privacy chips, delete account warning card
+  - Notifications: 5 grouped sections with icon containers
+  - Network: Proxy config in CharoCard, DoH picker in bottom sheet
+  - Storage: CharoProgressRing with gradient header, grouped sections
+  - Energy: Power saving card with gradient when active, grouped sections
+  - Language: System language in highlighted CharoCard, grouped language tiles
+  - Appearance: Theme picker with animated containers, accent colors, text scale demo card, wallpaper grid picker
+  - Media Quality: Custom radio circles (not standard RadioListTile), info card
+  - About: Gradient header card with logo + shadow, grouped legal/feedback/social sections
+- **Login Screen**: Logo gradient container with shadow
+- **Register Screen**: Logo gradient container added, fixed "Ауре" → "ЧАРО"
+- **Bottom Navigation**: HapticService.selection() on tab switch, shadow decoration
+- **HapticService**: Added static convenience methods (selection, lightImpact, mediumImpact, heavyImpact)
+- **App Router**: Removed unused flutter_bloc import
+
+### Fixed
+- Eliminated "Аура" remnant in `settings_main_screen.dart` (was "О Ауре" → now "О ЧАРО")
+- Eliminated "Ауре" remnant in `register_screen.dart` (was "в Ауре" → now "в ЧАРО")
+- ChatItem model now includes `isOnline` field for online indicator display
+
+---
+
 ## [1.0.0] — 2026-07-24
 
 ### Added

@@ -56,13 +56,37 @@ class _RegisterScreenState extends State<RegisterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // Logo
+                Center(
+                  child: Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [context.colors.primary, context.colors.secondary],
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: context.colors.primary.withOpacity(0.2),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(Icons.bolt, color: Colors.white, size: 36),
+                  ),
+                ),
+                const SizedBox(height: 20),
                 Text(
                   'Создайте аккаунт',
                   style: context.typography.headlineMedium,
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Заполните данные для регистрации в Ауре',
+                  'Заполните данные для регистрации в ЧАРО',
                   style: context.typography.bodyMedium?.copyWith(
                     color: context.colors.onSurface.withOpacity(0.6),
                   ),

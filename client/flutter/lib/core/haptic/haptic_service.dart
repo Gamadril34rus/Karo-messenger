@@ -76,4 +76,10 @@ class HapticService {
   Future<void> onVoiceRecordStop() async => heavy();
   Future<void> onStickerSent() async => light();
   Future<void> onSwipeAction() async => selectionClick();
+
+  // Static convenience methods for quick usage in widgets
+  static Future<void> selection() async => instance.selectionClick();
+  static Future<void> lightImpact() async => instance.light();
+  static Future<void> mediumImpact() async => instance.medium();
+  static Future<void> heavyImpact() async => instance.heavy();
 }

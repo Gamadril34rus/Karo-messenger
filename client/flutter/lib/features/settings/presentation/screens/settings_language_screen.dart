@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../shared/widgets/charo_widgets.dart';
 
-/// Настройки языка — все языки России + мировые
+/// Настройки языка — премиальный grouped layout с поиском
 class SettingsLanguageScreen extends StatefulWidget {
   const SettingsLanguageScreen({super.key});
 
@@ -24,53 +26,80 @@ class _SettingsLanguageScreenState extends State<SettingsLanguageScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Язык')),
-      body: Column(children: [
-        Padding(padding: const EdgeInsets.all(16), child: TextField(
-          controller: _searchController,
-          decoration: const InputDecoration(hintText: 'Поиск языка...', prefixIcon: Icon(Icons.search)),
-          onChanged: (_) => setState(() {}),
-        )),
-        Expanded(child: ListView(children: [
-          // Системный язык
-          _LanguageTile(code: 'system', name: 'Системный', isSelected: _selectedLanguage == 'system', onTap: () => setState(() => _selectedLanguage = 'system')),
-          const Divider(),
+      body: Column(
+        children: [
+          // Search field
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Поиск языка...',
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+              onChanged: (_) => setState(() {}),
+            ),
+          ),
 
-          // Языки России
-          _Section(title: 'Языки России'),
-          for (final entry in AppConstants.supportedLanguages.entries)
-            if (_matchesSearch(entry.value))
-              _LanguageTile(code: entry.key, name: entry.value, isSelected: _selectedLanguage == entry.key, onTap: () => setState(() => _selectedLanguage = entry.key)),
-        ])),
-      ]),
+          // System language option
+          CharoCard(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            radius: 16,
+            borderWidth: _selectedLanguage == 'system' ? 2 : 0,
+            borderColor: _selectedLanguage == 'system' ? context.colors.primary : null,
+            gradientColors: _selectedLanguage == 'system'
+                ? [context.colors.primary.withOpacity(0.06), context.colors.outlineVariant]
+                : null,
+            child: CharoTile(
+              icon: Icons.language_outlined,
+              iconColor: context.colors.primary,
+              title: 'Системный язык',
+              subtitle: 'Автоматически по настройкам устройства',
+              trailing: _selectedLanguage == 'system'
+                  ? Icon(Icons.check_circle, color: context.colors.primary)
+                  : null,
+              onTap: () => setState(() => _selectedLanguage = 'system'),
+            ),
+          ),
+
+          // Languages of Russia section
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.only(bottom: 32),
+              children: [
+                CharoSection(
+                  title: 'Языки России',
+                  children: _buildLanguageTiles(),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
+  }
+
+  List<Widget> _buildLanguageTiles() {
+    final filtered = AppConstants.supportedLanguages.entries
+        .where((e) => _matchesSearch(e.value))
+        .toList();
+
+    return filtered.map((entry) {
+      final isSelected = _selectedLanguage == entry.key;
+      return CharoTile(
+        title: entry.value,
+        trailing: isSelected
+            ? Icon(Icons.check_circle, color: context.colors.primary)
+            : Icon(Icons.circle_outlined, size: 20, color: context.colors.onSurface.withOpacity(0.3)),
+        onTap: () => setState(() => _selectedLanguage = entry.key),
+      );
+    }).toList();
   }
 
   bool _matchesSearch(String name) {
     if (_searchController.text.isEmpty) return true;
     return name.toLowerCase().contains(_searchController.text.toLowerCase());
   }
-}
-
-class _LanguageTile extends StatelessWidget {
-  final String code;
-  final String name;
-  final bool isSelected;
-  final VoidCallback onTap;
-  const _LanguageTile({required this.code, required this.name, required this.isSelected, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      title: Text(name, style: TextStyle(fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400, color: isSelected ? context.colors.primary : context.colors.onSurface)),
-      trailing: isSelected ? Icon(Icons.check, color: context.colors.primary) : null,
-      onTap: onTap,
-    );
-  }
-}
-
-class _Section extends StatelessWidget {
-  final String title;
-  const _Section({required this.title});
-  @override
-  Widget build(BuildContext context) => Padding(padding: const EdgeInsets.fromLTRB(16, 20, 16, 4), child: Text(title, style: context.typography.labelMedium?.copyWith(color: context.colors.primary)));
 }

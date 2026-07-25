@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_theme.dart';
 
-/// Настройки энергопотребления — режим экономии, фоновые процессы
+import '../../../../core/theme/app_theme.dart';
+import '../../../../shared/widgets/charo_widgets.dart';
+
+/// Настройки энергопотребления — премиальный grouped layout
 class SettingsEnergyScreen extends StatefulWidget {
   const SettingsEnergyScreen({super.key});
 
@@ -15,41 +17,103 @@ class _SettingsEnergyScreenState extends State<SettingsEnergyScreen> {
   bool _backgroundUpload = false;
   int _syncIntervalMinutes = 15;
   bool _reduceAnimations = false;
-  bool _darkModeSaves = true;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Энергопотребление')),
-      body: ListView(children: [
-        SwitchListTile(
-          title: const Text('Режим экономии'),
-          subtitle: const Text('Снижает фоновую активность и частоту синхронизации'),
-          value: _powerSaving,
-          onChanged: (v) => setState(() { _powerSaving = v; if (v) { _backgroundSync = false; _reduceAnimations = true; _syncIntervalMinutes = 60; } else { _backgroundSync = true; _reduceAnimations = false; _syncIntervalMinutes = 15; } }),
-        ),
-        const Divider(),
-        _Section(title: 'Фоновые процессы'),
-        SwitchListTile(title: const Text('Фоновая синхронизация'), subtitle: const Text('Получать сообщения в фоне'), value: _backgroundSync, onChanged: (v) => setState(() => _backgroundSync = v)),
-        SwitchListTile(title: const Text('Фоновая загрузка'), subtitle: const Text('Завершать отправку файлов в фоне'), value: _backgroundUpload, onChanged: (v) => setState(() => _backgroundUpload = v)),
-        ListTile(title: const Text('Интервал синхронизации'), subtitle: Text('Каждые $_syncIntervalMinutes мин'), trailing: const Icon(Icons.chevron_right), onTap: _pickSyncInterval),
-        const Divider(),
-        _Section(title: 'Оптимизация'),
-        SwitchListTile(title: const Text('Сократить анимации'), subtitle: const Text('Уменьшает расход батареи'), value: _reduceAnimations, onChanged: (v) => setState(() => _reduceAnimations = v)),
-        SwitchListTile(title: const Text('Тёмная тема экономит'), subtitle: const Text('На AMOLED-экранах тёмная тема снижает расход'), value: _darkModeSaves, onChanged: (v) => setState(() => _darkModeSaves = v)),
-      ]),
+      body: ListView(
+        padding: const EdgeInsets.only(bottom: 32),
+        children: [
+          // ── Power saving mode ────────────────────────────────
+          CharoCard(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.all(16),
+            gradientColors: _powerSaving
+                ? [context.colors.success.withOpacity(0.1), context.colors.outlineVariant]
+                : null,
+            borderWidth: _powerSaving ? 1.5 : 0,
+            borderColor: _powerSaving ? context.colors.success.withOpacity(0.5) : null,
+            child: CharoSwitchTile(
+              icon: Icons.battery_saver,
+              iconColor: _powerSaving ? context.colors.success : context.colors.onSurface.withOpacity(0.7),
+              title: 'Режим экономии',
+              subtitle: 'Снижает фоновую активность и частоту синхронизации',
+              value: _powerSaving,
+              onChanged: (v) => setState(() {
+                _powerSaving = v;
+                if (v) { _backgroundSync = false; _reduceAnimations = true; _syncIntervalMinutes = 60; }
+                else { _backgroundSync = true; _reduceAnimations = false; _syncIntervalMinutes = 15; }
+              }),
+            ),
+          ),
+
+          CharoSection(
+            title: 'Фоновые процессы',
+            children: [
+              CharoSwitchTile(
+                icon: Icons.cloud_sync_outlined,
+                iconColor: context.colors.primary,
+                title: 'Фоновая синхронизация',
+                subtitle: 'Получать сообщения в фоне',
+                value: _backgroundSync,
+                onChanged: (v) => setState(() => _backgroundSync = v),
+              ),
+              CharoSwitchTile(
+                icon: Icons.cloud_upload_outlined,
+                iconColor: const Color(0xFF10B981),
+                title: 'Фоновая загрузка',
+                subtitle: 'Завершать отправку файлов в фоне',
+                value: _backgroundUpload,
+                onChanged: (v) => setState(() => _backgroundUpload = v),
+              ),
+              CharoTile(
+                icon: Icons.schedule_outlined,
+                iconColor: const Color(0xF59E0B),
+                title: 'Интервал синхронизации',
+                subtitle: 'Каждые $_syncIntervalMinutes мин',
+                onTap: _pickSyncInterval,
+              ),
+            ],
+          ),
+
+          CharoSection(
+            title: 'Оптимизация',
+            children: [
+              CharoSwitchTile(
+                icon: Icons.animation_outlined,
+                iconColor: const Color(0xFF8B5CF6),
+                title: 'Сократить анимации',
+                subtitle: 'Уменьшает расход батареи',
+                value: _reduceAnimations,
+                onChanged: (v) => setState(() => _reduceAnimations = v),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
-  void _pickSyncInterval() => showModalBottomSheet(context: context, builder: (ctx) => SafeArea(child: Column(mainAxisSize: MainAxisSize.min, children: [5, 15, 30, 60].map((v) => ListTile(
-    title: Text('$v минут'), trailing: _syncIntervalMinutes == v ? Icon(Icons.check, color: context.colors.primary) : null,
-    onTap: () { setState(() => _syncIntervalMinutes = v); Navigator.pop(ctx); },
-  )).toList())));
-}
-
-class _Section extends StatelessWidget {
-  final String title;
-  const _Section({required this.title});
-  @override
-  Widget build(BuildContext context) => Padding(padding: const EdgeInsets.fromLTRB(16, 20, 16, 4), child: Text(title, style: context.typography.labelMedium?.copyWith(color: context.colors.primary)));
+  void _pickSyncInterval() => showModalBottomSheet(
+    context: context,
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+    builder: (ctx) => SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Интервал синхронизации', style: context.typography.titleLarge?.copyWith(fontWeight: FontWeight.w600)),
+            const SizedBox(height: 12),
+            ...[5, 15, 30, 60].map((v) => CharoTile(
+              title: '$v минут',
+              trailing: _syncIntervalMinutes == v ? Icon(Icons.check_circle, color: context.colors.primary) : null,
+              onTap: () { setState(() => _syncIntervalMinutes = v); Navigator.pop(ctx); },
+            )),
+          ],
+        ),
+      ),
+    ),
+  );
 }
