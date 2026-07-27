@@ -49,6 +49,20 @@ class SecureStorageHelper {
     await _storage.write(key: _userIdKey, value: id);
   }
 
+  // ─── OAuth State ────────────────────────────────────────────────
+
+  Future<void> setOAuthState({required String provider, required String state}) async {
+    await _storage.write(key: 'oauth_state_$provider', value: state);
+  }
+
+  Future<String?> getOAuthState(String provider) async {
+    return await _storage.read(key: 'oauth_state_$provider');
+  }
+
+  Future<void> clearOAuthState(String provider) async {
+    await _storage.delete(key: 'oauth_state_$provider');
+  }
+
   // ─── Clear All ──────────────────────────────────────────────────
   Future<void> clearAll() async {
     await _storage.deleteAll();

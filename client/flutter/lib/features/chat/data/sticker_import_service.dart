@@ -206,28 +206,78 @@ class StickerImportService {
     required String zipPath,
   }) async {
     try {
-      // WhatsApp zip contains: sticker_packs.json + webp files
-      // We need to unzip and extract
+      // WhatsApp zip: sticker_packs.json + webp images — extract via ZIP parser
       final dir = await _getStickerDir('whatsapp_import');
 
-      // Read zip file and extract
+      // Read zip and extract all entries
       final zipBytes = await File(zipPath).readAsBytes();
-
-      // Parse manifest from zip
       // WhatsApp sticker packs contain a JSON manifest
       final imported = <ImportedSticker>[];
       int order = 0;
 
       // Use Dart's built-in approach or process via native
-      // For now, extract individual files from known structure
+      // Extract individual sticker files from ZIP structure
       // WhatsApp format: stickers/01.webp, stickers/02.webp, etc.
 
-      // Save zip content and process
+      // Save zip content for processing
       final manifestPath = '${dir.path}/sticker_packs.json';
       await File(zipPath).copy('${dir.path}/source.zip');
 
-      // Parse manifest (simplified — real implementation uses zip extraction)
-      // WhatsApp packs have emoji.txt mapping file and sticker_packs.json
+      // Parse WhatsApp sticker pack — extract images and manifest
+      // WhatsApp format: sticker_packs.json + webp images + emoji mapping
+      final zipFile = File(zipPath);
+
+      // Read zip and extract files — using dart:io archive handling
+      // Each WhatsApp pack has a manifest with sticker metadata
+      final imported = <ImportedSticker>[];
+      int order = 0;
+
+      // Scan directory for image files (after extraction by OS or archive lib)
+      // In production, use archive package to decompress
+      // Here: process the manifest and individual sticker files
+      try {
+        // Attempt to read manifest from zip using buffer-based parsing
+        final bytes = await zipFile.readAsBytes();
+        // Local file header signature: 0x04034b50 (PK\x03\x04)
+        // Central directory: 0x02014b50 (PK\x01\x02)
+
+        // Simple ZIP parser: find file entries and extract
+        final entries = _parseZipEntries(bytes);
+        for (final entry in entries) {
+          final fileName = entry.fileName;
+          if (fileName.toLowerCase().endsWith('.webp') ||
+              fileName.toLowerCase().endsWith('.png')) {
+            final stickerData = entry.data;
+            final localPath = '${dir.path}/${fileName.split('/').last}';
+            await File(localPath).writeAsBytes(stickerData);
+            imported.add(ImportedSticker(
+              id: _uuid.v4(),
+              filePath: localPath,
+              emoji: '😊', // Default emoji
+              sortOrder: order++,
+            ));
+          } else if (fileName.toLowerCase().contains('sticker_packs.json') ||
+                     fileName.toLowerCase().contains('manifest')) {
+            final manifestJson = utf8.decode(entry.data);
+            final manifest = jsonDecode(manifestJson) as Map<String, dynamic>;
+            // Apply emoji and labels from manifest to imported stickers
+            final stickerList = manifest['stickers'] as List<dynamic>? ?? [];
+            for (int i = 0; i < imported.length && i < stickerList.length; i++) {
+              final stickerManifest = stickerList[i] as Map<String, dynamic>;
+              imported[i] = ImportedSticker(
+                id: imported[i].id,
+                filePath: imported[i].filePath,
+                emoji: stickerManifest['emoji'] as String? ?? '😊',
+                label: stickerManifest['label'] as String?,
+                sortOrder: imported[i].sortOrder,
+              );
+            }
+          }
+        }
+      } catch (e) {
+        logger.w('ZIP extraction failed, returning empty result: $e');
+      }
+
       return StickerImportResult(
         packId: 'whatsapp_${_uuid.v4().substring(0, 8)}',
         packName: 'WhatsApp Import',
@@ -549,3 +599,74 @@ class CustomEmoji {
     required this.label,
   });
 }
+
+// ─── ZIP Parser — minimal local file header extraction ──────────────
+// Parses ZIP local file headers without external dependencies
+// Format: https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT
+
+class _ZipEntry {
+  final String fileName;
+  final Uint8List data;
+  const _ZipEntry({required this.fileName, required this.data});
+}
+
+List<_ZipEntry> _parseZipEntries(Uint8List bytes) {
+  final entries = <_ZipEntry>[];
+  int pos = 0;
+
+  while (pos < bytes.length - 4) {
+    // Local file header signature: 0x04034b50
+    final sig = bytes[pos] | (bytes[pos + 1] << 8) | (bytes[pos + 2] << 16) | (bytes[pos + 3] << 24);
+    if (sig != 0x04034b50) {
+      pos++;
+      continue;
+    }
+
+    // Skip to file name and data
+    final compressionMethod = bytes[pos + 8] | (bytes[pos + 9] << 8);
+    final compressedSize = bytes[pos + 18] | (bytes[pos + 19] << 8) |
+                          (bytes[pos + 20] << 16) | (bytes[pos + 21] << 24);
+    final uncompressedSize = bytes[pos + 22] | (bytes[pos + 23] << 8) |
+                            (bytes[pos + 24] << 16) | (bytes[pos + 25] << 24);
+    final fileNameLen = bytes[pos + 26] | (bytes[pos + 27] << 8);
+    final extraFieldLen = bytes[pos + 28] | (bytes[pos + 29] << 8);
+
+    final fileNameStart = pos + 30;
+    final fileNameBytes = bytes.sublist(fileNameStart, fileNameStart + fileNameLen);
+    final fileName = utf8.decode(fileNameBytes, allowMalformed: true);
+
+    final dataStart = fileNameStart + fileNameLen + extraFieldLen;
+    final compressedData = bytes.sublist(dataStart, dataStart + compressedSize);
+
+    Uint8List data;
+    if (compressionMethod == 0) {
+      // Stored (no compression)
+      data = Uint8List.fromList(compressedData);
+    } else if (compressionMethod == 8) {
+      // Deflated — use dart's built-in zlib decompression
+      try {
+        final decoded = zlib.decode(compressedData);
+        data = Uint8List.fromList(decoded);
+      } catch (e) {
+        // Decompression failed — skip this entry
+        pos = dataStart + compressedSize;
+        continue;
+      }
+    } else {
+      // Unsupported compression — skip
+      pos = dataStart + compressedSize;
+      continue;
+    }
+
+    entries.add(_ZipEntry(fileName: fileName, data: data));
+
+    // Move to next entry
+    pos = dataStart + compressedSize;
+  }
+
+  return entries;
+}
+
+// Need zlib import for deflate decompression
+import 'dart:io'; // Already imported at top
+// dart:convert already imported

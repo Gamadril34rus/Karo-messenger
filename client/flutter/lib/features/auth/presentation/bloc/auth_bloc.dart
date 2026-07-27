@@ -311,13 +311,27 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
+      // Redirect to OAuth provider via deep link / browser
       final response = await _apiClient.get(
         '/api/v1/auth/oauth/${event.provider}',
       );
 
-      // OAuth flow обрабатывается через deep link
-      // В реальном приложении здесь будет OAuth redirect
-      logger.i('OAuth ${event.provider}: redirect to ${response.data}');
+      // The server returns a redirect URL to the OAuth provider
+      // In a real mobile app: open URL in browser/WebView with deep link callback
+      // On web: redirect directly via window.location
+      final redirectData = response.asMap;
+
+      // Store OAuth state for callback verification
+      await _secureStorage.setOAuthState(
+        provider: event.provider,
+        state: redirectData['state'] as String? ?? '',
+      );
+
+      // The BLoC fetches the redirect URL — UI layer handles the actual redirect
+      logger.i('OAuth ${event.provider}: redirect URL received — UI handles redirect');
+
+      // Don't emit a state change — the UI will handle the redirect
+      // and call AuthCheckRequested after OAuth callback
     } on CharoApiException catch (e) {
       emit(AuthError(message: e.message));
     }

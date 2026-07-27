@@ -203,7 +203,7 @@ export function wsHandler(prisma: PrismaClient, redis: Redis) {
           case 'call.offer':
           case 'call.answer':
           case 'call.ice':
-            await handleCallSignal(manager, msg);
+            await handleCallSignal(manager, prisma, msg);
             break;
 
           default:
@@ -390,12 +390,36 @@ async function handleRead(
 
 async function handleCallSignal(
   manager: ConnectionManager,
+  prisma: PrismaClient,
   msg: WsMessage,
 ): Promise<void> {
   const { callId, data } = msg.data;
+  if (!callId) {
+    logger.warn('Call signal missing callId');
+    return;
+  }
 
-  // Пересылаем сигнальные данные другому участнику звонка
-  // Участники звонка загружаются из prisma.callMember
-  // Пока — заглушка
-  logger.info(`Call signal: ${msg.type} for call ${callId}`);
+  // Retrieve call members from DB and relay signal to all other participants
+  try {
+    const callMembers = await prisma.callMember.findMany({
+      where: { callId: callId as string },
+      select: { userId: true },
+    });
+
+    // Relay the signal to all call participants (except the sender is already handled by the WS loop)
+    for (const member of callMembers) {
+      manager.sendToUser(member.userId, {
+        type: msg.type,
+        data: {
+          callId,
+          data,
+          from: msg.data.from || (msg as any).userId,
+        },
+      });
+    }
+
+    logger.info(`Call signal ${msg.type} relayed to ${callMembers.length} participants for call ${callId}`);
+  } catch (err) {
+    logger.error(`Call signal relay failed: ${err}`);
+  }
 }

@@ -361,12 +361,96 @@ export async function authRoutes(fastify: FastifyInstance) {
     return reply.redirect(redirectUrl);
   });
 
-  // ─── POST /auth/2fa/enable — Включить 2FA ────────────────────
+  // ─── POST /auth/2fa/enable — Enable TOTP 2FA
   fastify.post('/2fa/enable', {
     preHandler: [fastify.authenticate],
   }, async (request, reply) => {
-    // TOTP 2FA — полная реализация с otplib
-    return reply.send({ message: '2FA enabled' });
+    const userId = request.userId!;
+    const { code } = request.body as { code?: string };
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return reply.code(404).send({ message: 'Пользователь не найден' });
+
+    // If user already has 2FA set up and provides a valid code — confirm enable
+    if (user.twoFactorSecret && code) {
+      const { authenticator } = await import('otplib');
+      const isValid = authenticator.check(code, user.twoFactorSecret);
+      if (!isValid) {
+        return reply.code(400).send({ message: 'Неверный код 2FA' });
+      }
+      logger.info(`2FA enabled and verified for user ${userId}`);
+      return reply.send({ message: '2FA подтверждена и активирована', enabled: true });
+    }
+
+    // Generate new TOTP secret
+    const { authenticator } = await import('otplib');
+    const secret = authenticator.generateSecret();
+    const appName = 'ЧАРО';
+
+    // Store secret temporarily (not yet enabled until verified)
+    await prisma.user.update({
+      where: { id: userId },
+      data: { twoFactorSecret: secret },
+    });
+
+    // Generate QR code URL for authenticator apps
+    const otpAuthUrl = authenticator.keyuri(user.username || userId, appName, secret);
+
+    // Generate QR code image
+    const QRCode = await import('qrcode');
+    const qrImageDataUrl = await QRCode.toDataURL(otpAuthUrl);
+
+    return reply.send({
+      message: '2FA секрет создан. Подтвердите код из приложения.',
+      secret,
+      otp_auth_url: otpAuthUrl,
+      qr_code: qrImageDataUrl,
+      enabled: false, // Not yet verified
+    });
+  });
+
+  // ─── POST /auth/2fa/verify — Verify 2FA code during login
+  fastify.post('/2fa/verify', async (request, reply) => {
+    const { identifier, code } = request.body as { identifier: string; code: string };
+
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [{ phone: identifier }, { email: identifier }],
+        status: 'ACTIVE',
+      },
+    });
+
+    if (!user || !user.twoFactorSecret) {
+      return reply.code(400).send({ message: '2FA не настроена' });
+    }
+
+    const { authenticator } = await import('otplib');
+    const isValid = authenticator.check(code, user.twoFactorSecret);
+
+    if (!isValid) {
+      return reply.code(400).send({ message: 'Неверный код 2FA' });
+    }
+
+    // Generate tokens after 2FA verification
+    const { accessToken, refreshToken } = generateTokens(user.id);
+
+    await redis.set(
+      `session:${user.id}`,
+      JSON.stringify({ lastActive: Date.now(), twoFaVerified: true }),
+      'EX',
+      7 * 24 * 60 * 60,
+    );
+
+    return reply.send({
+      access_token: accessToken,
+      refresh_token: refreshToken,
+      user: {
+        id: user.id,
+        username: user.username,
+        display_name: user.displayName,
+        avatar_url: user.avatarUrl,
+      },
+    });
   });
 }
 
@@ -394,14 +478,140 @@ function generateOtp(): string {
 }
 
 async function sendOtpSms(phone: string, code: string): Promise<void> {
-  // SMS-провайдер: SMSAero / Twilio — интеграция через ENV
-  logger.info(`[SMS] OTP ${code} sent to ${phone}`);
-  // В development режиме — логируем, не отправляем
+  const smsProvider = process.env.SMS_PROVIDER || 'smsaero';
+  const smsApiKey = process.env.SMS_API_KEY || '';
+  const smsFrom = process.env.SMS_FROM || 'Charo';
+
+  if (!smsApiKey) {
+    logger.info(`[SMS] OTP ${code} for ${phone} (no SMS_API_KEY set — logged only)`);
+    return;
+  }
+
+  try {
+    if (smsProvider === 'smsaero') {
+      // SMSAero API — https://smsaero.ru
+      const response = await fetch('https://gate.smsaero.ru/v2/sms/send', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${Buffer.from(`${smsApiKey}:`).toString('base64')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          number: phone,
+          text: `ЧАРО: Ваш код авторизации — ${code}. Не сообщайте его третьим лицам.`,
+          sign: smsFrom,
+          channel: 'INFO',
+        }),
+      });
+      if (!response.ok) {
+        logger.error(`SMSAero API error: ${response.status}`);
+      } else {
+        logger.info(`SMS OTP sent to ${phone} via SMSAero`);
+      }
+    } else if (smsProvider === 'twilio') {
+      // Twilio API — https://www.twilio.com
+      const twilioAccountSid = process.env.TWILIO_ACCOUNT_SID || '';
+      const twilioAuthToken = process.env.TWILIO_AUTH_TOKEN || '';
+      const twilioFrom = process.env.TWILIO_FROM || '+1234567890';
+
+      if (!twilioAccountSid || !twilioAuthToken) {
+        logger.error('Twilio credentials not configured');
+        return;
+      }
+
+      const response = await fetch(
+        `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Basic ${Buffer.from(`${twilioAccountSid}:${twilioAuthToken}`).toString('base64')}`,
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({
+            From: twilioFrom,
+            To: phone,
+            Body: `ЧАРО: Ваш код авторизации — ${code}. Не сообщайте его третьим лицам.`,
+          }).toString(),
+        },
+      );
+      if (!response.ok) {
+        logger.error(`Twilio API error: ${response.status}`);
+      } else {
+        logger.info(`SMS OTP sent to ${phone} via Twilio`);
+      }
+    }
+  } catch (err) {
+    logger.error(`SMS delivery failed: ${err}`);
+  }
 }
 
 async function sendOtpEmail(email: string, code: string): Promise<void> {
-  // Email-провайдер: Resend / SendGrid — интеграция через ENV
-  logger.info(`[EMAIL] OTP ${code} sent to ${email}`);
+  const emailProvider = process.env.EMAIL_PROVIDER || 'resend';
+  const emailApiKey = process.env.EMAIL_API_KEY || '';
+  const emailFrom = process.env.EMAIL_FROM || 'noreply@charo.chat';
+
+  if (!emailApiKey) {
+    logger.info(`[EMAIL] OTP ${code} for ${email} (no EMAIL_API_KEY set — logged only)`);
+    return;
+  }
+
+  try {
+    if (emailProvider === 'resend') {
+      // Resend API — https://resend.com
+      const response = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${emailApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: `ЧАРО <${emailFrom}>`,
+          to: [email],
+          subject: 'ЧАРО — Код авторизации',
+          html: `
+            <div style="font-family: sans-serif; max-width: 400px; margin: 0 auto; padding: 20px;">
+              <h2 style="color: #6C63FF;">ЧАРО</h2>
+              <p>Ваш код авторизации:</p>
+              <div style="font-size: 32px; font-weight: bold; color: #6C63FF; padding: 16px; background: #F0EEFF; border-radius: 8px; text-align: center;">
+                ${code}
+              </div>
+              <p style="color: #888; font-size: 14px;">Код действителен 5 минут. Не сообщайте его третьим лицам.</p>
+            </div>
+          `,
+        }),
+      });
+      if (!response.ok) {
+        logger.error(`Resend API error: ${response.status}`);
+      } else {
+        logger.info(`Email OTP sent to ${email} via Resend`);
+      }
+    } else if (emailProvider === 'sendgrid') {
+      // SendGrid API — https://sendgrid.com
+      const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${emailApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          personalizations: [{ to: [{ email }] }],
+          from: { email: emailFrom, name: 'ЧАРО' },
+          subject: 'ЧАРО — Код авторизации',
+          content: [{
+            type: 'text/html',
+            value: `<div style="font-family:sans-serif;text-align:center;"><h2>ЧАРО</h2><p>Код: <b style="font-size:32px;color:#6C63FF">${code}</b></p><p style="color:#888">Действителен 5 минут</p></div>`,
+          }],
+        }),
+      });
+      if (!response.ok) {
+        logger.error(`SendGrid API error: ${response.status}`);
+      } else {
+        logger.info(`Email OTP sent to ${email} via SendGrid`);
+      }
+    }
+  } catch (err) {
+    logger.error(`Email delivery failed: ${err}`);
+  }
 }
 
 function buildOAuthUrl(provider: string, state: string): string {

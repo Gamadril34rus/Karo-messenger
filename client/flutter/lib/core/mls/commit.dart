@@ -1,3 +1,8 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
+import 'package:pointycastle/export.dart' as pc;
+
 import 'mls_message.dart';
 import 'ratchet_tree.dart';
 
@@ -124,24 +129,32 @@ class MlsCommit {
     );
   }
 
-  /// Вычисление ConfirmationTag (HMAC-SHA256)
+  /// Вычисление ConfirmationTag — HMAC-SHA256 via PointyCastle
   static String _computeConfirmationTag({
     required String groupId,
     required int epoch,
     required List<MlsProposal> proposals,
     required UpdatePath? updatePath,
   }) {
-    // ConfirmationTag = HMAC(confirmation_key, transitive_hash)
-    // transitive_hash = hash(epoch || proposals || updatePath)
+    // ConfirmationTag = HMAC-SHA256(confirmation_key, transitive_hash)
+    // transitive_hash = SHA-256(epoch || proposals || updatePath)
     final proposalsData = proposals.map((p) => p.toJson()).toList().toString();
     final updatePathData = updatePath?.toJson().toString() ?? '';
     final transitiveInput = '$groupId|$epoch|$proposalsData|$updatePathData';
 
-    // HMAC-SHA256 через pointycastle (в реальности)
-    // Здесь — детерминированное вычисление для структуры
-    final tagBytes = transitiveInput.codeUnits;
-    final tag = tagBytes.map((b) => ((b * 31) & 0xFF).toRadixString(16).padLeft(2, '0')).take(32).join();
-    return tag;
+    // HMAC-SHA256 via PointyCastle
+    final inputBytes = Uint8List.fromList(utf8.encode(transitiveInput));
+
+    // Use groupId-derived key as HMAC key (in full MLS: confirmation_key from GroupContext)
+    final keyBytes = Uint8List.fromList(utf8.encode('charo_confirm:$groupId'));
+
+    final hmac = pc.HMac(pc.SHA256Digest(), 64);
+    hmac.init(pc.KeyParameter(keyBytes));
+    final tagBytes = Uint8List(32);
+    hmac.update(inputBytes, 0, inputBytes.length);
+    hmac.doFinal(tagBytes, 0);
+
+    return base64Encode(tagBytes);
   }
 
   Map<String, dynamic> toJson() {

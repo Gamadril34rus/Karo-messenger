@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/haptic/haptic_service.dart';
 import '../../../../shared/widgets/charo_widgets.dart';
@@ -60,70 +62,78 @@ class _NearbyScreenState extends State<NearbyScreen> {
           final users = state is NearbyLoaded ? state.users : <NearbyUser>[];
           return Column(
             children: [
-              // Map placeholder with premium styling
-              CharoHeaderCard(
+              // Real map via flutter_map with OpenStreetMap tiles
+              SizedBox(
                 height: 240,
-                gradientColors: [
-                  context.colors.primary.withOpacity(0.08),
-                  context.colors.outlineVariant,
-                  context.colors.surface,
-                ],
-                radius: 16,
-                child: Stack(
-                  children: [
-                    Center(
-                      child: Icon(Icons.map, size: 64, color: context.colors.onSurface.withOpacity(0.15)),
-                    ),
-                    Positioned(
-                      right: 16,
-                      bottom: 16,
-                      child: FloatingActionButton.small(
-                        onPressed: () {
-                          HapticService.light();
-                          context.read<NearbyBloc>().add(NearbyLoadRequested());
-                        },
-                        child: const Icon(Icons.my_location),
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  child: FlutterMap(
+                    options: MapOptions(
+                      initialCenter: LatLng(52.5187, 5.4712), // Lelystad, NL (default center)
+                      initialZoom: 14,
+                      interactionOptions: const InteractionOptions(
+                        flags: InteractiveFlag.all,
                       ),
                     ),
-                    for (final u in users.take(5))
-                      Positioned(
-                        left: 50 + (users.indexOf(u) * 60.0) % 300,
-                        top: 40 + (users.indexOf(u) * 40.0) % 150,
-                        child: GestureDetector(
-                          onTap: () {
-                            HapticService.light();
-                            _showUserSheet(context, u);
-                          },
-                          child: Column(
-                            children: [
-                              CharoAvatar(
-                                radius: 20,
-                                fallbackText: u.displayName,
-                                showRing: true,
-                                ringColors: [context.colors.primary, context.colors.success],
+                    children: [
+                      TileLayer(
+                        urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        userAgentPackageName: 'charo_messenger',
+                        maxZoom: 19,
+                      ),
+                      MarkerLayer(
+                        markers: [
+                          // Self marker
+                          Marker(
+                            point: LatLng(52.5187, 5.4712),
+                            width: 40,
+                            height: 40,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: context.colors.primary,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 2),
                               ),
-                              const SizedBox(height: 4),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              child: const Icon(Icons.my_location, color: Colors.white, size: 20),
+                            ),
+                          ),
+                          // Nearby user markers
+                          ...users.map((u) => Marker(
+                            point: _userPosition(u, LatLng(52.5187, 5.4712)),
+                            width: 44,
+                            height: 44,
+                            child: GestureDetector(
+                              onTap: () {
+                                HapticService.light();
+                                _showUserSheet(context, u);
+                              },
+                              child: Container(
                                 decoration: BoxDecoration(
                                   color: context.colors.surface,
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: context.colors.primary.withOpacity(0.3)),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: context.colors.primary, width: 2),
+                                  boxShadow: [
+                                    BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4),
+                                  ],
                                 ),
-                                child: Text(
-                                  u.distance,
-                                  style: context.typography.bodySmall?.copyWith(
-                                    fontSize: 10,
-                                    color: context.colors.primary,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                                child: CharoAvatar(
+                                  radius: 18,
+                                  fallbackText: u.displayName,
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
+                            ),
+                          )),
+                        ],
                       ),
-                  ],
+                      RichAttributionBuilder(
+                        attributions: [
+                          TextSourceAttribution('OpenStreetMap contributors',
+                            onTap: () => {},
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
               // List header
@@ -241,5 +251,32 @@ class _NearbyUserTile extends StatelessWidget {
 
   void _showUserSheet(BuildContext context, NearbyUser user) {
     HapticService.light();
+  }
+
+  /// Calculate position on map from distance string and base position
+  /// Distributes nearby users around the center point based on their distance
+  LatLng _userPosition(NearbyUser user, LatLng center) {
+    final distanceStr = user.distance;
+    double distanceMeters = 100; // default 100m
+
+    if (distanceStr.contains('м')) {
+      distanceMeters = double.tryParse(
+        distanceStr.replaceAll(RegExp(r'[^\d.]'), ''),
+      ) ?? 100;
+    } else if (distanceStr.contains('км')) {
+      distanceMeters = (double.tryParse(
+        distanceStr.replaceAll(RegExp(r'[^\d.]'), ''),
+      ) ?? 0.1) * 1000;
+    }
+
+    // Spread users around center — deterministic angle based on userId hash
+    final hash = user.userId.hashCode;
+    final angle = (hash % 360) * (3.14159265 / 180);
+
+    // Convert distance to lat/lng offset (approximate)
+    final latOffset = (distanceMeters / 111320) * (hash % 2 == 0 ? 1 : -1) * 0.5;
+    final lngOffset = (distanceMeters / (111320 * 0.7)) * (hash % 2 == 0 ? 1 : -1) * 0.5;
+
+    return LatLng(center.latitude + latOffset, center.longitude + lngOffset);
   }
 }

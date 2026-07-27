@@ -1,5 +1,20 @@
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import * as Minio from 'minio';
+import { logger } from '../../utils/logger';
+
+const CDN_BASE = process.env.CDN_BASE_URL || 'https://cdn.charo.chat';
+const BUCKET = process.env.MINIO_BUCKET || 'charo-media';
+
+function getMinioClient(): Minio.Client {
+  return new Minio.Client({
+    endPoint: process.env.MINIO_ENDPOINT || 'localhost',
+    port: Number(process.env.MINIO_PORT) || 9000,
+    useSSL: process.env.MINIO_USE_SSL === 'true',
+    accessKey: process.env.MINIO_ACCESS_KEY || 'minioadmin',
+    secretKey: process.env.MINIO_SECRET_KEY || 'minioadmin',
+  });
+}
 
 const updateProfileSchema = z.object({
   display_name: z.string().max(128).optional(),
@@ -95,14 +110,30 @@ export async function usersRoutes(fastify: FastifyInstance) {
     return reply.send({ data: users });
   });
 
-  // PATCH /users/me/avatar — Загрузить аватар
+  // PATCH /users/me/avatar — Upload avatar to MinIO
   fastify.patch('/me/avatar', async (request, reply) => {
     const userId = request.userId!;
     const data = await request.file();
     if (!data) return reply.code(400).send({ message: 'Файл не предоставлен' });
 
-    // Загрузка в MinIO (упрощённая реализация)
-    const avatarUrl = `https://cdn.charo.chat/avatars/${userId}/${Date.now()}`;
+    const fileBuffer = await data.toBuffer();
+
+    // Upload to MinIO
+    const objectKey = `avatars/${userId}/${Date.now()}_${data.filename}`;
+    const minioClient = getMinioClient();
+
+    try {
+      await minioClient.putObject(BUCKET, objectKey, fileBuffer, fileBuffer.length, {
+        'Content-Type': data.mimetype,
+        'x-amz-meta-user-id': userId,
+      });
+      logger.info(`Avatar uploaded to MinIO: ${objectKey}`);
+    } catch (err) {
+      logger.error(`MinIO avatar upload failed: ${err}`);
+      return reply.code(500).send({ message: 'Ошибка загрузки аватара' });
+    }
+
+    const avatarUrl = `${CDN_BASE}/${objectKey}`;
     await prisma.user.update({ where: { id: userId }, data: { avatarUrl } });
 
     return reply.send({ avatar_url: avatarUrl });
