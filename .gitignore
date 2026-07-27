@@ -58,5 +58,7 @@ redis_data/
 minio_data/
 
 # Generated
-*.g.dart
-local_db.g.dart
+*.freezed.dart
+*.config.dart
+# local_db.g.dart is manually maintained (build_runner unavailable in sandbox)
+# When running on real machine: dart run build_runner build will regenerate it

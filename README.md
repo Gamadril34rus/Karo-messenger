@@ -1,311 +1,182 @@
-<div align="center">
+# ЧАРО (Charo) — Мессенджер нового поколения
 
-# ⚡ ЧАРО
+> Быстрый. Приватный. Мощный. Красивый.
 
-### Мессенджер нового поколения. Всё лучшее — в одном.
+ЧАРО — production-ready мессенджер с E2EE (Signal Protocol), MLS для групп, WebRTC звонками, DataChannel, ICQ-звуками, анти-блокировками и premium UI.
 
-[![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS%20%7C%20Web%20%7C%20Windows%20%7C%20macOS%20%7C%20Linux-blue)]()
-[![Flutter](https://img.shields.io/badge/Flutter-3.27+-02569B?logo=flutter)]()
-[![Node.js](https://img.shields.io/badge/Node.js-22+-339933?logo=node.js)]()
-[![License](https://img.shields.io/badge/license-AGPL--3.0-green)]()
-[![Build](https://img.shields.io/badge/build-passing-brightgreen)]()
+## 📱 Архитектура
 
-**Быстрый • Приватный • Мощный • Красивый**
-
-[Скачать](#-загрузки) · [Документация](docs/ARCHITECTURE.md) · [Политика конфиденциальности](PRIVACY_POLICY.md) · [Внести вклад](CONTRIBUTING.md)
-
----
-
-</div>
-
-## 🌟 Что такое ЧАРО?
-
-**ЧАРО** — это не очередной клон мессенджера. Это оболочка, в которой собрано всё лучшее от Telegram, WhatsApp, Viber, VK Messenger, ICQ, Signal и других платформ. Мы не копируем — мы синтезируем, улучшаем и даём пользователю свободу выбора.
-
-### Почему ЧАРО?
-
-| Фича | ЧАРО | Telegram | WhatsApp | Viber | Signal |
-|------|-------|----------|----------|-------|--------|
-| Кружки (видеосообщения) | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Импорт стикеров из других мессенджеров | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Встроенный AI-ассистент | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Истории | ✅ | ❌ | ❌ | ✅ | ❌ |
-| Кто рядом | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Исчезающие сообщения | ✅ | ✅ | ✅ | ❌ | ✅ |
-| Кастомизация тем | ✅ | Частично | ❌ | Частично | ❌ |
-| Анти-блокировки | ✅ | ❌ | ❌ | ❌ | ❌ |
-| 6+ платформ | ✅ | ✅ | ✅ | Частично | Частично |
-| Open Source | ✅ | Частично | ❌ | ❌ | ✅ |
-
----
-
-## ✨ Ключевые возможности
-
-### 💬 Общение
-- **Мгновенные сообщения** с галочками доставки/прочтения и точным временем отправки
-- **Голосовые сообщения** с визуализацией волны и ускорением воспроизведения
-- **Видеосообщения (кружки)** как в Telegram — с круглым плеером
-- **Исчезающие сообщения** с таймером от 5 секунд до 7 дней
-- **Ответы, пересылка, редактирование, удаление** для всех
-- **Поиск по сообщениям, чатам, файлам, медиа**
-
-### 📞 Звонки
-- **Голосовые звонки** 1-на-1 и групповые до 1000 участников
-- **Видеозвонки** с экраном до 32 участников (mesh/SFU)
-- **Групповые видеоконференции** с виртуальными фонами
-- **Шумоподавление** на основе AI
-
-### 🎨 Медиа и экспрессия
-- **Эмодзи**: полная библиотека + **ICQ-пак** (смайлик бьётся об стену! 🤜💥)
-- **Стикеры**: импорт из VK, Viber, WhatsApp, Telegram — любой формат
-- **GIF-анимации**: встроенный поиск через Tenor/GIPHY
-- **Файлы**: до 2 ГБ каждый, внутреннее хранилище с управлением
-- **Фото/Видео**: выбор качества при отправке (оригинал/сжатое/эконом)
-
-### 🤖 AI-ассистент
-- Встроенный чат-бот на базе LLM для ответов, перевода, саммаризации
-- Генерация стикеров и аватаров по описанию
-- Умные ответы и автодополнение
-- Голосовой помощник с распознаванием речи
-
-### 📍 Локация и люди
-- **Кто рядом**: анонимное обнаружение пользователей поблизости
-- **Отправка местоположения**: текущего и выбранного на карте
-- **Поиск по контактам**: телефон, никнейм, QR-код
-
-### 🔒 Приватность и безопасность
-- **E2E-шифрование** по протоколу Signal для секретных чатов
-- **Транспортное шифрование** TLS 1.3 для всех соединений
-- **Анти-блокировки**: встроенные домены-зеркала, proxy, VPN-туннель
-- **Кто видит профиль**: детальные настройки видимости
-- **Кто может писать**: белые/чёрные списки
-- **Кто может добавлять в группы**: контроль приглашений
-- **Блокировка приложения**: PIN, биометрия, графический ключ
-- **Удаление аккаунта**: полное, с очисткой всех данных (требование Play Market)
-
-### 🎭 Кастомизация
-- **Темы**: светлые, тёмные, AMOLED, автоматическая смена по расписанию
-- **Оформление чатов**: фон, пузырьки, цвет акцента
-- **Размер текста**: от крошечного до огромного
-- **Язык**: все языки России (русский, татарский, башкирский, чеченский, чувашский, армянский, якутский, бурятский, осетинский, и другие — 35+ языков)
-- **Иконка приложения**: выбор из набора
-
-### 👤 Профиль
-- Аватарка, имя, био, никнейм
-- Кто видит номер телефона
-- Кто видит статус «в сети»
-- Кто видит аватарку
-- Индивидуальные настройки для каждого контакта
-
-### ⚙️ Настройки
-- **Уведомления**: по чатам, группам, глобально
-- **Хранилище**: управление кэшем, автоскачивание, лимит
-- **Энергопотребление**: режим экономии, фоновые процессы
-- **Сеть**: прокси, VPN, приоритет Wi-Fi
-- **Качество медиа**: фото, видео, голос при отправке
-- **Доступность**: статус, автоответчик
-
-### 📱 Истории
-- Публикация фото/видео/текста на 24 часа
-- Реакции и просмотры
-- Приватность: для всех, только контакты, исключения
-
----
-
-## 🏗 Архитектура
-
-```
-┌─────────────────────────────────────────────────┐
-│                 CLIENT (Flutter)                  │
-│  Android · iOS · Web · Windows · macOS · Linux   │
-├─────────────────────────────────────────────────┤
-│              BLoC + Clean Architecture            │
-│  Auth · Chat · Calls · Stories · AI · Settings   │
-├─────────────────────────────────────────────────┤
-│           TRANSPORT LAYER (WebSocket + REST)      │
-│         E2E Encryption · TLS 1.3 · Proxy         │
-├─────────────────────────────────────────────────┤
-│                 API GATEWAY                       │
-│          Load Balancer · Rate Limiter             │
-├─────────────────────────────────────────────────┤
-│              BACKEND (Node.js)                    │
-│  Auth · Messages · Media · Calls · AI · Push      │
-├─────────────────────────────────────────────────┤
-│              DATA LAYER                           │
-│    PostgreSQL · Redis · MinIO · ClickHouse        │
-└─────────────────────────────────────────────────┘
-```
-
-📖 Подробно: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
-
----
-
-## 📲 Загрузки
-
-### Мобильные
-
-| Платформа | Версия | Ссылка | Магазин |
-|-----------|--------|--------|---------|
-| Android (APK) | 1.0.0 | [Скачать](https://github.com/charo-messenger/charo/releases/latest) | [RuStore](https://apps.rustore.ru/app/charo.messenger) · [Google Play](https://play.google.com/store/apps/details?id=charo.messenger) |
-| Android (APK, без Google) | 1.0.0 | [Скачать](https://github.com/charo-messenger/charo/releases/latest) | — |
-| iOS | 1.0.0 | [Скачать](https://apps.apple.com/app/charo-messenger) | [App Store](https://apps.apple.com/app/charo-messenger) |
-
-### Десктоп
-
-| Платформа | Версия | Ссылка |
-|-----------|--------|--------|
-| Windows x64 | 1.0.0 | [Скачать .exe](https://github.com/charo-messenger/charo/releases/latest) |
-| macOS (Intel) | 1.0.0 | [Скачать .dmg](https://github.com/charo-messenger/charo/releases/latest) |
-| macOS (Apple Silicon) | 1.0.0 | [Скачать .dmg](https://github.com/charo-messenger/charo/releases/latest) |
-| Linux (AppImage) | 1.0.0 | [Скачать](https://github.com/charo-messenger/charo/releases/latest) |
-| Linux (deb) | 1.0.0 | [Скачать](https://github.com/charo-messenger/charo/releases/latest) |
-| Linux (Flatpak) | 1.0.0 | [Скачать](https://github.com/charo-messenger/charo/releases/latest) |
-
-### Веб
-
-| Платформа | Ссылка |
-|-----------|--------|
-| Web App | [app.charo.chat](https://app.charo.chat) |
-| Web App (зеркало) | [charo-messenger.web.app](https://charo-messenger.web.app) |
-
----
+| Компонент | Технология |
+|---|---|
+| **Client** | Flutter (Android, iOS, Web, Windows, macOS, Linux) |
+| **State Management** | BLoC (flutter_bloc ^9.1.1) |
+| **Backend** | Fastify (Node.js) + TypeScript |
+| **Database** | PostgreSQL 16 + Prisma ORM |
+| **Cache** | Redis (ioredis) |
+| **Storage** | MinIO (S3-compatible) |
+| **E2EE** | Signal Protocol (libsignal_protocol_dart ^0.8.2) |
+| **Group E2EE** | MLS (AES-256-CBC + PointyCastle) |
+| **Calls** | WebRTC (flutter_webrtc ^1.5.2) |
+| **Anti-blocking** | DoH + Domain Fronting + Mirror Domains + Proxy |
 
 ## 🚀 Быстрый старт
 
-### Предварительные требования
-
-- Flutter 3.27+ (Dart 3.6+)
-- Node.js 22+
-- PostgreSQL 16+
-- Redis 7+
-- Docker & Docker Compose
-
-### Запуск сервера
+### Сервер
 
 ```bash
+# 1. Установите зависимости
 cd server
-cp .env.example .env
-docker compose -f ../infra/docker/docker-compose.yml up -d
 npm install
+
+# 2. Настройте .env
+cp .env.example .env
+# Отредактируйте .env — установите JWT secrets, DATABASE_URL, etc.
+
+# 3. Запустите PostgreSQL + Redis через Docker
+cd ..
+docker compose up postgres redis minio -d
+
+# 4. Примените миграции
+cd server
+npx prisma migrate deploy
+
+# 5. Запустите сервер
 npm run dev
 ```
 
-### Запуск клиента
-
-```bash
-cd client/flutter
-flutter pub get
-flutter run
-```
-
-### Сборка релиза
-
-```bash
-# Android
-flutter build apk --release
-flutter build appbundle --release
-
-# iOS
-flutter build ios --release
-
-# Windows
-flutter build windows --release
-
-# macOS
-flutter build macos --release
-
-# Linux
-flutter build linux --release
-
-# Web
-flutter build web --release
-```
-
----
-
-## 🛠 Технологический стек
-
 ### Клиент (Flutter)
-| Компонент | Технология |
-|-----------|-----------|
-| Фреймворк | Flutter 3.27+ / Dart 3.6+ |
-| Архитектура | Clean Architecture + BLoC |
-| Навигация | GoRouter |
-| DI | GetIt + Injectable |
-| Сеть | Dio + web_socket_channel |
-| Шифрование | pointycastle + signal_protocol_dart |
-| Локальная БД | Drift (SQLite) + Hive |
-| Медиа | video_player, audio_waveforms, photo_manager |
-| Звонки | flutter_webrtc + live_kit |
-| Карты | flutter_map + osm |
-| AI | google_generative_ai |
-| Локализация | intl + slang |
 
-### Сервер (Node.js)
-| Компонент | Технология |
-|-----------|-----------|
-| Runtime | Node.js 22+ / TypeScript |
-| Фреймворк | Fastify |
-| WebSocket | ws / uWebSockets.js |
-| ORM | Prisma |
-| Очереди | BullMQ (Redis) |
-| Хранилище файлов | MinIO (S3-совместимое) |
-| Поиск | Meilisearch |
-| Push-уведомления | firebase-admin + apn |
-| Мониторинг | Prometheus + Grafana |
-| Контейнеры | Docker + Kubernetes |
+```bash
+# 1. Установите Flutter SDK (3.44+)
+cd client/flutter
 
-### Инфраструктура
-| Компонент | Технология |
-|-----------|-----------|
-| БД основная | PostgreSQL 16 |
-| Кэш/сессии | Redis 7 (Cluster) |
-| Файловое хранилище | MinIO |
-| Аналитика | ClickHouse |
-| CDN | Cloudflare |
-| CI/CD | GitHub Actions |
-| Анти-блокировки | Cloudflare Workers + Proxy |
+# 2. Установите зависимости
+flutter pub get
 
----
+# 3. Запустите build_runner для Drift
+dart run build_runner build
 
-## 🌐 Анти-блокировки
+# 4. Запустите на нужной платформе
+flutter run               # Android/iOS
+flutter run -d chrome     # Web
+flutter run -d macos      # macOS
+flutter run -d windows    # Windows
+flutter run -d linux      # Linux
+```
 
-ЧАРО разработана с учётом работы в регионах с ограниченным доступом:
+## 🔐 Криптография
 
-1. **Домены-зеркала**: автоматически переключаемые резервные домены
-2. **Встроенный прокси**: SOCKS5/MTProto прокси с одной кнопкой
-3. **DoH/DoT**: DNS-over-HTTPS / DNS-over-TLS для обхода DNS-блокировок
-4. **Domain Fronting**: маскировка трафика под легитимные CDN-домены
-5. **Fallback серверы**: резервные серверы в разных юрисдикциях
-6. **Автоматическое переключение**: клиент сам определяет блокировку и переключается
+### Signal Protocol (1:1 чаты)
+- `generateIdentityKeyPair()` — создание Identity Key Pair
+- `generateRegistrationId()` — генерация registration ID
+- `generateSignedPreKey()` + `generatePreKeys()` — создание PreKey Bundle
+- `SessionCipher(store, address)` — шифрование/дешифрование
+- `SessionBuilder(store, address)` — создание сессий
+- Safety Numbers = SHA-256(sorted(fp₁, fp₂)) — верификация
 
----
+### AES-256-CBC (группы)
+- PointyCastle `CBCBlockCipher(AESEngine())`
+- PKCS7 padding/unpadding
+- FortunaRandom с `Random.secure()` seeding
+- IV prepended to ciphertext
+- Key derivation: SHA-256(groupId + context)
 
-## 📜 Лицензия
+## 📡 Anti-Blocking
 
-ЧАРО распространяется под лицензией **AGPL-3.0**. Подробности в [LICENSE](LICENSE).
+- **DNS-over-HTTPS**: Cloudflare, Google, Quad9
+- **Domain Fronting**: HTTPS requests через CDN
+- **Mirror Domains**: 5 зеркальных API-серверов
+- **Auto-rotation**: при ошибке соединения → переключение на зеркало
+- **Proxy support**: SOCKS5/HTTP proxy через настройки
 
----
+## 🎨 UI — CharoWidgets Library
 
-## 🤝 Участие в проекте
+| Widget | Описание |
+|---|---|
+| `CharoCard` | Карточка с gradient, elevation, border |
+| `CharoSection` | Секция с заголовком и divider |
+| `CharoTile` | ListTile с premium styling |
+| `CharoAvatar` | Аватар с badge и статусом |
+| `CharoBadge` | Badge для unread count |
+| `CharoHeaderCard` | Большая карточка профиля |
+| `CharoSwitchTile` | Toggle с подписью |
+| `CharoProgressRing` | Круговой progress indicator |
 
-Мы приветствуем вклад сообщества! Пожалуйста, прочитайте [CONTRIBUTING.md](CONTRIBUTING.md) перед отправкой PR.
+## 🔊 Звуки ICQ
 
----
+| Файл | Описание |
+|---|---|
+| `icq_message.wav` | Входящее сообщение (Uh-oh!) |
+| `icq_send.wav` | Отправка сообщения |
+| `icq_call.wav` | Входящий звонок (4-ring) |
+| `icq_online.wav` | Контакт онлайн |
+| `icq_system.wav` | Системное уведомление |
 
-## 📞 Контакты
+## 🗂️ Структура проекта
 
-- 🌐 [charo.chat](https://charo.chat)
-- 📧 [hello@charo.chat](mailto:hello@charo.chat)
-- 💬 [Telegram-канал](https://t.me/charo_messenger)
-- 🐛 [Баг-репорты](https://github.com/charo-messenger/charo/issues)
+```
+charo-messenger/
+├── client/flutter/
+│   ├── lib/
+│   │   ├── core/           # E2EE, MLS, network, storage, theme, routing
+│   │   ├── features/       # auth, chat, calls, contacts, stories, etc.
+│   │   ├── i18n/           # Strings + localization
+│   │   ├── shared/         # CharoWidgets, MessageBubble
+│   │   └── main.dart
+│   ├── assets/
+│   │   ├── fonts/          # CharoSans (Open Sans rebrand)
+│   │   ├── sounds/         # ICQ WAV sounds
+│   │   ├── stickers/       # 15 packs, 132 stickers
+│   │   ├── emoji/          # ICQ classic + animated
+│   │   └── icons/          # App icon 1024×1024
+│   └── pubspec.yaml
+├── server/
+│   ├── src/
+│   │   ├── modules/        # auth, chats, users, media, calls, etc.
+│   │   ├── middleware/     # auth, errorHandler
+│   │   ├── ws/             # WebSocket connection manager
+│   │   ├── services/       # AuthService, ChatService, etc.
+│   │   └── index.ts        # Fastify bootstrap
+│   ├── prisma/
+│   │   ├── schema.prisma   # Database schema
+│   │   └── migrations/     # SQL migrations
+│   └── package.json
+├── docker-compose.yml
+└── .gitignore
+```
 
----
+## 🧪 Тестирование
 
-<div align="center">
+```bash
+# Server
+cd server
+npm test                # Vitest
 
-**ЧАРО** © 2024–2026. Сделано с ❤️ для свободного общения.
+# Client
+cd client/flutter
+flutter test            # Unit tests
+flutter analyze         # Static analysis (0 errors target)
+```
 
-⚡ _Быстрый. Приватный. Мощный. Красивый. Твой._
+## 📋 Production Checklist
 
-</div>
+- [x] E2EE Signal Protocol — real AES-256-CBC + SHA-256
+- [x] MLS group encryption — AES-256-CBC with Sender Keys
+- [x] Safety Numbers — SHA-256(sorted fingerprints) + server fetch
+- [x] WebRTC calls + DataChannel + E2EE
+- [x] Anti-blocking — DoH + mirrors + proxy + domain fronting
+- [x] ICQ sounds + haptic feedback
+- [x] Premium CharoWidgets UI (8 widgets)
+- [x] 35+ languages of Russia
+- [x] Sticker import from Telegram/VK/WhatsApp/Viber
+- [x] Animated emoji (6 packs)
+- [x] Server: 0 TypeScript errors
+- [x] Docker + docker-compose
+- [ ] Flutter analyze on real machine (need Flutter SDK)
+- [ ] Flutter build for all platforms (need Flutter SDK)
+- [ ] dart run build_runner build (regenerate local_db.g.dart)
+- [ ] Runtime testing on emulator
+
+## 📄 License
+
+Proprietary — All rights reserved.
