@@ -6,6 +6,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../shared/widgets/charo_widgets.dart';
 import '../bloc/chat_list/chat_bloc.dart';
+import '../../data/chat_item.dart';
 
 /// Список чатов — главный экран мессенджера с премиальным UI
 class ChatListScreen extends StatefulWidget {
@@ -284,33 +285,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
 }
 
 /// Модель чата для списка
-class ChatItem {
-  final String id;
-  final String type;
-  final String? title;
-  final String? avatarUrl;
-  final String? lastMessage;
-  final String? lastMessageSender;
-  final DateTime? lastMessageAt;
-  final int unreadCount;
-  final bool isMuted;
-  final bool isPinned;
-  final bool isOnline;
 
-  const ChatItem({
-    required this.id,
-    this.type = 'private',
-    this.title,
-    this.avatarUrl,
-    this.lastMessage,
-    this.lastMessageSender,
-    this.lastMessageAt,
-    this.unreadCount = 0,
-    this.isMuted = false,
-    this.isPinned = false,
-    this.isOnline = false,
-  });
-}
 
 /// Premium chat tile with avatar, online indicator, unread badge, and actions
 class _PremiumChatTile extends StatelessWidget {

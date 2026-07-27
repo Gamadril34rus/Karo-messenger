@@ -5,7 +5,7 @@ import '../../../../../core/network/api_client.dart';
 import '../../../../../core/network/ws_client.dart';
 import '../../../../../core/storage/local_db.dart';
 import '../../../../../core/utils/logger.dart';
-import '../../screens/chat_list_screen.dart';
+import '../../../data/chat_item.dart';
 
 // ─── Events ────────────────────────────────────────────────────────
 
