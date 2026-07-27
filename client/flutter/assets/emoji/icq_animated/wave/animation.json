@@ -1,25 +1,9 @@
 {
   "id": "wave",
-  "name": "Машет рукой",
-  "frames": 6,
+  "name": "\u041c\u0430\u0448\u0435\u0442 \u0440\u0443\u043a\u043e\u0439",
   "fps": 10,
-  "loop": true,
-  "unicode": "👋",
-  "description": "ICQ animated emoji — Машет рукой",
-  "frameFiles": [
-    "frame_0.png",
-    "frame_1.png",
-    "frame_2.png",
-    "frame_3.png",
-    "frame_4.png",
-    "frame_5.png"
-  ],
-  "frameOrder": [
-    0,
-    1,
-    2,
-    3,
-    4,
-    5
-  ]
+  "frames": 10,
+  "frame_prefix": "frame_",
+  "format": "png",
+  "size": 320
 }

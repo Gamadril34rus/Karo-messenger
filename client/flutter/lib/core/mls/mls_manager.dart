@@ -60,7 +60,6 @@ class MlsManager {
         final groupId = map['group_id'] as String? ?? map['groupId'] as String? ?? '';
         final epoch = map['epoch'] as int? ?? 0;
 
-        // members может быть списком объектов с userId, а не просто строк
         final membersRaw = map['members'] as List<dynamic>? ?? [];
         final members = membersRaw.map((m) {
           if (m is String) return m;
@@ -195,10 +194,10 @@ class MlsManager {
       throw CharoMlsException('Group $groupId not found');
     }
 
-    final tree = _trees[groupId]!;
     final epoch = _localEpochs[groupId] ?? 0;
 
-    final encrypted = group.encrypt(plaintext, tree);
+    // Real AES-256-CBC group encryption via E2EE
+    final encrypted = await group.encryptAsync(plaintext);
     final signature = _e2ee.signMessage(encrypted);
 
     final mlsMessage = MlsMessage(
@@ -246,7 +245,7 @@ class MlsManager {
 
     switch (message.type) {
       case MlsMessageType.application:
-        return _decryptApplicationMessage(group, message);
+        return await _decryptApplicationMessage(group, message);
       case MlsMessageType.commit:
         return await _processCommitMessage(message);
       case MlsMessageType.proposal:
@@ -254,9 +253,8 @@ class MlsManager {
     }
   }
 
-  String _decryptApplicationMessage(GroupContext group, MlsMessage message) {
-    final tree = _trees[message.groupId]!;
-    final plaintext = group.decrypt(message.encryptedContent, tree);
+  Future<String> _decryptApplicationMessage(GroupContext group, MlsMessage message) async {
+    final plaintext = await group.decryptAsync(message.encryptedContent);
 
     _messageController.add(message);
     return plaintext;
@@ -495,21 +493,14 @@ class GroupContext {
     this.confirmationKey = '',
   });
 
-  /// Шифрование текста для группы (AEAD с epoch key)
-  String encrypt(String plaintext, RatchetTree tree) {
-    final senderIndex = tree.leafIndices[MlsManager.instance._userId ?? ''] ?? 0;
-    final aad = '$groupId|$epoch|$senderIndex';
-
-    // Group encryption через E2EE encryptForGroup
+  /// Async encryption — AES-256-CBC via E2EEKeyManager.encryptForGroup
+  Future<String> encryptAsync(String plaintext) async {
     return E2EEKeyManager.instance.encryptForGroup(groupId, plaintext);
   }
 
-  /// Расшифровка текста группы
-  String decrypt(String encryptedContent, RatchetTree tree) {
-    // Group decryption через E2EE decryptForGroup
-    // encryptForGroup возвращает Future<String>, поэтому здесь нужен синхронный fallback
-    // В production: AEAD-расшифровка с epoch-specific tree key
-    return encryptedContent; // Placeholder — в production используется tree root secret
+  /// Async decryption — AES-256-CBC via E2EEKeyManager.decryptForGroup
+  Future<String> decryptAsync(String encryptedContent) async {
+    return E2EEKeyManager.instance.decryptForGroup(groupId, encryptedContent);
   }
 
   GroupContext copyWith({

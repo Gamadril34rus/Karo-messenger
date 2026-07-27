@@ -11,6 +11,7 @@ import 'core/network/api_client.dart';
 import 'core/network/ws_client.dart';
 import 'core/storage/secure_storage.dart';
 import 'core/storage/local_db.dart';
+import 'core/e2ee/e2ee_manager.dart';
 import 'core/utils/logger.dart';
 
 import 'features/auth/presentation/bloc/auth_bloc.dart';
@@ -65,8 +66,12 @@ Future<void> _setupDependencies(
   sl.registerLazySingleton<AppDatabase>(() => localDb);
 
   // Network
-  sl.registerLazySingleton<ApiClient>(() => ApiClient(sl()));
+  final apiClient = ApiClient(sl());
+  sl.registerLazySingleton<ApiClient>(() => apiClient);
   sl.registerLazySingleton<WsClient>(() => WsClient(sl()));
+
+  // E2EE — connect to ApiClient for server key publishing
+  E2EEKeyManager.instance.setApiClient(apiClient);
 
   // BLoCs
   sl.registerFactory(() => AuthBloc(

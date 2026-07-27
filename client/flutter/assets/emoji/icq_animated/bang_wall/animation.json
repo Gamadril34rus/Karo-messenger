@@ -1,29 +1,9 @@
 {
   "id": "bang_wall",
-  "name": "Бьётся об стену",
-  "frames": 8,
-  "fps": 12,
-  "loop": true,
-  "unicode": "😩",
-  "description": "Classic ICQ emoji — character repeatedly bangs head against brick wall",
-  "frameFiles": [
-    "frame_0.png",
-    "frame_1.png",
-    "frame_2.png",
-    "frame_3.png",
-    "frame_4.png",
-    "frame_5.png",
-    "frame_6.png",
-    "frame_7.png"
-  ],
-  "frameOrder": [
-    0,
-    1,
-    2,
-    3,
-    4,
-    5,
-    6,
-    7
-  ]
+  "name": "\u0411\u044c\u0451\u0442\u0441\u044f \u043e\u0431 \u0441\u0442\u0435\u043d\u0443",
+  "fps": 10,
+  "frames": 10,
+  "frame_prefix": "frame_",
+  "format": "png",
+  "size": 320
 }

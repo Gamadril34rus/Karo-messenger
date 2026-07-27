@@ -201,6 +201,7 @@ class ApiClient {
   }
 
   CharoExceptionType _statusCodeToType(int? statusCode) {
+    if (statusCode == null) return CharoExceptionType.unknown;
     switch (statusCode) {
       case 400:
         return CharoExceptionType.badRequest;
@@ -212,9 +213,8 @@ class ApiClient {
         return CharoExceptionType.notFound;
       case 429:
         return CharoExceptionType.rateLimit;
-      case >= 500:
-        return CharoExceptionType.serverError;
       default:
+        if (statusCode >= 500) return CharoExceptionType.serverError;
         return CharoExceptionType.unknown;
     }
   }

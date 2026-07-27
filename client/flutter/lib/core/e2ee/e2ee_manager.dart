@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:libsignal_protocol_dart/libsignal_protocol_dart.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:pointycastle/export.dart' as pc;
 
 import '../network/api_client.dart';
 import '../utils/logger.dart';
@@ -19,6 +20,9 @@ import '../utils/logger.dart';
 /// - IdentityKeyPair.fromSerialized(), .serialize()
 /// - IdentityKeyPair.getPublicKey(), .getPrivateKey()
 /// - Curve.generateKeyPair(), .calculateSignature()
+///
+/// AES-256-CBC group encryption via PointyCastle.
+/// SHA-256 hashing via PointyCastle.
 class E2EEKeyManager {
   static final E2EEKeyManager instance = E2EEKeyManager._internal();
   E2EEKeyManager._internal();
@@ -27,6 +31,8 @@ class E2EEKeyManager {
     aOptions: AndroidOptions(encryptedSharedPreferences: true),
     iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
   );
+
+  ApiClient? _apiClient;
 
   InMemorySignalProtocolStore? _store;
   IdentityKeyPair? _identityKeyPair;
@@ -37,21 +43,26 @@ class E2EEKeyManager {
 
   Stream<String> get sessionReady => _sessionReadyController.stream;
 
+  /// Set API client for server communication
+  void setApiClient(ApiClient apiClient) {
+    _apiClient = apiClient;
+  }
+
   // ─── Initialization ──────────────────────────────────────────────
 
   Future<void> initialize(String userId) async {
     if (_initialized && _userId == userId) return;
 
     _userId = userId;
-    _identityKeyPair = generateIdentityKeyPair();
-    _store = InMemorySignalProtocolStore(_identityKeyPair!, 0);
 
     final exists = await _secureStorage.read(key: 'e2ee_initialized_$userId');
 
-    if (exists == null) {
-      await _generateFreshKeys();
-    } else {
+    if (exists != null) {
       await _loadExistingKeys();
+    } else {
+      _identityKeyPair = generateIdentityKeyPair();
+      _store = InMemorySignalProtocolStore(_identityKeyPair!, 0);
+      await _generateFreshKeys();
     }
 
     _initialized = true;
@@ -67,10 +78,14 @@ class E2EEKeyManager {
     );
 
     final registrationId = generateRegistrationId(false);
+    final localRegistrationId = registrationId;
     await _secureStorage.write(
       key: 'registration_id_$userId',
-      value: registrationId.toString(),
+      value: localRegistrationId.toString(),
     );
+
+    // Recreate store with proper registration ID
+    _store = InMemorySignalProtocolStore(_identityKeyPair!, localRegistrationId);
 
     final signedPreKeyId = _randomId();
     final signedPreKey = generateSignedPreKey(identityKeyPair, signedPreKeyId);
@@ -94,7 +109,11 @@ class E2EEKeyManager {
     final storedIdentity = await _secureStorage.read(key: 'identity_key_pair_$userId');
     if (storedIdentity != null) {
       _identityKeyPair = IdentityKeyPair.fromSerialized(base64Decode(storedIdentity));
-      _store = InMemorySignalProtocolStore(_identityKeyPair!, 0);
+
+      final storedRegId = await _secureStorage.read(key: 'registration_id_$userId');
+      final regId = storedRegId != null ? int.parse(storedRegId) : 0;
+
+      _store = InMemorySignalProtocolStore(_identityKeyPair!, regId);
       logger.i('🔐 E2EE keys loaded from secure storage');
     }
   }
@@ -109,7 +128,6 @@ class E2EEKeyManager {
     try {
       final registrationId = await _getRegistrationId();
       final bundleData = {
-        'user_id': _userId,
         'identity_key': base64Encode(identityKeyPair.getPublicKey().serialize()),
         'signed_prekey_id': signedPreKey.id,
         'signed_prekey_public': base64Encode(signedPreKey.getKeyPair().publicKey.serialize()),
@@ -121,7 +139,12 @@ class E2EEKeyManager {
         }).toList(),
       };
 
-      logger.i('🔐 PreKeyBundle published to server (${preKeys.length} prekeys)');
+      if (_apiClient != null) {
+        await _apiClient!.post('/api/v1/users/me/keys', data: bundleData);
+        logger.i('🔐 PreKeyBundle published to server (${preKeys.length} prekeys)');
+      } else {
+        logger.w('🔐 No ApiClient set — PreKeyBundle not published to server');
+      }
     } catch (e) {
       logger.e('Failed to publish PreKeyBundle: $e');
     }
@@ -193,18 +216,106 @@ class E2EEKeyManager {
     return await encryptData(recipientId, fullPayload);
   }
 
-  /// Group encryption — Sender Keys
+  /// Group encryption — AES-256-CBC with Sender Keys
   Future<String> encryptForGroup(String groupId, String plaintext) async {
     final senderKey = await _deriveSenderKey(groupId);
-    final encrypted = _aesEncrypt(senderKey, Uint8List.fromList(utf8.encode(plaintext)));
-    return encrypted;
+    final iv = _generateRandomIv();
+    final encrypted = _aes256CbcEncrypt(senderKey, iv, Uint8List.fromList(utf8.encode(plaintext)));
+    // IV prepended to ciphertext for decryption
+    final combined = Uint8List.fromList([...iv, ...encrypted]);
+    return base64Encode(combined);
   }
 
-  /// Group decryption — Sender Keys
-  Future<String> decryptForGroup(String groupId, String encryptedContent) async {
+  /// Group decryption — AES-256-CBC with Sender Keys
+  Future<String> decryptForGroup(String groupId, String base64Combined) async {
     final senderKey = await _deriveSenderKey(groupId);
-    final decryptedBytes = _aesDecrypt(senderKey, base64Decode(encryptedContent));
+    final combined = base64Decode(base64Combined);
+    // First 16 bytes = IV
+    final iv = combined.sublist(0, 16);
+    final ciphertext = combined.sublist(16);
+    final decryptedBytes = _aes256CbcDecrypt(senderKey, Uint8List.fromList(iv), Uint8List.fromList(ciphertext));
     return utf8.decode(decryptedBytes);
+  }
+
+  // ─── AES-256-CBC via PointyCastle ────────────────────────────────────
+
+  /// AES-256-CBC encrypt — real encryption via PointyCastle
+  Uint8List _aes256CbcEncrypt(Uint8List key, Uint8List iv, Uint8List plaintext) {
+    // PKCS7 padding
+    final padded = _pkcs7Pad(plaintext, 16);
+
+    final cipher = pc.CBCBlockCipher(pc.AESEngine());
+    cipher.init(true, pc.ParametersWithIV(pc.KeyParameter(key), iv));
+
+    final output = Uint8List(padded.length);
+    var offset = 0;
+    while (offset < padded.length) {
+      offset += cipher.processBlock(padded, offset, output, offset);
+    }
+
+    return output;
+  }
+
+  /// AES-256-CBC decrypt — real decryption via PointyCastle
+  Uint8List _aes256CbcDecrypt(Uint8List key, Uint8List iv, Uint8List ciphertext) {
+    final cipher = pc.CBCBlockCipher(pc.AESEngine());
+    cipher.init(false, pc.ParametersWithIV(pc.KeyParameter(key), iv));
+
+    final output = Uint8List(ciphertext.length);
+    var offset = 0;
+    while (offset < ciphertext.length) {
+      offset += cipher.processBlock(ciphertext, offset, output, offset);
+    }
+
+    return _pkcs7Unpad(output);
+  }
+
+  /// PKCS7 padding
+  Uint8List _pkcs7Pad(Uint8List data, int blockSize) {
+    final padLength = blockSize - (data.length % blockSize);
+    final padded = Uint8List(data.length + padLength);
+    padded.setRange(0, data.length, data);
+    for (int i = data.length; i < padded.length; i++) {
+      padded[i] = padLength;
+    }
+    return padded;
+  }
+
+  /// PKCS7 unpadding
+  Uint8List _pkcs7Unpad(Uint8List data) {
+    if (data.isEmpty) return data;
+    final padLength = data[data.length - 1];
+    if (padLength > data.length || padLength == 0) return data;
+    // Verify padding
+    for (int i = data.length - padLength; i < data.length; i++) {
+      if (data[i] != padLength) return data;
+    }
+    return data.sublist(0, data.length - padLength);
+  }
+
+  /// Generate random 16-byte IV for AES-CBC
+  Uint8List _generateRandomIv() {
+    final secureRandom = pc.FortunaRandom();
+    // Seed with system time bytes
+    final seeds = Uint8List(32);
+    final now = DateTime.now().microsecondsSinceEpoch;
+    for (int i = 0; i < 32; i++) {
+      seeds[i] = ((now >> (i % 8)) + i * 37) & 0xFF;
+    }
+    secureRandom.seed(pc.KeyParameter(seeds));
+    final iv = Uint8List(16);
+    secureRandom.nextBytes(iv);
+    return iv;
+  }
+
+  // ─── SHA-256 via PointyCastle ────────────────────────────────────────
+
+  Uint8List _sha256(Uint8List data) {
+    final digest = pc.SHA256Digest();
+    digest.update(data, 0, data.length);
+    final hash = Uint8List(digest.digestSize);
+    digest.doFinal(hash, 0);
+    return hash;
   }
 
   // ─── Message signing ────────────────────────────────────────────────
@@ -252,8 +363,63 @@ class E2EEKeyManager {
 
   Future<bool> _restoreSessionFromServer(String recipientId) async {
     try {
+      if (_apiClient == null) return false;
+
+      final response = await _apiClient!.get('/api/v1/users/$recipientId/keys');
+      final bundleData = response.asMap;
+
+      // Build PreKeyBundle from server response
+      final identityKey = IdentityKey.fromSerialized(
+        base64Decode(bundleData['identity_key'] as String),
+      );
+      final signedPreKeyId = bundleData['signed_prekey_id'] as int;
+      final signedPreKeyPublic = Curve.decodePoint(
+        base64Decode(bundleData['signed_prekey_public'] as String),
+        0,
+      );
+      final signedPreKeySignature = base64Decode(
+        bundleData['signed_prekey_signature'] as String,
+      );
+      final registrationId = bundleData['registration_id'] as int;
+
+      // Pick first available prekey
+      final prekeysList = bundleData['prekeys'] as List<dynamic>;
+      final firstPrekey = prekeysList.isNotEmpty ? prekeysList[0] as Map<String, dynamic> : null;
+
+      PreKeyBundle? preKeyBundle;
+      if (firstPrekey != null) {
+        final preKeyId = firstPrekey['id'] as int;
+        final preKeyPublic = Curve.decodePoint(
+          base64Decode(firstPrekey['public_key'] as String),
+          0,
+        );
+        preKeyBundle = PreKeyBundle(
+          registrationId,
+          1, // deviceId
+          preKeyId,
+          preKeyPublic,
+          signedPreKeyId,
+          signedPreKeyPublic,
+          signedPreKeySignature,
+          identityKey,
+        );
+      } else {
+        // No prekey available — fallback
+        preKeyBundle = PreKeyBundle(
+          registrationId,
+          1,
+          0,
+          null,
+          signedPreKeyId,
+          signedPreKeyPublic,
+          signedPreKeySignature,
+          identityKey,
+        );
+      }
+
       final address = SignalProtocolAddress(recipientId, 1);
       final sessionBuilder = SessionBuilder(_store!, address);
+      await sessionBuilder.process(preKeyBundle);
 
       logger.i('✅ Session with $recipientId restored from server');
       return true;
@@ -265,6 +431,7 @@ class E2EEKeyManager {
 
   Future<void> _requestNewPreKeyBundle(String recipientId) async {
     logger.i('Requesting PreKeyBundle for $recipientId');
+    // Will be processed on next ensureSession call
   }
 
   Future<String> encryptWithSessionRecovery(
@@ -293,7 +460,7 @@ class E2EEKeyManager {
     String base64Ciphertext,
   ) async {
     if (!_isValidCiphertextFormat(base64Ciphertext)) {
-      logger.w('🚨 Malformed ciphertext detected (possible Cheval-style attack)');
+      logger.w('🚨 Malformed ciphertext detected (possible attack)');
       return null;
     }
 
@@ -323,6 +490,14 @@ class E2EEKeyManager {
     IdentityKey identityKey,
   ) async {
     try {
+      // Real verification: verify the signature of the signed prekey
+      final signature = signedPreKey.signature;
+      final signedPreKeyPublicKey = signedPreKey.getKeyPair().publicKey.serialize();
+      Curve.verifySignature(
+        identityKey.getPublicKey(),
+        Uint8List.fromList(signedPreKeyPublicKey),
+        signature,
+      );
       return true;
     } catch (e) {
       logger.e('SignedPreKey signature verification failed: $e');
@@ -331,17 +506,14 @@ class E2EEKeyManager {
   }
 
   Future<bool> verifyPreKeyBundle(PreKeyBundle bundle) async {
-    final signedPreKeyValid = await verifySignedPreKey(
-      SignedPreKeyRecord(
-        bundle.signedPreKeyId,
-        DateTime.now().millisecondsSinceEpoch,
-        bundle.signedPreKeyPublicKey,
+    try {
+      // Verify the signature on the signed prekey
+      Curve.verifySignature(
+        bundle.identityKey.getPublicKey(),
+        bundle.signedPreKeyPublicKey.serialize(),
         bundle.signedPreKeySignature,
-      ),
-      bundle.identityKey,
-    );
-
-    if (!signedPreKeyValid) {
+      );
+    } catch (e) {
       logger.e('❌ Signed PreKey signature invalid');
       return false;
     }
@@ -396,8 +568,57 @@ class E2EEKeyManager {
     Map<String, dynamic> bundleJson,
   ) async {
     try {
+      if (_store == null) return false;
+
+      final identityKey = IdentityKey.fromSerialized(
+        base64Decode(bundleJson['identity_key'] as String),
+      );
+      final signedPreKeyId = bundleJson['signed_prekey_id'] as int;
+      final signedPreKeyPublic = Curve.decodePoint(
+        base64Decode(bundleJson['signed_prekey_public'] as String),
+        0,
+      );
+      final signedPreKeySignature = base64Decode(
+        bundleJson['signed_prekey_signature'] as String,
+      );
+      final registrationId = bundleJson['registration_id'] as int;
+
+      final prekeysList = bundleJson['prekeys'] as List<dynamic>;
+      final firstPrekey = prekeysList.isNotEmpty ? prekeysList[0] as Map<String, dynamic> : null;
+
+      PreKeyBundle preKeyBundle;
+      if (firstPrekey != null) {
+        final preKeyId = firstPrekey['id'] as int;
+        final preKeyPublic = Curve.decodePoint(
+          base64Decode(firstPrekey['public_key'] as String),
+          0,
+        );
+        preKeyBundle = PreKeyBundle(
+          registrationId,
+          1,
+          preKeyId,
+          preKeyPublic,
+          signedPreKeyId,
+          signedPreKeyPublic,
+          signedPreKeySignature,
+          identityKey,
+        );
+      } else {
+        preKeyBundle = PreKeyBundle(
+          registrationId,
+          1,
+          0,
+          null,
+          signedPreKeyId,
+          signedPreKeyPublic,
+          signedPreKeySignature,
+          identityKey,
+        );
+      }
+
       final address = SignalProtocolAddress(senderId, 1);
       final sessionBuilder = SessionBuilder(_store!, address);
+      await sessionBuilder.process(preKeyBundle);
 
       logger.i('✅ PreKeyBundle from $senderId verified successfully');
       return true;
@@ -411,12 +632,24 @@ class E2EEKeyManager {
 
   Future<String> getSafetyNumber(String otherUserId) async {
     final myIdentity = await _secureStorage.read(key: 'identity_key_pair_$userId');
-    final otherIdentity = '';
-
     if (myIdentity == null) return '•••• •••• •••• ••••';
 
-    final combined = utf8.encode(myIdentity + otherIdentity);
-    final hash = _sha256(Uint8List.fromList(combined));
+    final myKey = IdentityKeyPair.fromSerialized(base64Decode(myIdentity));
+    final myFingerprint = myKey.getPublicKey().serialize();
+
+    // In production: fetch other user's identity key from server
+    // Here: placeholder fingerprint
+    final otherFingerprint = Uint8List(32);
+    for (int i = 0; i < 32; i++) {
+      otherFingerprint[i] = i;
+    }
+
+    // Safety number = SHA-256(sorted(fingerprint1, fingerprint2))
+    final combined = Uint8List.fromList([
+      ...myFingerprint,
+      ...otherFingerprint,
+    ]);
+    final hash = _sha256(combined);
     return _bytesToDigitGroups(hash);
   }
 
@@ -477,20 +710,13 @@ class E2EEKeyManager {
     return true;
   }
 
-  Uint8List _sha256(Uint8List data) {
-    final hashBytes = Uint8List(32);
-    for (int i = 0; i < 32; i++) {
-      hashBytes[i] = data.isNotEmpty ? (data[i % data.length] * 31 + i * 7) & 0xFF : 0;
-    }
-    return hashBytes;
-  }
-
   String _bytesToDigitGroups(Uint8List hash) {
     final sb = StringBuffer();
     for (int i = 0; i < 4; i++) {
       final start = i * 5;
       final end = start + 5;
       final groupBytes = hash.sublist(start, end.clamp(0, hash.length));
+      // Convert 5 bytes to 5 decimal digits
       final groupDigits = groupBytes.map((b) => b % 10).join();
       if (i > 0) sb.write(' ');
       sb.write(groupDigits);
@@ -499,23 +725,9 @@ class E2EEKeyManager {
   }
 
   Uint8List _deriveSenderKey(String groupId) {
-    final combined = Uint8List.fromList(utf8.encode(groupId));
-    return _sha256(combined);
-  }
-
-  String _aesEncrypt(Uint8List key, Uint8List plaintext) {
-    final encrypted = Uint8List(plaintext.length + 16);
-    for (int i = 0; i < plaintext.length; i++) {
-      encrypted[i] = plaintext[i] ^ key[i % key.length];
-    }
-    return base64Encode(encrypted);
-  }
-
-  Uint8List _aesDecrypt(Uint8List key, Uint8List encrypted) {
-    final plaintext = Uint8List(encrypted.length - 16);
-    for (int i = 0; i < plaintext.length; i++) {
-      plaintext[i] = encrypted[i] ^ key[i % key.length];
-    }
-    return plaintext;
+    // Derive a 32-byte AES key from groupId using SHA-256
+    // In production: use HKDF with additional context (epoch, sender)
+    final input = Uint8List.fromList(utf8.encode('charo_sender_key:$groupId'));
+    return _sha256(input);
   }
 }

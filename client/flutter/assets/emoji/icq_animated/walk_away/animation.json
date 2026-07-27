@@ -1,25 +1,9 @@
 {
   "id": "walk_away",
-  "name": "Уходит",
-  "frames": 6,
-  "fps": 8,
-  "loop": true,
-  "unicode": "🚶",
-  "description": "ICQ animated emoji — Уходит",
-  "frameFiles": [
-    "frame_0.png",
-    "frame_1.png",
-    "frame_2.png",
-    "frame_3.png",
-    "frame_4.png",
-    "frame_5.png"
-  ],
-  "frameOrder": [
-    0,
-    1,
-    2,
-    3,
-    4,
-    5
-  ]
+  "name": "\u0423\u0445\u043e\u0434\u0438\u0442",
+  "fps": 10,
+  "frames": 10,
+  "frame_prefix": "frame_",
+  "format": "png",
+  "size": 320
 }

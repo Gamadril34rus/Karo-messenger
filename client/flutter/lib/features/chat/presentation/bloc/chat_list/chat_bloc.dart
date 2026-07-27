@@ -1,9 +1,11 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../core/network/api_client.dart';
 import '../../../../../core/network/ws_client.dart';
 import '../../../../../core/storage/local_db.dart';
+import '../../../../../core/storage/local_db.g.dart';
 import '../../../../../core/utils/logger.dart';
 import '../../../data/chat_item.dart';
 
@@ -248,7 +250,6 @@ class ChatListBloc extends Bloc<ChatListEvent, ChatListState> {
       case 'message.new':
         final chatId = event.data['chatId'] as String?;
         if (chatId == null) return;
-        // Обновляем чат в списке — поднимаем наверх
         final currentState = state;
         if (currentState is ChatListLoaded) {
           final chatIndex = currentState.chats.indexWhere((c) => c.id == chatId);
@@ -279,14 +280,15 @@ class ChatListBloc extends Bloc<ChatListEvent, ChatListState> {
     }
   }
 
-  // Маппинг локального чата -> ChatItem
-  ChatItem _localChatToItem(dynamic c) {
+  // Маппинг LocalChat (Drift data class) -> ChatItem
+  ChatItem _localChatToItem(LocalChat c) {
     return ChatItem(
       id: c.id,
       type: c.type,
       title: c.title,
       avatarUrl: c.avatarUrl,
       lastMessage: c.lastMessage,
+      lastMessageSender: c.lastMessageSender,
       lastMessageAt: c.lastMessageAt,
       unreadCount: c.unreadCount,
       isMuted: c.isMuted,
@@ -294,21 +296,21 @@ class ChatListBloc extends Bloc<ChatListEvent, ChatListState> {
     );
   }
 
-  // Маппинг ChatItem -> Drift companion
-  dynamic _chatItemToCompanion(ChatItem chat) {
-    // Возвращаем Map для Drift insert — полная реализация при генерации кода
-    return {
-      'id': chat.id,
-      'type': chat.type,
-      'title': chat.title,
-      'avatarUrl': chat.avatarUrl,
-      'lastMessage': chat.lastMessage,
-      'lastMessageAt': chat.lastMessageAt?.toIso8601String(),
-      'unreadCount': chat.unreadCount,
-      'isMuted': chat.isMuted,
-      'isPinned': chat.isPinned,
-      'updatedAt': DateTime.now().toIso8601String(),
-      'createdAt': DateTime.now().toIso8601String(),
-    };
+  // Маппинг ChatItem -> LocalChatsCompanion (Drift companion)
+  LocalChatsCompanion _chatItemToCompanion(ChatItem chat) {
+    return LocalChatsCompanion.insert(
+      id: chat.id,
+      type: Value(chat.type),
+      title: Value(chat.title),
+      avatarUrl: Value(chat.avatarUrl),
+      lastMessage: Value(chat.lastMessage),
+      lastMessageSender: Value(chat.lastMessageSender),
+      lastMessageAt: Value(chat.lastMessageAt),
+      unreadCount: Value(chat.unreadCount),
+      isMuted: Value(chat.isMuted),
+      isPinned: Value(chat.isPinned),
+      updatedAt: DateTime.now(),
+      createdAt: DateTime.now(),
+    );
   }
 }

@@ -1,25 +1,9 @@
 {
   "id": "pushup",
-  "name": "Отжимается",
-  "frames": 6,
-  "fps": 8,
-  "loop": true,
-  "unicode": "💪",
-  "description": "ICQ animated emoji — Отжимается",
-  "frameFiles": [
-    "frame_0.png",
-    "frame_1.png",
-    "frame_2.png",
-    "frame_3.png",
-    "frame_4.png",
-    "frame_5.png"
-  ],
-  "frameOrder": [
-    0,
-    1,
-    2,
-    3,
-    4,
-    5
-  ]
+  "name": "\u041e\u0442\u0436\u0438\u043c\u0430\u0435\u0442\u0441\u044f",
+  "fps": 10,
+  "frames": 10,
+  "frame_prefix": "frame_",
+  "format": "png",
+  "size": 320
 }
