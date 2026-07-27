@@ -68,6 +68,12 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         if (state is AuthAuthenticated) {
           context.go('/chats');
         }
+        if (state is Auth2faRequired) {
+          context.go('/2fa', extra: {
+            'tempToken': state.tempToken,
+            'identifier': state.identifier,
+          });
+        }
         if (state is AuthError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.message), backgroundColor: context.colors.error),

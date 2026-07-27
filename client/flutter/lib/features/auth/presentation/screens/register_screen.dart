@@ -237,6 +237,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
           displayName: _displayNameController.text.trim(),
           phone: _usePhone ? _phoneController.text.trim() : null,
           email: !_usePhone ? _emailController.text.trim() : null,
+          consentGiven: _consentGiven,
+          ageConfirmed: _ageConfirmed,
+          termsAccepted: _termsAccepted,
         ));
   }
 }

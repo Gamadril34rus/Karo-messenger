@@ -51,16 +51,22 @@ final class AuthRegisterRequested extends AuthEvent {
   final String displayName;
   final String? phone;
   final String? email;
+  final bool consentGiven;
+  final bool ageConfirmed;
+  final bool termsAccepted;
 
   AuthRegisterRequested({
     required this.username,
     required this.displayName,
     this.phone,
     this.email,
+    required this.consentGiven,
+    required this.ageConfirmed,
+    required this.termsAccepted,
   });
 
   @override
-  List<Object?> get props => [username, displayName, phone, email];
+  List<Object?> get props => [username, displayName, phone, email, consentGiven, ageConfirmed, termsAccepted];
 }
 
 /// OAuth авторизация
@@ -81,6 +87,17 @@ final class Auth2faEnabled extends AuthEvent {
 
   @override
   List<Object?> get props => [code];
+}
+
+/// Верификация 2FA при входе (после OTP или пароля)
+final class Auth2faVerifyRequested extends AuthEvent {
+  final String tempToken;
+  final String code;
+
+  Auth2faVerifyRequested({required this.tempToken, required this.code});
+
+  @override
+  List<Object?> get props => [tempToken, code];
 }
 
 /// Выход
@@ -184,6 +201,17 @@ final class AuthAccountDeleted extends AuthState {
 /// Аккаунт восстановлен (30-дневный grace period)
 final class AuthAccountRecovered extends AuthState {}
 
+/// 2FA требуется — ожидаем ввод TOTP-кода
+final class Auth2faRequired extends AuthState {
+  final String tempToken;
+  final String identifier;
+
+  Auth2faRequired({required this.tempToken, required this.identifier});
+
+  @override
+  List<Object?> get props => [tempToken, identifier];
+}
+
 // ─── BLoC ─────────────────────────────────────────────────────────
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
@@ -208,6 +236,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthDeleteAccountRequested>(_onDeleteAccountRequested);
     on<AuthRefreshRequested>(_onRefreshRequested);
     on<AuthAccountRecoveryRequested>(_onAccountRecoveryRequested);
+    on<Auth2faVerifyRequested>(_on2faVerifyRequested);
   }
 
   // ─── Проверка авторизации ──────────────────────────────────────
@@ -291,6 +320,16 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       });
 
       final data = response.asMap;
+
+      // Check if 2FA is required
+      if (data['requires_2fa'] == true) {
+        emit(Auth2faRequired(
+          tempToken: data['temp_token'] as String? ?? '',
+          identifier: event.identifier,
+        ));
+        return;
+      }
+
       await _saveTokens(
         accessToken: data['access_token'] as String,
         refreshToken: data['refresh_token'] as String,
@@ -330,6 +369,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         'display_name': event.displayName,
         if (event.phone != null) 'phone': event.phone,
         if (event.email != null) 'email': event.email,
+        'consent_given': event.consentGiven,
+        'age_confirmed': event.ageConfirmed,
+        'terms_accepted': event.termsAccepted,
       });
 
       // После регистрации отправляем OTP
@@ -469,6 +511,46 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       add(AuthCheckRequested());
     } catch (e) {
       emit(AuthUnauthenticated());
+    }
+  }
+
+  // ─── Верификация 2FA ────────────────────────────────────────────
+  Future<void> _on2faVerifyRequested(
+    Auth2faVerifyRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    try {
+      final response = await _apiClient.post('/api/v1/auth/2fa/verify', data: {
+        'temp_token': event.tempToken,
+        'code': event.code,
+      });
+
+      final data = response.asMap;
+      await _saveTokens(
+        accessToken: data['access_token'] as String,
+        refreshToken: data['refresh_token'] as String,
+      );
+
+      // Подключаем WebSocket
+      await _wsClient.connect();
+
+      // Инициализация E2EE
+      final userId = data['user']['id'] as String;
+      await E2EEKeyManager.instance.initialize(userId);
+      await _secureStorage.setUserId(userId);
+
+      // Инициализация звуков уведомлений
+      await NotificationService.instance.initialize();
+
+      emit(AuthAuthenticated(
+        userId: userId,
+        username: data['user']['username'] as String,
+        displayName: data['user']['display_name'] as String?,
+        avatarUrl: data['user']['avatar_url'] as String?,
+      ));
+    } on CharoApiException catch (e) {
+      emit(AuthError(message: e.message));
     }
   }
 

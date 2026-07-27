@@ -1,8 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
+import 'package:get_it/get_it.dart';
+
 import '../../../../core/haptic/haptic_service.dart';
 import '../../../../core/audio/notification_service.dart';
+import '../../../../core/network/ws_client.dart';
 import '../../../../core/utils/logger.dart';
 import '../../data/adaptive_quality_manager.dart';
 import '../../data/data_channel_service.dart';
@@ -163,7 +166,12 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
     _peerConnection!.onIceCandidate = (candidate) {
       // Send ICE candidate to remote via WebSocket signaling
       logger.d('📞 ICE candidate: ${candidate.candidate}');
-      // In production, this would go through WsClient.callSignal
+      final wsClient = GetIt.instance<WsClient>();
+      wsClient.callSignal(widget.callId, 'ice', {
+        'candidate': candidate.candidate,
+        'sdpMid': candidate.sdpMid,
+        'sdpMLineIndex': candidate.sdpMLineIndex,
+      });
     };
 
     _peerConnection!.onTrack = (event) {
@@ -203,6 +211,50 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
     if (widget.isOutgoing) {
       _createOffer();
     }
+
+    // Subscribe to incoming WebSocket signaling for this call
+    _wsSubscription = GetIt.instance<WsClient>().messages.listen((event) {
+      if (event.type.startsWith('call.') && event.data['callId'] == widget.callId) {
+        _handleCallSignal(event);
+      }
+    });
+  }
+
+  void _handleCallSignal(WsEvent event) {
+    final signalType = event.type.replaceFirst('call.', '');
+    final data = event.data['data'] as Map<String, dynamic>? ?? event.data;
+
+    switch (signalType) {
+      case 'ice':
+        final candidate = RTCIceCandidate(
+          data['candidate'] as String?,
+          data['sdpMid'] as String?,
+          data['sdpMLineIndex'] as int?,
+        );
+        _peerConnection?.addCandidate(candidate);
+        logger.d('📞 Remote ICE candidate added');
+        break;
+      case 'offer':
+        final sdp = data['sdp'] as String?;
+        if (sdp != null) {
+          _peerConnection?.setRemoteDescription(
+            RTCSessionDescription(sdp, 'offer'),
+          );
+          _createAnswer();
+        }
+        break;
+      case 'answer':
+        final sdp = data['sdp'] as String?;
+        if (sdp != null) {
+          _peerConnection?.setRemoteDescription(
+            RTCSessionDescription(sdp, 'answer'),
+          );
+        }
+        break;
+      case 'hangup':
+        _endCall();
+        break;
+    }
   }
 
   Future<void> _createOffer() async {
@@ -219,7 +271,12 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
       _dataChannel = DataChannelService();
       _dataChannel!.createDataChannel(_peerConnection!);
 
-      // In production, send offer via WsClient.callSignal
+      // Send offer via WebSocket signaling
+      final wsClient = GetIt.instance<WsClient>();
+      wsClient.callSignal(widget.callId, 'offer', {
+        'sdp': offer.sdp,
+        'type': offer.type,
+      });
     } catch (e) {
       logger.e('📞 Failed to create offer: $e');
     }
@@ -230,6 +287,13 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
       final answer = await _peerConnection!.createAnswer();
       await _peerConnection!.setLocalDescription(answer);
       logger.i('📞 SDP answer created');
+
+      // Send answer via WebSocket signaling
+      final wsClient = GetIt.instance<WsClient>();
+      wsClient.callSignal(widget.callId, 'answer', {
+        'sdp': answer.sdp,
+        'type': answer.type,
+      });
     } catch (e) {
       logger.e('📞 Failed to create answer: $e');
     }

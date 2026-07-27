@@ -8,6 +8,7 @@ import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/register_screen.dart';
 import '../../features/auth/presentation/screens/otp_verification_screen.dart';
 import '../../features/auth/presentation/screens/account_recovery_screen.dart';
+import '../../features/auth/presentation/screens/two_fa_verification_screen.dart';
 import '../../features/chat/presentation/screens/chat_list_screen.dart';
 import '../../features/chat/presentation/screens/chat_detail_screen.dart';
 import '../../features/calls/presentation/screens/calls_screen.dart';
@@ -24,6 +25,7 @@ import '../../features/settings/presentation/screens/settings_language_screen.da
 import '../../features/settings/presentation/screens/settings_energy_screen.dart';
 import '../../features/settings/presentation/screens/settings_media_quality_screen.dart';
 import '../../features/settings/presentation/screens/settings_about_screen.dart';
+import '../../features/settings/presentation/screens/data_export_screen.dart';
 import '../../features/contacts/presentation/screens/contacts_screen.dart';
 import '../../features/ai_assistant/presentation/screens/ai_assistant_screen.dart';
 import '../../features/nearby/presentation/screens/nearby_screen.dart';
@@ -47,6 +49,13 @@ class AppRouter {
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(path: '/register', builder: (context, state) => const RegisterScreen()),
       GoRoute(path: '/verify', builder: (context, state) => const OtpVerificationScreen()),
+      GoRoute(
+        path: '/2fa',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          return TwoFaVerificationScreen();
+        },
+      ),
       GoRoute(
         path: '/auth/recover',
         builder: (context, state) {
@@ -96,6 +105,7 @@ class AppRouter {
       GoRoute(path: '/settings/energy', parentNavigatorKey: _rootNavigatorKey, builder: (context, state) => const SettingsEnergyScreen()),
       GoRoute(path: '/settings/media-quality', parentNavigatorKey: _rootNavigatorKey, builder: (context, state) => const SettingsMediaQualityScreen()),
       GoRoute(path: '/settings/about', parentNavigatorKey: _rootNavigatorKey, builder: (context, state) => const SettingsAboutScreen()),
+      GoRoute(path: '/settings/data-export', parentNavigatorKey: _rootNavigatorKey, builder: (context, state) => const DataExportScreen()),
       GoRoute(path: '/ai', parentNavigatorKey: _rootNavigatorKey, builder: (context, state) => const AiAssistantScreen()),
       GoRoute(path: '/nearby', parentNavigatorKey: _rootNavigatorKey, builder: (context, state) => const NearbyScreen()),
 

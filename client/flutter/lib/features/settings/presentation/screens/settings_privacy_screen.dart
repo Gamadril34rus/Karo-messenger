@@ -171,6 +171,13 @@ class _SettingsPrivacyScreenState extends State<SettingsPrivacyScreen> {
                 subtitle: 'E2E-шифрование по протоколу Signal',
                 onTap: _showSecretChatsInfo,
               ),
+              CharoTile(
+                icon: Icons.download_outlined,
+                iconColor: const Color(0xFF3B82F6),
+                title: 'Экспорт данных',
+                subtitle: 'GDPR/ФЗ-152 — скачать свои данные',
+                onTap: () => context.go('/settings/data-export'),
+              ),
             ],
           ),
 
