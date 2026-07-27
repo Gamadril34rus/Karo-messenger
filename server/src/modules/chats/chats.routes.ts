@@ -203,6 +203,73 @@ export async function chatsRoutes(fastify: FastifyInstance) {
     return reply.send(messages.reverse());
   });
 
+  // DELETE /chats/:id/messages — Очистить историю чата
+  fastify.delete('/:id/messages', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const userId = request.userId!;
+
+    const membership = await prisma.chatMember.findUnique({
+      where: { chatId_userId: { chatId: id, userId } },
+    });
+    if (!membership) return reply.code(403).send({ message: 'Нет доступа' });
+
+    // Mark all messages as deleted (soft delete) rather than hard delete
+    await prisma.message.updateMany({
+      where: { chatId: id, isDeleted: false },
+      data: { isDeleted: true, content: { isSet: false } },
+    });
+
+    return reply.code(204).send();
+  });
+
+  // GET /chats/:id/export — Экспорт истории чата
+  fastify.get('/:id/export', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const userId = request.userId!;
+
+    const membership = await prisma.chatMember.findUnique({
+      where: { chatId_userId: { chatId: id, userId } },
+    });
+    if (!membership) return reply.code(403).send({ message: 'Нет доступа' });
+
+    const messages = await prisma.message.findMany({
+      where: { chatId: id, isDeleted: false },
+      orderBy: { createdAt: 'asc' },
+      include: {
+        sender: { select: { id: true, username: true, displayName: true } },
+        media: true,
+      },
+    });
+
+    const chat = await prisma.chat.findUnique({
+      where: { id },
+      include: { members: { include: { user: { select: { id: true, displayName: true } } } } },
+    });
+
+    const exportData = {
+      chat: {
+        id: chat?.id,
+        title: chat?.title,
+        type: chat?.type,
+        members: chat?.members.map(m => ({
+          userId: m.userId,
+          displayName: m.user.displayName,
+        })),
+      },
+      messages: messages.map(m => ({
+        id: m.id,
+        sender: m.sender.displayName ?? m.sender.username,
+        type: m.type,
+        content: m.content,
+        createdAt: m.createdAt.toISOString(),
+        isEdited: m.isEdited,
+      })),
+      exportedAt: new Date().toISOString(),
+    };
+
+    return reply.send(exportData);
+  });
+
   // GET /chats/:id/search — Поиск в чате
   fastify.get('/:id/search', async (request, reply) => {
     const { id } = request.params as { id: string };

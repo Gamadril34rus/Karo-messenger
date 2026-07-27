@@ -10,6 +10,7 @@ import '../../features/auth/presentation/screens/otp_verification_screen.dart';
 import '../../features/chat/presentation/screens/chat_list_screen.dart';
 import '../../features/chat/presentation/screens/chat_detail_screen.dart';
 import '../../features/calls/presentation/screens/calls_screen.dart';
+import '../../features/calls/presentation/screens/active_call_screen.dart';
 import '../../features/stories/presentation/screens/stories_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/settings/presentation/screens/settings_main_screen.dart';
@@ -86,6 +87,23 @@ class AppRouter {
       GoRoute(path: '/settings/about', parentNavigatorKey: _rootNavigatorKey, builder: (context, state) => const SettingsAboutScreen()),
       GoRoute(path: '/ai', parentNavigatorKey: _rootNavigatorKey, builder: (context, state) => const AiAssistantScreen()),
       GoRoute(path: '/nearby', parentNavigatorKey: _rootNavigatorKey, builder: (context, state) => const NearbyScreen()),
+
+      // ── Active Call ────────────────────────────────────────────
+      GoRoute(
+        path: '/call/:id',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final callId = state.pathParameters['id']!;
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          return ActiveCallScreen(
+            callId: callId,
+            recipientName: extra['recipientName'] as String? ?? 'Неизвестный',
+            recipientAvatarUrl: extra['recipientAvatarUrl'] as String? ?? '',
+            isVideo: extra['isVideo'] as bool? ?? false,
+            isOutgoing: extra['isOutgoing'] as bool? ?? true,
+          );
+        },
+      ),
     ],
   );
 }

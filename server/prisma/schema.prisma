@@ -332,6 +332,11 @@ enum CallStatus {
   DECLINED
 }
 
+enum CallRole {
+  CALLER
+  RECIPIENT
+}
+
 model Call {
   id          String     @id @default(uuid()) @db.Uuid
   chatId      String?    @map("chat_id") @db.Uuid
@@ -350,9 +355,10 @@ model Call {
 }
 
 model CallMember {
-  id     String @id @default(uuid()) @db.Uuid
-  callId String @map("call_id") @db.Uuid
-  userId String @map("user_id") @db.Uuid
+  id     String     @id @default(uuid()) @db.Uuid
+  callId String     @map("call_id") @db.Uuid
+  userId String     @map("user_id") @db.Uuid
+  role   CallRole   @default(RECIPIENT)
 
   call Call @relation(fields: [callId], references: [id], onDelete: Cascade)
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)

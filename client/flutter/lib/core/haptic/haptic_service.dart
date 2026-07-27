@@ -79,7 +79,7 @@ class HapticService {
 
   // Static convenience methods for quick usage in widgets
   static Future<void> selection() async => instance.selectionClick();
-  static Future<void> lightImpact() async => instance.light();
-  static Future<void> mediumImpact() async => instance.medium();
-  static Future<void> heavyImpact() async => instance.heavy();
+  static Future<void> light() async => instance.light();
+  static Future<void> medium() async => instance.medium();
+  static Future<void> heavy() async => instance.heavy();
 }

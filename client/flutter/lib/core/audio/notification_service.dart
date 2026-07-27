@@ -1,12 +1,13 @@
 import 'dart:async';
 
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../haptic/haptic_service.dart';
 import '../utils/logger.dart';
 
-/// NotificationService — сервис звуков уведомлений (ICQ sounds)
+/// NotificationService — сервис звуков и push-уведомлений (ICQ sounds)
 ///
 /// Звуки ЧАРО (по мотивам ICQ):
 /// - icq_message.wav — входящее сообщение ("Uh-oh!")
@@ -14,34 +15,72 @@ import '../utils/logger.dart';
 /// - icq_call.wav — входящий звонок (loop)
 /// - icq_online.wav — контакт появился онлайн
 /// - icq_system.wav — системное уведомление
+///
+/// Push-уведомления:
+/// - flutter_local_notifications для локальных уведомлений
+/// - Баннер + звук + вибрация для входящих сообщений
+/// - Full-screen intent для входящих звонков
 class NotificationService {
   static final NotificationService instance = NotificationService._internal();
   NotificationService._internal();
 
   final AudioPlayer _player = AudioPlayer();
+  final FlutterLocalNotificationsPlugin _notificationsPlugin =
+      FlutterLocalNotificationsPlugin();
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage(
     aOptions: AndroidOptions(encryptedSharedPreferences: true),
     iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
   );
 
   bool _soundEnabled = true;
+  bool _pushEnabled = true;
   bool _initialized = false;
 
   final _soundStateController = StreamController<bool>.broadcast();
   Stream<bool> get soundStateStream => _soundStateController.stream;
 
   bool get isSoundEnabled => _soundEnabled;
+  bool get isPushEnabled => _pushEnabled;
 
   // ─── Инициализация ──────────────────────────────────────────────
 
   Future<void> initialize() async {
     if (_initialized) return;
 
-    final stored = await _secureStorage.read(key: 'sound_enabled');
-    _soundEnabled = stored != 'false';
-    _initialized = true;
+    final storedSound = await _secureStorage.read(key: 'sound_enabled');
+    _soundEnabled = storedSound != 'false';
 
-    logger.i('🔔 NotificationService initialized (sound=${_soundEnabled})');
+    final storedPush = await _secureStorage.read(key: 'push_enabled');
+    _pushEnabled = storedPush != 'false';
+
+    // Initialize flutter_local_notifications
+    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const iosSettings = DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
+    );
+    const linuxSettings = LinuxInitializationSettings(defaultActionIcon: null);
+    const macosSettings = DarwinInitializationSettings();
+
+    const initSettings = InitializationSettings(
+      android: androidSettings,
+      iOS: iosSettings,
+      linux: linuxSettings,
+      macOS: macosSettings,
+    );
+
+    await _notificationsPlugin.initialize(
+      initSettings,
+      onDidReceiveNotificationResponse: _onNotificationTap,
+    );
+
+    // Request Android notification permission (Android 13+)
+    await _notificationsPlugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>()?.requestNotificationsPermission();
+
+    _initialized = true;
+    logger.i('🔔 NotificationService initialized (sound=${_soundEnabled}, push=${_pushEnabled})');
   }
 
   Future<void> setSoundEnabled(bool enabled) async {
@@ -49,6 +88,137 @@ class NotificationService {
     await _secureStorage.write(key: 'sound_enabled', value: enabled.toString());
     _soundStateController.add(enabled);
     logger.d('🔔 Sound ${enabled ? 'enabled' : 'disabled'}');
+  }
+
+  Future<void> setPushEnabled(bool enabled) async {
+    _pushEnabled = enabled;
+    await _secureStorage.write(key: 'push_enabled', value: enabled.toString());
+    logger.d('🔔 Push ${enabled ? 'enabled' : 'disabled'}');
+  }
+
+  // ─── Push Notifications ──────────────────────────────────────────
+
+  /// Show notification for incoming message
+  Future<void> showMessageNotification({
+    required String chatId,
+    required String senderName,
+    required String messageText,
+    String? avatarUrl,
+  }) async {
+    if (!_pushEnabled) return;
+
+    const androidDetails = AndroidNotificationDetails(
+      'charo_messages',
+      'ЧАРО — Сообщения',
+      channelDescription: 'Входящие сообщения в ЧАРО',
+      importance: Importance.high,
+      priority: Priority.high,
+      showWhen: true,
+      enableVibration: true,
+      playSound: true,
+      sound: RawResourceAndroidNotificationSound('icq_message'),
+      category: AndroidNotificationCategory.message,
+      styleInformation: BigTextStyleInformation(messageText),
+    );
+
+    const iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+      sound: 'icq_message.wav',
+      categoryIdentifier: 'charo_message',
+    );
+
+    const notificationDetails = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    // Use chatId hash as notification ID to update existing notifications
+    final notificationId = chatId.hashCode & 0x7FFFFFFF;
+
+    await _notificationsPlugin.show(
+      notificationId,
+      senderName,
+      messageText,
+      notificationDetails,
+      payload: 'chat:$chatId',
+    );
+  }
+
+  /// Show notification for incoming call (high priority, full-screen intent)
+  Future<void> showCallNotification({
+    required String callId,
+    required String callerName,
+    bool isVideo = false,
+  }) async {
+    if (!_pushEnabled) return;
+
+    final androidDetails = AndroidNotificationDetails(
+      'charo_calls',
+      'ЧАРО — Звонки',
+      channelDescription: 'Входящие звонки в ЧАРО',
+      importance: Importance.max,
+      priority: Priority.max,
+      showWhen: true,
+      enableVibration: true,
+      playSound: true,
+      sound: RawResourceAndroidNotificationSound('icq_call'),
+      category: AndroidNotificationCategory.call,
+      fullScreenIntent: true,
+      autoCancel: false,
+      ongoing: true,
+      styleInformation: BigTextStyleInformation(
+        isVideo ? 'Видеозвонок от $callerName' : 'Голосовой звонок от $callerName',
+      ),
+    );
+
+    const iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+      sound: 'icq_call.wav',
+      categoryIdentifier: 'charo_call',
+    );
+
+    final notificationDetails = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    final notificationId = callId.hashCode & 0x7FFFFFFF;
+
+    await _notificationsPlugin.show(
+      notificationId,
+      callerName,
+      isVideo ? 'Видеозвонок' : 'Голосовой звонок',
+      notificationDetails,
+      payload: 'call:$callId',
+    );
+  }
+
+  /// Cancel call notification (when call is answered/ended)
+  Future<void> cancelCallNotification(String callId) async {
+    final notificationId = callId.hashCode & 0x7FFFFFFF;
+    await _notificationsPlugin.cancel(notificationId);
+  }
+
+  /// Cancel message notification for a chat (when chat is opened)
+  Future<void> cancelMessageNotification(String chatId) async {
+    final notificationId = chatId.hashCode & 0x7FFFFFFF;
+    await _notificationsPlugin.cancel(notificationId);
+  }
+
+  void _onNotificationTap(NotificationResponse response) {
+    final payload = response.payload;
+    if (payload == null) return;
+
+    logger.i('🔔 Notification tapped: $payload');
+
+    // Route to appropriate screen based on payload
+    // 'chat:chatId' → open chat detail
+    // 'call:callId' → open active call
+    // This is handled by the app's navigation system
   }
 
   // ─── Звуки ICQ ──────────────────────────────────────────────────

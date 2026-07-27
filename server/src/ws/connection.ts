@@ -184,6 +184,14 @@ export function wsHandler(prisma: PrismaClient, redis: Redis) {
             await handleMessageSend(manager, prisma, userId, msg);
             break;
 
+          case 'message.delete':
+            await handleMessageDelete(manager, prisma, userId, msg);
+            break;
+
+          case 'message.forward':
+            await handleMessageForward(manager, prisma, userId, msg);
+            break;
+
           case 'typing.start':
             await handleTyping(manager, prisma, userId, msg.data.chatId as string, true);
             break;
@@ -204,6 +212,10 @@ export function wsHandler(prisma: PrismaClient, redis: Redis) {
           case 'call.answer':
           case 'call.ice':
             await handleCallSignal(manager, prisma, msg);
+            break;
+
+          case 'call.initiate':
+            await handleCallInitiate(manager, prisma, userId, msg);
             break;
 
           default:
@@ -385,6 +397,160 @@ async function handleRead(
         timestamp: Date.now(),
       },
     });
+  }
+}
+
+async function handleMessageDelete(
+  manager: ConnectionManager,
+  prisma: PrismaClient,
+  userId: string,
+  msg: WsMessage,
+): Promise<void> {
+  const { messageId } = msg.data;
+  if (!messageId) return;
+
+  try {
+    const message = await prisma.message.findUnique({ where: { id: messageId as string } });
+    if (!message) return;
+
+    // Verify sender or admin/owner can delete
+    const membership = await prisma.chatMember.findUnique({
+      where: { chatId_userId: { chatId: message.chatId, userId } },
+    });
+    if (!membership) return;
+
+    if (message.senderId !== userId && membership.role !== 'ADMIN' && membership.role !== 'OWNER') return;
+
+    await prisma.message.update({
+      where: { id: messageId as string },
+      data: { isDeleted: true, content: { isSet: false } },
+    });
+
+    // Notify all chat members
+    await manager.sendToChat(message.chatId, {
+      type: 'message.deleted',
+      data: { messageId, chatId: message.chatId },
+    });
+
+    logger.info(`Message ${messageId} deleted by ${userId}`);
+  } catch (err) {
+    logger.error(`Message delete error: ${err}`);
+  }
+}
+
+async function handleMessageForward(
+  manager: ConnectionManager,
+  prisma: PrismaClient,
+  userId: string,
+  msg: WsMessage,
+): Promise<void> {
+  const { messageId, targetChatId } = msg.data;
+  if (!messageId) return;
+
+  try {
+    const originalMessage = await prisma.message.findUnique({
+      where: { id: messageId as string },
+      include: { sender: { select: { id: true, displayName: true } } },
+    });
+    if (!originalMessage) return;
+
+    // Verify user is member of both source and target chats
+    if (targetChatId) {
+      const targetMembership = await prisma.chatMember.findUnique({
+        where: { chatId_userId: { chatId: targetChatId as string, userId } },
+      });
+      if (!targetMembership) return;
+    }
+
+    // Create forwarded message in target chat
+    const forwardedMessage = await prisma.message.create({
+      data: {
+        chatId: (targetChatId as string) ?? originalMessage.chatId,
+        senderId: userId,
+        type: originalMessage.type,
+        content: originalMessage.content ?? undefined,
+        forwardedFromId: messageId as string,
+      },
+      include: {
+        sender: { select: { id: true, username: true, displayName: true, avatarUrl: true } },
+      },
+    });
+
+    // Notify target chat members
+    await manager.sendToChat(forwardedMessage.chatId, {
+      type: 'message.new',
+      data: { ...forwardedMessage, isForwarded: true },
+    });
+
+    logger.info(`Message ${messageId} forwarded to ${targetChatId} by ${userId}`);
+  } catch (err) {
+    logger.error(`Message forward error: ${err}`);
+  }
+}
+
+async function handleCallInitiate(
+  manager: ConnectionManager,
+  prisma: PrismaClient,
+  userId: string,
+  msg: WsMessage,
+): Promise<void> {
+  const { targetUserId, chatId, type } = msg.data;
+  if (!targetUserId && !chatId) {
+    logger.warn('Call initiate missing target');
+    return;
+  }
+
+  try {
+    // Create call record
+    const call = await prisma.call.create({
+      data: {
+        chatId: chatId as string | undefined,
+        callerId: userId,
+        type: (type as string)?.toUpperCase() === 'VIDEO' ? 'VIDEO' : 'VOICE',
+        status: 'RINGING',
+      },
+    });
+
+    // Determine call participants
+    const participants: string[] = [];
+    if (targetUserId) {
+      participants.push(targetUserId as string);
+    } else if (chatId) {
+      const members = await prisma.chatMember.findMany({
+        where: { chatId: chatId as string, userId: { not: userId } },
+        select: { userId: true },
+      });
+      participants.push(...members.map(m => m.userId));
+    }
+
+    // Create call member records
+    await prisma.callMember.createMany({
+      data: [
+        { callId: call.id, userId, role: 'CALLER' },
+        ...participants.map(pid => ({
+          callId: call.id,
+          userId: pid,
+          role: 'RECIPIENT' as const,
+        })),
+      ],
+    });
+
+    // Notify all participants of incoming call
+    for (const participantId of participants) {
+      manager.sendToUser(participantId, {
+        type: 'call.incoming',
+        data: {
+          callId: call.id,
+          callerId: userId,
+          type: type ?? 'voice',
+          chatId: chatId ?? null,
+        },
+      });
+    }
+
+    logger.info(`Call ${call.id} initiated by ${userId} for ${participants.length} participants`);
+  } catch (err) {
+    logger.error(`Call initiate error: ${err}`);
   }
 }
 

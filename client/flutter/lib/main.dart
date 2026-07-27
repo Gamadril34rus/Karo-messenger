@@ -12,7 +12,9 @@ import 'core/network/ws_client.dart';
 import 'core/storage/secure_storage.dart';
 import 'core/storage/local_db.dart';
 import 'core/e2ee/e2ee_manager.dart';
+import 'core/audio/notification_service.dart';
 import 'core/utils/logger.dart';
+import 'i18n/localizations_delegate.dart';
 
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/chat/presentation/bloc/chat_list/chat_bloc.dart';
@@ -122,7 +124,10 @@ class AppCharoApp extends StatelessWidget {
             // Локализация
             locale: _resolveLocale(settingsState.language),
             supportedLocales: AppConstants.supportedLocales,
-            localizationsDelegates: AppConstants.localizationDelegates,
+            localizationsDelegates: [
+              ...AppConstants.localizationDelegates,
+              CharoLocalizations.delegate,
+            ],
 
             // Навигация
             routerConfig: AppRouter.router,

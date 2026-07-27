@@ -1,9 +1,11 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/e2ee/e2ee_manager.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/storage/secure_storage.dart';
 import '../../../../core/network/ws_client.dart';
+import '../../../../core/audio/notification_service.dart';
 import '../../../../core/utils/logger.dart';
 
 // ─── События ──────────────────────────────────────────────────────
@@ -205,6 +207,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       // Подключаем WebSocket
       await _wsClient.connect();
 
+      // Инициализация E2EE
+      await E2EEKeyManager.instance.initialize(userData['id'] as String);
+
+      // Инициализация звуков уведомлений
+      await NotificationService.instance.initialize();
+
       emit(AuthAuthenticated(
         userId: userData['id'] as String,
         username: userData['username'] as String,
@@ -268,8 +276,16 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       // Подключаем WebSocket
       await _wsClient.connect();
 
+      // Инициализация E2EE
+      final userId = data['user']['id'] as String;
+      await E2EEKeyManager.instance.initialize(userId);
+      await _secureStorage.setUserId(userId);
+
+      // Инициализация звуков уведомлений
+      await NotificationService.instance.initialize();
+
       emit(AuthAuthenticated(
-        userId: data['user']['id'] as String,
+        userId: userId,
         username: data['user']['username'] as String,
         displayName: data['user']['display_name'] as String?,
         avatarUrl: data['user']['avatar_url'] as String?,
@@ -347,6 +363,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     } catch (_) {}
 
     await _wsClient.disconnect();
+    await E2EEKeyManager.instance.wipeAllKeys();
     await _secureStorage.clearAll();
     emit(AuthUnauthenticated());
   }
