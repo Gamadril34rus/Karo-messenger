@@ -99,6 +99,17 @@ final class AuthDeleteAccountRequested extends AuthEvent {
 /// Обновление токена
 final class AuthRefreshRequested extends AuthEvent {}
 
+/// Восстановление удалённого аккаунта (30-дневный grace period)
+final class AuthAccountRecoveryRequested extends AuthEvent {
+  final String accountId;
+  final String recoveryCode;
+
+  AuthAccountRecoveryRequested({required this.accountId, required this.recoveryCode});
+
+  @override
+  List<Object?> get props => [accountId, recoveryCode];
+}
+
 // ─── Состояния ────────────────────────────────────────────────────
 
 sealed class AuthState extends Equatable {
@@ -159,8 +170,19 @@ final class AuthError extends AuthState {
   List<Object?> get props => [message];
 }
 
-/// Аккаунт удалён
-final class AuthAccountDeleted extends AuthState {}
+/// Аккаунт удалён — ожидание подтверждения удаления (recovery code returned)
+final class AuthAccountDeleted extends AuthState {
+  final String accountId;
+  final String recoveryCode;
+
+  AuthAccountDeleted({required this.accountId, required this.recoveryCode});
+
+  @override
+  List<Object?> get props => [accountId, recoveryCode];
+}
+
+/// Аккаунт восстановлен (30-дневный grace period)
+final class AuthAccountRecovered extends AuthState {}
 
 // ─── BLoC ─────────────────────────────────────────────────────────
 
@@ -185,6 +207,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthLogoutRequested>(_onLogoutRequested);
     on<AuthDeleteAccountRequested>(_onDeleteAccountRequested);
     on<AuthRefreshRequested>(_onRefreshRequested);
+    on<AuthAccountRecoveryRequested>(_onAccountRecoveryRequested);
   }
 
   // ─── Проверка авторизации ──────────────────────────────────────
@@ -380,15 +403,59 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     emit(AuthLoading());
     try {
-      await _apiClient.delete('/api/v1/auth/account', data: {
+      final response = await _apiClient.delete('/api/v1/auth/account', data: {
         'confirmation': event.confirmation,
       });
 
+      final data = response.asMap;
+      final accountId = data['account_id'] as String? ?? '';
+      final recoveryCode = data['recovery_code'] as String? ?? '';
+
       await _wsClient.disconnect();
       await _secureStorage.clearAll();
-      emit(AuthAccountDeleted());
+      emit(AuthAccountDeleted(accountId: accountId, recoveryCode: recoveryCode));
     } on CharoApiException catch (e) {
       emit(AuthError(message: e.message));
+    }
+  }
+
+  // ─── Восстановление аккаунта ───────────────────────────────────
+  Future<void> _onAccountRecoveryRequested(
+    AuthAccountRecoveryRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    try {
+      final response = await _apiClient.post('/api/v1/auth/recover', data: {
+        'account_id': event.accountId,
+        'verification_code': event.recoveryCode,
+      });
+
+      final data = response.asMap;
+      await _saveTokens(
+        accessToken: data['access_token'] as String,
+        refreshToken: data['refresh_token'] as String,
+      );
+
+      // After recovery, fetch user profile separately
+      final userResponse = await _apiClient.get('/api/v1/users/me');
+      final userData = userResponse.asMap;
+      final userId = userData['id'] as String;
+      await _secureStorage.setUserId(userId);
+      await _wsClient.connect();
+      await E2EEKeyManager.instance.initialize(userId);
+      await NotificationService.instance.initialize();
+
+      emit(AuthAuthenticated(
+        userId: userId,
+        username: userData['username'] as String,
+        displayName: userData['display_name'] as String?,
+        avatarUrl: userData['avatar_url'] as String?,
+      ));
+    } on CharoApiException catch (e) {
+      emit(AuthError(message: e.message));
+    } catch (e) {
+      emit(AuthError(message: 'Неизвестная ошибка: $e'));
     }
   }
 

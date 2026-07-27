@@ -805,6 +805,84 @@ export async function authRoutes(fastify: FastifyInstance) {
     });
   });
 
+  // ─── GET /auth/sessions — List active sessions ───────────────
+  fastify.get('/sessions', {
+    preHandler: [fastify.authenticate],
+  }, async (request, reply) => {
+    const userId = request.userId!;
+
+    // Get all devices/sessions for this user
+    const devices = await prisma.device.findMany({
+      where: { userId },
+      orderBy: { lastActive: 'desc' },
+    });
+
+    // Get current session from Redis
+    const currentSession = await redis.get(`session:${userId}`);
+
+    const sessions = devices.map((device) => ({
+      id: device.id,
+      device_name: device.deviceName || 'Неизвестное устройство',
+      platform: device.platform || device.deviceType || 'unknown',
+      ip: device.ip || '',
+      last_active: device.lastActive.toISOString(),
+      is_current: device.id === currentSession ? true : false,
+    }));
+
+    // Mark the most recent device as current
+    if (sessions.length > 0 && !sessions.some(s => s.is_current)) {
+      sessions[0].is_current = true;
+    }
+
+    return reply.send(sessions);
+  });
+
+  // ─── DELETE /auth/sessions/:sessionId — Terminate specific session ──
+  fastify.delete('/sessions/:sessionId', {
+    preHandler: [fastify.authenticate],
+  }, async (request, reply) => {
+    const userId = request.userId!;
+    const { sessionId } = request.params as { sessionId: string };
+
+    const device = await prisma.device.findFirst({
+      where: { id: sessionId, userId },
+    });
+
+    if (!device) {
+      return reply.code(404).send({ message: 'Сессия не найдена' });
+    }
+
+    await prisma.device.delete({ where: { id: sessionId } });
+
+    logger.info(`Session ${sessionId} terminated by ${userId}`);
+    return reply.send({ message: 'Сессия завершена' });
+  });
+
+  // ─── DELETE /auth/sessions — Terminate all other sessions ────
+  fastify.delete('/sessions', {
+    preHandler: [fastify.authenticate],
+  }, async (request, reply) => {
+    const userId = request.userId!;
+    const { keep_current } = request.body as { keep_current?: boolean };
+
+    // Get current device
+    const currentDevice = await prisma.device.findFirst({
+      where: { userId },
+      orderBy: { lastActive: 'desc' },
+    });
+
+    if (keep_current && currentDevice) {
+      await prisma.device.deleteMany({
+        where: { userId, id: { not: currentDevice.id } },
+      });
+    } else {
+      await prisma.device.deleteMany({ where: { userId } });
+    }
+
+    logger.info(`All other sessions terminated by ${userId}`);
+    return reply.send({ message: 'Все другие сессии завершены' });
+  });
+
   // ─── POST /auth/2fa/verify — Verify 2FA during login ─────────
   fastify.post('/2fa/verify', async (request, reply) => {
     const { temp_token, code } = request.body as { temp_token?: string; code: string; identifier?: string };

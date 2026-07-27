@@ -225,6 +225,13 @@ class _LoginScreenState extends State<LoginScreen>
                   onPressed: () => context.go('/register'),
                   child: const Text('Нет аккаунта? Зарегистрироваться'),
                 ),
+                const SizedBox(height: 8),
+
+                // Восстановление аккаунта (ФЗ-152 Art.9, GDPR Art.17 — 30-дневный recovery)
+                TextButton(
+                  onPressed: () => context.go('/auth/recover'),
+                  child: const Text('Восстановить удалённый аккаунт'),
+                ),
               ],
             ),
           ),

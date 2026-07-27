@@ -223,18 +223,9 @@ class StickerImportService {
       final manifestPath = '${dir.path}/sticker_packs.json';
       await File(zipPath).copy('${dir.path}/source.zip');
 
-      // Parse WhatsApp sticker pack — extract images and manifest
-      // WhatsApp format: sticker_packs.json + webp images + emoji mapping
+      // Parse WhatsApp sticker pack — extract images and manifest via ZIP parser
       final zipFile = File(zipPath);
-
-      // Read zip and extract files — using dart:io archive handling
-      // Each WhatsApp pack has a manifest with sticker metadata
-      final imported = <ImportedSticker>[];
-      int order = 0;
-
-      // Scan directory for image files (after extraction by OS or archive lib)
-      // In production, use archive package to decompress
-      // Here: process the manifest and individual sticker files
+      final bytes = await zipFile.readAsBytes();
       try {
         // Attempt to read manifest from zip using buffer-based parsing
         final bytes = await zipFile.readAsBytes();
@@ -367,10 +358,59 @@ class StickerImportService {
       // Copy source zip for processing
       await File(zipPath).copy('${dir.path}/source.zip');
 
+      // Parse ZIP and extract sticker images
+      final entries = _parseZipEntries(zipBytes);
+      final imported = <ImportedSticker>[];
+      int order = 0;
+
+      Map<String, dynamic>? manifestData;
+      // First pass: find manifest
+      for (final entry in entries) {
+        if (entry.fileName.toLowerCase().contains('manifest.json') ||
+            entry.fileName.toLowerCase().contains('sticker_packs.json')) {
+          try {
+            manifestData = jsonDecode(utf8.decode(entry.data, allowMalformed: true)) as Map<String, dynamic>;
+          } catch (_) {}
+        }
+      }
+
+      // Second pass: extract sticker images
+      for (final entry in entries) {
+        final fileName = entry.fileName.split('/').last;
+        if (fileName.toLowerCase().endsWith('.webp') ||
+            fileName.toLowerCase().endsWith('.png') ||
+            fileName.toLowerCase().endsWith('.jpg') ||
+            fileName.toLowerCase().endsWith('.gif')) {
+          final localPath = '${dir.path}/$fileName';
+          await File(localPath).writeAsBytes(entry.data);
+          imported.add(ImportedSticker(
+            id: _uuid.v4(),
+            filePath: localPath,
+            emoji: '😊',
+            sortOrder: order++,
+          ));
+        }
+      }
+
+      // Apply manifest data if available
+      if (manifestData != null) {
+        final stickersList = manifestData['stickers'] as List<dynamic>? ?? [];
+        for (int i = 0; i < imported.length && i < stickersList.length; i++) {
+          final s = stickersList[i] as Map<String, dynamic>;
+          imported[i] = ImportedSticker(
+            id: imported[i].id,
+            filePath: imported[i].filePath,
+            emoji: s['emoji'] as String? ?? imported[i].emoji,
+            label: s['label'] as String?,
+            sortOrder: imported[i].sortOrder,
+          );
+        }
+      }
+
       return StickerImportResult(
         packId: packId,
-        packName: packNameOverride ?? 'Local Import',
-        stickers: [],  // Actual extraction needs archive package
+        packName: packNameOverride ?? manifestData?['name'] as String? ?? 'Local Import',
+        stickers: imported,
         source: StickerImportSource.localZip,
       );
     } catch (e) {
@@ -667,6 +707,4 @@ List<_ZipEntry> _parseZipEntries(Uint8List bytes) {
   return entries;
 }
 
-// Need zlib import for deflate decompression
-import 'dart:io'; // Already imported at top
-// dart:convert already imported
+

@@ -7,6 +7,7 @@ import '../../features/auth/presentation/screens/splash_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/register_screen.dart';
 import '../../features/auth/presentation/screens/otp_verification_screen.dart';
+import '../../features/auth/presentation/screens/account_recovery_screen.dart';
 import '../../features/chat/presentation/screens/chat_list_screen.dart';
 import '../../features/chat/presentation/screens/chat_detail_screen.dart';
 import '../../features/calls/presentation/screens/calls_screen.dart';
@@ -46,6 +47,16 @@ class AppRouter {
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(path: '/register', builder: (context, state) => const RegisterScreen()),
       GoRoute(path: '/verify', builder: (context, state) => const OtpVerificationScreen()),
+      GoRoute(
+        path: '/auth/recover',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          return AccountRecoveryScreen(
+            accountId: extra['accountId'] as String? ?? '',
+            recoveryCode: extra['recoveryCode'] as String? ?? '',
+          );
+        },
+      ),
 
       // ── Main shell with premium bottom nav ──────────────────
       ShellRoute(

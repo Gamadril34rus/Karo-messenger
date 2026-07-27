@@ -375,6 +375,8 @@ model Device {
   userId       String   @map("user_id") @db.Uuid
   deviceType   String   @map("device_type") @db.VarChar(32)
   deviceName   String?  @map("device_name") @db.VarChar(128)
+  platform     String?  @map("platform") @db.VarChar(32)
+  ip           String?  @map("ip") @db.VarChar(45)
   pushToken    String?  @map("push_token") @db.VarChar(512)
   lastActive   DateTime @default(now()) @map("last_active")
   createdAt    DateTime @default(now()) @map("created_at")

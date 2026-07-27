@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/app_constants.dart';
@@ -69,19 +70,19 @@ class SettingsAboutScreen extends StatelessWidget {
                 title: 'Исходный код',
                 subtitle: 'github.com/charo-messenger/charo',
                 trailing: Icon(Icons.open_in_new, size: 18, color: context.colors.onSurface.withOpacity(0.4)),
-                onTap: () {},
+                onTap: () => _launchUrl('https://github.com/charo-messenger/charo'),
               ),
               CharoTile(
                 icon: Icons.security_outlined,
                 iconColor: const Color(0xFF8B5CF6),
                 title: 'Политика конфиденциальности',
-                onTap: () {},
+                onTap: () => _launchUrl('https://charo.chat/privacy'),
               ),
               CharoTile(
                 icon: Icons.description_outlined,
                 iconColor: const Color(0xFF3B82F6),
                 title: 'Пользовательское соглашение',
-                onTap: () {},
+                onTap: () => _launchUrl('https://charo.chat/terms'),
               ),
             ],
           ),
@@ -94,13 +95,13 @@ class SettingsAboutScreen extends StatelessWidget {
                 icon: Icons.bug_report_outlined,
                 iconColor: Colors.red,
                 title: 'Сообщить об ошибке',
-                onTap: () {},
+                onTap: () => _launchUrl('https://github.com/charo-messenger/charo/issues/new'),
               ),
               CharoTile(
                 icon: Icons.rate_review_outlined,
                 iconColor: const Color(0xFFF59E0B),
                 title: 'Оставить отзыв',
-                onTap: () {},
+                onTap: () => _launchUrl('https://charo.chat/feedback'),
               ),
             ],
           ),
@@ -115,7 +116,7 @@ class SettingsAboutScreen extends StatelessWidget {
                 title: 'Telegram-канал',
                 subtitle: '@charo_messenger',
                 trailing: Icon(Icons.open_in_new, size: 18, color: context.colors.onSurface.withOpacity(0.4)),
-                onTap: () {},
+                onTap: () => _launchUrl('https://t.me/charo_messenger'),
               ),
               CharoTile(
                 icon: Icons.language_outlined,
@@ -123,7 +124,7 @@ class SettingsAboutScreen extends StatelessWidget {
                 title: 'Веб-сайт',
                 subtitle: 'charo.chat',
                 trailing: Icon(Icons.open_in_new, size: 18, color: context.colors.onSurface.withOpacity(0.4)),
-                onTap: () {},
+                onTap: () => _launchUrl('https://charo.chat'),
               ),
             ],
           ),
@@ -145,6 +146,13 @@ class SettingsAboutScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _launchUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 
   void _showLicense(BuildContext context) {
