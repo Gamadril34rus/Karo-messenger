@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform, kIsWeb;
 import '../constants/app_constants.dart';
 import '../storage/secure_storage.dart';
 import '../utils/logger.dart';
@@ -47,8 +48,23 @@ class ApiClient {
   }
 
   String get _platformHeader {
-    // Определяется в runtime
-    return 'flutter'; // Заглушка, заменится на Platform.isAndroid и т.д.
+    if (kIsWeb) return 'web';
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        return 'android';
+      case TargetPlatform.iOS:
+        return 'ios';
+      case TargetPlatform.macOS:
+        return 'macos';
+      case TargetPlatform.windows:
+        return 'windows';
+      case TargetPlatform.linux:
+        return 'linux';
+      case TargetPlatform.fuchsia:
+        return 'fuchsia';
+      default:
+        return 'flutter';
+    }
   }
 
   // ─── GET ───────────────────────────────────────────────────────

@@ -83,7 +83,7 @@ function _haversineDistance(lat1: number, lon1: number, lat2: number, lon2: numb
 }
 
 function _formatDistance(meters: number): string {
-  if (meters < 100) return '${meters.round()} м';
-  if (meters < 1000) return '${(meters / 100).round() * 100} м';
-  return '${(meters / 1000).toStringAsFixed(1)} км';
+  if (meters < 100) return `${Math.round(meters)} м`;
+  if (meters < 1000) return `${Math.round(meters / 100) * 100} м`;
+  return `${(meters / 1000).toFixed(1)} км`;
 }

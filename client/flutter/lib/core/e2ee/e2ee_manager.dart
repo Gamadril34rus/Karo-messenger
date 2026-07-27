@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:libsignal_protocol_dart/libsignal_protocol_dart.dart';
@@ -296,11 +297,17 @@ class E2EEKeyManager {
   /// Generate random 16-byte IV for AES-CBC
   Uint8List _generateRandomIv() {
     final secureRandom = pc.FortunaRandom();
-    // Seed with system time bytes
+    // Cryptographically strong seeding: combine dart:math Random.secure()
+    // output with system timestamp entropy
     final seeds = Uint8List(32);
-    final now = DateTime.now().microsecondsSinceEpoch;
+    final strongRandom = Random.secure();
     for (int i = 0; i < 32; i++) {
-      seeds[i] = ((now >> (i % 8)) + i * 37) & 0xFF;
+      seeds[i] = strongRandom.nextInt(256);
+    }
+    // Mix in timestamp entropy as additional source
+    final now = DateTime.now().microsecondsSinceEpoch;
+    for (int i = 0; i < 8; i++) {
+      seeds[i] ^= ((now >> (i * 8)) & 0xFF);
     }
     secureRandom.seed(pc.KeyParameter(seeds));
     final iv = Uint8List(16);
@@ -637,20 +644,63 @@ class E2EEKeyManager {
     final myKey = IdentityKeyPair.fromSerialized(base64Decode(myIdentity));
     final myFingerprint = myKey.getPublicKey().serialize();
 
-    // In production: fetch other user's identity key from server
-    // Here: placeholder fingerprint
-    final otherFingerprint = Uint8List(32);
-    for (int i = 0; i < 32; i++) {
-      otherFingerprint[i] = i;
+    // Fetch other user's identity key from server via ApiClient
+    Uint8List otherFingerprint;
+    if (_apiClient != null) {
+      try {
+        final response = await _apiClient!.get('/api/v1/users/$otherUserId/keys');
+        final bundleData = response.asMap;
+        final otherIdentityKeyBase64 = bundleData['identity_key'] as String;
+        otherFingerprint = base64Decode(otherIdentityKeyBase64);
+        logger.d('🔐 Safety number: fetched identity key for $otherUserId from server');
+      } catch (e) {
+        logger.e('Failed to fetch identity key for safety number: $e');
+        // Fallback: derive from local session if available
+        otherFingerprint = await _getLocalIdentityKey(otherUserId);
+      }
+    } else {
+      otherFingerprint = await _getLocalIdentityKey(otherUserId);
     }
 
     // Safety number = SHA-256(sorted(fingerprint1, fingerprint2))
+    // Sort fingerprints lexicographically to ensure same result for both users
+    final sortedFingerprints = [
+      myFingerprint,
+      otherFingerprint,
+    ];
+    sortedFingerprints.sort((a, b) {
+      for (int i = 0; i < a.length && i < b.length; i++) {
+        if (a[i] != b[i]) return a[i] - b[i];
+      }
+      return a.length - b.length;
+    });
+
     final combined = Uint8List.fromList([
-      ...myFingerprint,
-      ...otherFingerprint,
+      ...sortedFingerprints[0],
+      ...sortedFingerprints[1],
     ]);
     final hash = _sha256(combined);
     return _bytesToDigitGroups(hash);
+  }
+
+  /// Get local identity key for a user from the signal store
+  Future<Uint8List> _getLocalIdentityKey(String userId) async {
+    if (_store == null) return Uint8List(33);
+
+    try {
+      final address = SignalProtocolAddress(userId, 1);
+      final sessionRecord = await _store!.loadSession(address);
+      if (sessionRecord != null) {
+        // Session record contains the remote identity key
+        final sessionState = sessionRecord.sessionState;
+        final remoteIdentityKey = sessionState.remoteIdentityKey;
+        return remoteIdentityKey.serialize();
+      }
+    } catch (e) {
+      logger.d('No local session for $userId: $e');
+    }
+
+    return Uint8List(33); // 33 bytes = ECPublicKey format
   }
 
   Future<bool> verifySafetyNumber(String otherUserId, String safetyNumber) async {

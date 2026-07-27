@@ -1,10 +1,12 @@
 import 'dart:async';
 
+import 'package:flutter_webrtc/flutter_webrtc.dart';
+
 import '../../../core/utils/logger.dart';
 
 /// WebRtcMonitor — мониторинг WebRTC-соединения
 ///
-/// Собирает статистику каждые 3 секунды:
+/// Собирает статистику каждые 3 секунды через RTCPeerConnection.getStats():
 /// - Packet loss (процент потерянных пакетов)
 /// - RTT (round-trip time в ms)
 /// - Bitrate (текущая скорость в Kbps)
@@ -15,7 +17,13 @@ import '../../../core/utils/logger.dart';
 class WebRtcMonitor {
   WebRtcStats? _currentStats;
   Timer? _statsTimer;
+  RTCPeerConnection? _peerConnection;
   final List<StreamSubscription> _subscriptions = [];
+
+  // Previous bytes counters for bitrate calculation
+  int _prevBytesSent = 0;
+  int _prevBytesReceived = 0;
+  DateTime? _prevStatsTime;
 
   final _statsController = StreamController<WebRtcStats>.broadcast();
   final _connectionQualityController = StreamController<ConnectionQuality>.broadcast();
@@ -27,8 +35,14 @@ class WebRtcMonitor {
   int _participantCount = 0;
   bool _disposed = false;
 
-  WebRtcMonitor() {
+  WebRtcMonitor({RTCPeerConnection? peerConnection}) : _peerConnection = peerConnection {
     _startCollecting();
+  }
+
+  /// Attach a peer connection for stats collection
+  void setPeerConnection(RTCPeerConnection peerConnection) {
+    _peerConnection = peerConnection;
+    logger.i('WebRTC Monitor: peer connection attached');
   }
 
   void _startCollecting() {
@@ -39,10 +53,8 @@ class WebRtcMonitor {
     });
   }
 
-  void _collectStats() {
-    // В реальности — вызов peerConnection.getStats() и парсинг RTCStatsReport
-    // Здесь — генерация статистики из WebRTC connection
-    final stats = _parseStatsFromConnection();
+  Future<void> _collectStats() async {
+    final stats = await _parseStatsFromConnection();
 
     if (stats != null) {
       _currentStats = stats;
@@ -53,16 +65,76 @@ class WebRtcMonitor {
     }
   }
 
-  WebRtcStats? _parseStatsFromConnection() {
-    // Реальная реализация:
-    // final report = await peerConnection.getStats();
-    // Парсинг RTCStatsReport для извлечения:
-    // - packetsSent, packetsReceived, packetsLost
-    // - roundTripTime
-    // - bytesSent, bytesReceived (за период)
-    //
-    // Placeholder — в реальности подключается к flutter_webrtc
-    return null;
+  /// Parse stats from flutter_webrtc RTCPeerConnection.getStats()
+  Future<WebRtcStats?> _parseStatsFromConnection() async {
+    if (_peerConnection == null) return null;
+
+    try {
+      final report = await _peerConnection!.getStats();
+
+      int packetsSent = 0;
+      int packetsReceived = 0;
+      int packetsLost = 0;
+      int bytesSent = 0;
+      int bytesReceived = 0;
+      int rtt = 0;
+
+      for (final statsMap in report) {
+        final statsType = statsMap['type'] as String? ?? '';
+
+        if (statsType == 'outbound-rtp') {
+          packetsSent += (statsMap['packetsSent'] as int?) ?? 0;
+          bytesSent += (statsMap['bytesSent'] as int?) ?? 0;
+        } else if (statsType == 'inbound-rtp') {
+          packetsReceived += (statsMap['packetsReceived'] as int?) ?? 0;
+          packetsLost += (statsMap['packetsLost'] as int?) ?? 0;
+          bytesReceived += (statsMap['bytesReceived'] as int?) ?? 0;
+        } else if (statsType == 'candidate-pair' || statsType == 'transport') {
+          // RTT is in the active candidate-pair as currentRoundTripTime (seconds)
+          final rttSec = statsMap['currentRoundTripTime'] as double?;
+          if (rttSec != null) {
+            rtt = (rttSec * 1000).round(); // Convert to ms
+          }
+        }
+      }
+
+      // Calculate bitrate from byte deltas
+      final now = DateTime.now();
+      double bitrate = 0;
+      if (_prevStatsTime != null) {
+        final elapsed = now.difference(_prevStatsTime!).inMilliseconds;
+        if (elapsed > 0) {
+          final bytesDelta = (bytesSent - _prevBytesSent) + (bytesReceived - _prevBytesReceived);
+          bitrate = (bytesDelta * 8) / elapsed; // bits per ms → Kbps
+        }
+      }
+
+      _prevBytesSent = bytesSent;
+      _prevBytesReceived = bytesReceived;
+      _prevStatsTime = now;
+
+      // Calculate packet loss percentage
+      final totalPackets = packetsSent + packetsReceived;
+      final packetLoss = totalPackets > 0
+          ? packetsLost / totalPackets
+          : 0.0;
+
+      return WebRtcStats(
+        packetLoss: packetLoss,
+        rtt: rtt,
+        bitrate: bitrate,
+        bytesSent: bytesSent,
+        bytesReceived: bytesReceived,
+        packetsSent: packetsSent,
+        packetsReceived: packetsReceived,
+        packetsLost: packetsLost,
+        participantCount: _participantCount,
+        timestamp: now,
+      );
+    } catch (e) {
+      logger.e('WebRTC Stats collection error: $e');
+      return null;
+    }
   }
 
   /// Обновление participant count
@@ -131,14 +203,20 @@ class WebRtcMonitor {
     required bool simulcastEnabled,
   }) {
     logger.d('WebRTC: Applying video settings — $codec $width×$height $fpsfps ${maxBitrate}Kbps simulcast=$simulcastEnabled');
-    // В реальности — отправка video constraints через MediaStreamTrack.setEnabled + RTCConfiguration
-    // или через LiveKit Room.localParticipant.setParameters()
+    // In a real implementation, this sends RTCRtpSender.setParameters()
+    // with maxBitrate, codec preferences, and simulcast encodings.
+    // flutter_webrtc exposes this via peerConnection.getSenders().
+    // For now: logged for later integration with actual WebRTC calls.
   }
 
   /// Disable video (audioOnly mode)
   void disableVideo() {
     logger.d('WebRTC: Disabling video track');
-    // В реальности — room.localParticipant.setCameraEnabled(false)
+    // In a real implementation:
+    // for (final sender in peerConnection.getSenders()) {
+    //   if (sender.track?.kind == 'video') { sender.track?.setEnabled(false); }
+    // }
+    // For now: logged for later integration with actual WebRTC calls.
   }
 
   void dispose() {

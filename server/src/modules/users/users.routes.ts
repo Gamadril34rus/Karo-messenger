@@ -107,4 +107,79 @@ export async function usersRoutes(fastify: FastifyInstance) {
 
     return reply.send({ avatar_url: avatarUrl });
   });
+
+  // ─── E2EE Key Bundle Routes ─────────────────────────────────────
+
+  // GET /users/:id/keys — Получить PreKeyBundle другого пользователя
+  fastify.get('/:id/keys', async (request, reply) => {
+    const { id } = request.params as { id: string };
+
+    const keys = await prisma.userKey.findUnique({
+      where: { userId: id },
+    });
+
+    if (!keys) {
+      return reply.code(404).send({ message: 'PreKeyBundle не найден' });
+    }
+
+    // Return prekeys as a proper list from the JSON bundle field
+    const prekeysBundle = keys.preKeyBundle as any;
+    const prekeys = Array.isArray(prekeysBundle) ? prekeysBundle :
+      (prekeysBundle?.prekeys ? prekeysBundle.prekeys : []);
+
+    return reply.send({
+      identity_key: keys.identityKeyPublic,
+      signed_prekey_id: keys.signedPreKeyId,
+      signed_prekey_public: keys.signedPreKeyPublic,
+      signed_prekey_signature: keys.signedPreKeySignature,
+      registration_id: keys.registrationId,
+      prekeys: prekeys,
+    });
+  });
+
+  // POST /users/me/keys — Публикация своего PreKeyBundle
+  fastify.post('/me/keys', async (request, reply) => {
+    const userId = request.userId!;
+    const body = request.body as any;
+
+    const keys = await prisma.userKey.upsert({
+      where: { userId },
+      create: {
+        userId,
+        identityKeyPublic: body.identity_key || '',
+        signedPreKeyId: body.signed_prekey_id || 0,
+        signedPreKeyPublic: body.signed_prekey_public || '',
+        signedPreKeySignature: body.signed_prekey_signature || '',
+        registrationId: body.registration_id || 0,
+        preKeyBundle: body.prekeys || {},
+      },
+      update: {
+        identityKeyPublic: body.identity_key || '',
+        signedPreKeyId: body.signed_prekey_id || 0,
+        signedPreKeyPublic: body.signed_prekey_public || '',
+        signedPreKeySignature: body.signed_prekey_signature || '',
+        registrationId: body.registration_id || 0,
+        preKeyBundle: body.prekeys || {},
+      },
+    });
+
+    return reply.code(201).send(keys);
+  });
+
+  // DELETE /users/me/keys — Удалить свои ключи (при удалении аккаунта)
+  fastify.delete('/me/keys', async (request, reply) => {
+    const userId = request.userId!;
+
+    try {
+      await prisma.userKey.delete({ where: { userId } });
+    } catch {
+      // Keys might not exist — that's OK
+    }
+
+    await prisma.keyRequest.deleteMany({
+      where: { OR: [{ requesterId: userId }, { targetId: userId }] },
+    });
+
+    return reply.code(204).send();
+  });
 }

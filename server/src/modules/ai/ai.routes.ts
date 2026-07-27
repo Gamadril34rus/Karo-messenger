@@ -112,7 +112,7 @@ async function _generateAiResponse(userMessage: string): Promise<string> {
   if (userMessage.toLowerCase().includes('привет')) return 'Привет! Чем могу помочь?';
   if (userMessage.toLowerCase().includes('перевед')) return 'Конечно, отправьте текст для перевода, и я переведу его.';
   if (userMessage.toLowerCase().includes('погод')) return 'К сожалению, у меня нет доступа к данным о погоде в реальном времени. Попробуйте специализированный сервис.';
-  return 'Я AI-ассистент Ауры. Могу помочь с переводом, саммаризацией чатов, генерацией стикеров и ответами на вопросы. Чем могу помочь?';
+  return 'Я AI-ассистент ЧАРО. Могу помочь с переводом, саммаризацией чатов, генерацией стикеров и ответами на вопросы. Чем могу помочь?';
 }
 
 async function _generateSummary(context: string): Promise<string> {

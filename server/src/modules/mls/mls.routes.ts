@@ -415,67 +415,8 @@ export async function mlsRoutes(app: FastifyInstance) {
     return reply.code(201).send(request);
   });
 
-  // ─── Получение PreKeyBundle ──────────────────────────────────────
-  app.get('/users/:targetId/keys', async (req: FastifyRequest, reply: FastifyReply) => {
-    const { targetId } = req.params as any;
-
-    const keys = await prisma.userKey.findUnique({
-      where: { userId: targetId },
-    });
-
-    if (!keys) {
-      return reply.code(404).send({ message: 'PreKeyBundle не найден' });
-    }
-
-    return reply.send({
-      user_id: keys.userId,
-      identity_key: keys.identityKeyPublic,
-      signed_prekey_id: keys.signedPreKeyId,
-      signed_prekey_public: keys.signedPreKeyPublic,
-      signed_prekey_signature: keys.signedPreKeySignature,
-      registration_id: keys.registrationId,
-      prekey_bundle: keys.preKeyBundle,
-    });
-  });
-
-  // ─── Публикация PreKeyBundle (свой) ──────────────────────────────
-  app.post('/users/me/keys', async (req: FastifyRequest, reply: FastifyReply) => {
-    const userId = (req as any).user?.id;
-    const body = req.body as any;
-
-    const keys = await prisma.userKey.upsert({
-      where: { userId },
-      create: {
-        userId,
-        identityKeyPublic: body.identity_key || '',
-        signedPreKeyId: body.signed_prekey_id || 0,
-        signedPreKeyPublic: body.signed_prekey_public || '',
-        signedPreKeySignature: body.signed_prekey_signature || '',
-        registrationId: body.registration_id || 0,
-        preKeyBundle: body.prekeys || {},
-      },
-      update: {
-        identityKeyPublic: body.identity_key || '',
-        signedPreKeyId: body.signed_prekey_id || 0,
-        signedPreKeyPublic: body.signed_prekey_public || '',
-        signedPreKeySignature: body.signed_prekey_signature || '',
-        registrationId: body.registration_id || 0,
-        preKeyBundle: body.prekeys || {},
-      },
-    });
-
-    return reply.code(201).send(keys);
-  });
-
-  // ─── Удаление ключей (при удалении аккаунта) ────────────────────
-  app.delete('/users/me/keys', async (req: FastifyRequest, reply: FastifyReply) => {
-    const userId = (req as any).user?.id;
-
-    await prisma.userKey.delete({ where: { userId } });
-    await prisma.keyRequest.deleteMany({
-      where: { OR: [{ requesterId: userId }, { targetId: userId }] },
-    });
-
-    return reply.code(204).send();
-  });
+  // ─── E2EE Key endpoints moved to users.routes.ts ────────────────
+  // GET  /users/:id/keys    → users.routes.ts
+  // POST /users/me/keys     → users.routes.ts
+  // DELETE /users/me/keys   → users.routes.ts
 }

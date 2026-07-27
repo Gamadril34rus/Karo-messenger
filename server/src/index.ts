@@ -70,6 +70,10 @@ declare module 'fastify' {
 fastify.decorate('prisma', prisma);
 fastify.decorate('redis', redis);
 
+// Auth authenticate decorator — для preHandler в защищённых маршрутах
+// (authRoutes.logout / authRoutes.delete-account используют fastify.authenticate)
+fastify.decorate('authenticate', authMiddleware);
+
 // ─── Плагины ──────────────────────────────────────────────────────
 
 async function bootstrap() {
