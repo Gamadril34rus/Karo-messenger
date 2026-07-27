@@ -64,6 +64,7 @@ model User {
   userKeys            UserKey[]
   keyRequestsMade     KeyRequest[] @relation("KeyRequester")
   keyRequestsReceived KeyRequest[] @relation("KeyTarget")
+  consentRecords      ConsentRecord[]
 
   @@map("users")
 }
@@ -497,6 +498,28 @@ model OtpCode {
 
   @@index([identifier, code])
   @@map("otp_codes")
+}
+
+// ─── Consent Records (ФЗ-152 Art.9, GDPR Art.7) ───────────────────
+
+model ConsentRecord {
+  id                   String   @id @default(uuid()) @db.Uuid
+  userId               String   @map("user_id") @db.Uuid
+  type                 String   @db.VarChar(32) // REGISTRATION, OAUTH_REGISTRATION, DATA_EXPORT, ACCOUNT_DELETE, PRIVACY_CHANGE
+  consentGiven         Boolean  @default(true) @map("consent_given")
+  ageConfirmed         Boolean  @default(false) @map("age_confirmed")
+  termsAccepted        Boolean  @default(false) @map("terms_accepted")
+  privacyPolicyVersion String?  @map("privacy_policy_version") @db.VarChar(20)
+  termsVersion         String?  @map("terms_version") @db.VarChar(20)
+  ipAddress            String?  @map("ip_address") @db.VarChar(45) // IPv4/IPv6
+  userAgent            String?  @map("user_agent") @db.VarChar(512)
+  oauthProvider        String?  @map("oauth_provider") @db.VarChar(32)
+  createdAt            DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("consent_records")
 }
 
 // ─── MLS (Messaging Layer Security) ──────────────────────────────

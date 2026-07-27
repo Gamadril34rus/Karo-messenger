@@ -21,6 +21,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
   bool _usePhone = true;
+  bool _consentGiven = false;
+  bool _ageConfirmed = false;
+  bool _termsAccepted = false;
 
   @override
   void dispose() {
@@ -160,12 +163,50 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                 const SizedBox(height: 32),
 
+                // LEGAL: Consent checkboxes (ФЗ-152, GDPR Art.7)
+                CharoCard(
+                  padding: const EdgeInsets.all(16),
+                  borderWidth: 1,
+                  borderColor: context.colors.primary.withOpacity(0.3),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      CharoSwitchTile(
+                        icon: Icons.check_circle_outline,
+                        iconColor: context.colors.primary,
+                        title: 'Согласие на обработку данных',
+                        subtitle: 'Политика конфиденциальности ЧАРО',
+                        value: _consentGiven,
+                        onChanged: (v) => setState(() => _consentGiven = v),
+                      ),
+                      CharoSwitchTile(
+                        icon: Icons.cake_outlined,
+                        iconColor: context.colors.warning,
+                        title: 'Я старше 13 лет',
+                        subtitle: 'ЧАРО доступен только для пользователей 13+',
+                        value: _ageConfirmed,
+                        onChanged: (v) => setState(() => _ageConfirmed = v),
+                      ),
+                      CharoSwitchTile(
+                        icon: Icons.gavel_outlined,
+                        iconColor: context.colors.info,
+                        title: 'Принимаю Условия использования',
+                        subtitle: 'AGPL-3.0 | Права и обязанности',
+                        value: _termsAccepted,
+                        onChanged: (v) => setState(() => _termsAccepted = v),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 32),
+
                 // Кнопка регистрации
                 BlocBuilder<AuthBloc, AuthState>(
                   builder: (context, state) {
                     final isLoading = state is AuthLoading;
-                    return FilledButton(
-                      onPressed: isLoading ? null : _onRegister,
+                  final canRegister = _consentGiven && _ageConfirmed && _termsAccepted;
+                  return FilledButton(
+                    onPressed: (isLoading || !canRegister) ? null : _onRegister,
                       child: isLoading
                           ? const SizedBox(
                               width: 20, height: 20,
