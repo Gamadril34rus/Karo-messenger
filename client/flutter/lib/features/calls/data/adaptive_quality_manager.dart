@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import '../../core/utils/logger.dart';
+import '../../../core/utils/logger.dart';
 import 'webrtc_monitor.dart';
 
 /// AdaptiveQualityManager — адаптивное управление качеством видео в звонках

@@ -1,132 +1,117 @@
-import 'package:slang/slang.dart';
+/// AppStrings — централизованный доступ ко всем строкам приложения.
+///
+/// Используется вместо slang/i18n JSON для прямого доступа в коде.
+/// JSON-файлы в lib/i18n/ используются для динамической локализации.
+class AppStrings {
+  AppStrings._();
 
-part '_strings_en.i18n.yaml.g.dart';
-part '_strings_ru.i18n.yaml.g.dart';
+  static const String appName = "ЧАРО";
+  static const String appTagline = "Быстрый. Приватный. Мощный.";
 
-@StringBase(
-  caseStyle: CaseStyle.CAMEL_CASE,
-  pluralAuto: PluralAuto.cardinal,
-)
-class AppStrings extends Strings {
-  static const AppStrings _instance = AppStrings();
-  static AppStrings get instance => _instance;
+  // ─── Auth ────────────────────────────────────────────────
+  static const String login = "Войти";
+  static const String register = "Регистрация";
+  static const String phone = "Телефон";
+  static const String password = "Пароль";
+  static const String confirmPassword = "Подтвердить пароль";
+  static const String forgotPassword = "Забыли пароль?";
+  static const String otpVerification = "Верификация OTP";
+  static const String enterOtpCode = "Введите код из SMS";
+  static const String resendCode = "Отправить снова";
+  static const String welcome = "Добро пожаловать!";
+  static const String loginSuccess = "Вы успешно вошли";
+  static const String registrationSuccess = "Аккаунт создан";
+  static const String accountDeleted = "Аккаунт удалён";
 
-  @override
-  Map<String, Strings> get children => {};
+  // ─── Chat ────────────────────────────────────────────────
+  static const String chats = "Чаты";
+  static const String newChat = "Новый чат";
+  static const String searchChats = "Поиск чатов";
+  static const String noChats = "Нет чатов";
+  static const String sendMessage = "Отправить";
+  static const String reply = "Ответить";
+  static const String forward = "Переслать";
+  static const String edit = "Редактировать";
+  static const String delete = "Удалить";
+  static const String pin = "Закрепить";
+  static const String unpin = "Открепить";
+  static const String copy = "Копировать";
+  static const String typing = "печатает…";
+  static const String online = "в сети";
+  static const String lastSeen = "был(а) в";
+  static const String messageEncrypted = "🔐 Зашифровано";
+  static const String voiceMessage = "🎤 Голосовое";
+  static const String videoMessage = "📹 Видео";
+  static const String fileAttached = "📎 Файл";
 
-  @override
-  AppStringExtension get root => AppStringExtension();
-}
+  // ─── Calls ────────────────────────────────────────────────
+  static const String calls = "Звонки";
+  static const String voiceCall = "Голосовой звонок";
+  static const String videoCall = "Видеозвонок";
+  static const String callEnded = "Звонок завершён";
+  static const String callMissed = "Пропущенный звонок";
+  static const String callIncoming = "Входящий звонок";
+  static const String callOutgoing = "Исходящий звонок";
+  static const String mute = "Микрофон";
+  static const String camera = "Камера";
+  static const String speaker = "Динамик";
 
-extension AppStringExtension on AppStrings {
-  // ─── App ───
-  String get appName => 'ЧАРО';
-  String get appTagline => 'Быстрый. Приватный. Мощный.';
+  // ─── Settings ────────────────────────────────────────────
+  static const String settings = "Настройки";
+  static const String appearance = "Внешний вид";
+  static const String notifications = "Уведомления";
+  static const String privacy = "Приватность";
+  static const String network = "Сеть";
+  static const String storage = "Хранилище";
+  static const String language = "Язык";
+  static const String about = "О приложении";
+  static const String energy = "Энергосбережение";
+  static const String mediaQuality = "Качество медиа";
+  static const String deleteAccount = "Удалить аккаунт";
+  static const String darkTheme = "Тёмная тема";
+  static const String lightTheme = "Светлая тема";
+  static const String fontSize = "Размер шрифта";
+  static const String chatBackground = "Обложка чата";
 
-  // ─── Auth ───
-  String get login => 'Войти';
-  String get register => 'Регистрация';
-  String get phone => 'Телефон';
-  String get password => 'Пароль';
-  String get confirmPassword => 'Подтвердить пароль';
-  String get forgotPassword => 'Забыли пароль?';
-  String get otpVerification => 'Верификация OTP';
-  String get enterOtpCode => 'Введите код из SMS';
-  String get resendCode => 'Отправить снова';
-  String get welcome => 'Добро пожаловать!';
-  String get loginSuccess => 'Вы успешно вошли';
-  String get registrationSuccess => 'Аккаунт создан';
-  String get accountDeleted => 'Аккаунт удалён';
+  // ─── Stickers ────────────────────────────────────────────
+  static const String stickers = "Стикеры";
+  static const String emoji = "Эмодзи";
+  static const String gif = "GIF";
+  static const String stickerImport = "Импорт стикеров";
+  static const String fromTelegram = "Из Telegram";
+  static const String fromVk = "Из VK";
+  static const String fromWhatsapp = "Из WhatsApp";
+  static const String fromViber = "Из Viber";
 
-  // ─── Chat ───
-  String get chats => 'Чаты';
-  String get newChat => 'Новый чат';
-  String get searchChats => 'Поиск чатов';
-  String get noChats => 'Нет чатов';
-  String get sendMessage => 'Отправить';
-  String get reply => 'Ответить';
-  String get forward => 'Переслать';
-  String get edit => 'Редактировать';
-  String get delete => 'Удалить';
-  String get pin => 'Закрепить';
-  String get unpin => 'Открепить';
-  String get copy => 'Копировать';
-  String get typing => 'печатает…';
-  String get online => 'в сети';
-  String get lastSeen => 'был(а) в';
-  String get messageEncrypted => '🔐 Зашифровано';
-  String get voiceMessage => '🎤 Голосовое';
-  String get videoMessage => '📹 Видео';
-  String get fileAttached => '📎 Файл';
+  // ─── Stories ────────────────────────────────────────────
+  static const String stories = "Истории";
+  static const String addStory = "Добавить историю";
+  static const String viewStory = "Просмотр";
 
-  // ─── Calls ───
-  String get calls => 'Звонки';
-  String get voiceCall => 'Голосовой звонок';
-  String get videoCall => 'Видеозвонок';
-  String get callEnded => 'Звонок завершён';
-  String get callMissed => 'Пропущенный звонок';
-  String get callIncoming => 'Входящий звонок';
-  String get callOutgoing => 'Исходящий звонок';
-  String get mute => 'Микрофон';
-  String get camera => 'Камера';
-  String get speaker => 'Динамик';
+  // ─── Profile ────────────────────────────────────────────
+  static const String profile = "Профиль";
+  static const String username = "Имя пользователя";
+  static const String displayName = "Отображаемое имя";
+  static const String bio = "О себе";
+  static const String avatar = "Аватар";
+  static const String changeAvatar = "Изменить аватар";
 
-  // ─── Settings ───
-  String get settings => 'Настройки';
-  String get appearance => 'Внешний вид';
-  String get notifications => 'Уведомления';
-  String get privacy => 'Приватность';
-  String get network => 'Сеть';
-  String get storage => 'Хранилище';
-  String get language => 'Язык';
-  String get about => 'О приложении';
-  String get energy => 'Энергосбережение';
-  String get mediaQuality => 'Качество медиа';
-  String get deleteAccount => 'Удалить аккаунт';
-  String get darkTheme => 'Тёмная тема';
-  String get lightTheme => 'Светлая тема';
-  String get fontSize => 'Размер шрифта';
-  String get chatBackground => 'Обложка чата';
+  // ─── Errors ────────────────────────────────────────────
+  static const String errorNetwork = "Ошибка сети";
+  static const String errorAuth = "Ошибка авторизации";
+  static const String errorEncryption = "Ошибка шифрования";
+  static const String errorUnknown = "Неизвестная ошибка";
+  static const String errorRateLimit = "Слишком много запросов";
 
-  // ─── Stickers ───
-  String get stickers => 'Стикеры';
-  String get emoji => 'Эмодзи';
-  String get gif => 'GIF';
-  String get stickerImport => 'Импорт стикеров';
-  String get fromTelegram => 'Из Telegram';
-  String get fromVk => 'Из VK';
-  String get fromWhatsapp => 'Из WhatsApp';
-  String get fromViber => 'Из Viber';
+  // ─── Accessibility ────────────────────────────────────
+  static const String accessibility = "Специальные возможности";
+  static const String accessibilityHighContrast = "Высокая контрастность";
+  static const String accessibilityLargeText = "Увеличенный текст";
+  static const String accessibilityScreenReader = "Экранный диктор";
 
-  // ─── Stories ───
-  String get stories => 'Истории';
-  String get addStory => 'Добавить историю';
-  String get viewStory => 'Просмотр';
-
-  // ─── Profile ───
-  String get profile => 'Профиль';
-  String get username => 'Имя пользователя';
-  String get displayName => 'Отображаемое имя';
-  String get bio => 'О себе';
-  String get avatar => 'Аватар';
-  String get changeAvatar => 'Изменить аватар';
-
-  // ─── Errors ───
-  String get errorNetwork => 'Ошибка сети';
-  String get errorAuth => 'Ошибка авторизации';
-  String get errorEncryption => 'Ошибка шифрования';
-  String get errorUnknown => 'Неизвестная ошибка';
-  String get errorRateLimit => 'Слишком много запросов';
-
-  // ─── Accessibility ───
-  String get accessibility => 'Специальные возможности';
-  String get accessibilityHighContrast => 'Высокая контрастность';
-  String get accessibilityLargeText => 'Увеличенный текст';
-  String get accessibilityScreenReader => 'Экранный диктор';
-
-  // ─── Privacy Policy ───
-  String get privacyPolicy => 'Политика приватности';
-  String get termsOfService => 'Условия использования';
-  String get dataDeletion => 'Удаление данных';
-  String get e2eeNotice => 'Все сообщения зашифрованы E2EE';
+  // ─── Privacy Policy ────────────────────────────────────
+  static const String privacyPolicy = "Политика приватности";
+  static const String termsOfService = "Условия использования";
+  static const String dataDeletion = "Удаление данных";
+  static const String e2eeNotice = "Все сообщения зашифрованы E2EE";
 }

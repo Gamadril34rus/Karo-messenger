@@ -1,14 +1,14 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../core/e2ee/e2ee_manager.dart';
-import '../../../../core/errors/app_error.dart';
-import '../../../../core/haptic/haptic_service.dart';
-import '../../../../core/network/api_client.dart';
-import '../../../../core/network/ws_client.dart';
-import '../../../../core/storage/local_db.dart';
-import '../../../../core/utils/logger.dart';
-import '../screens/chat_detail_screen.dart';
+import '../../../../../core/e2ee/e2ee_manager.dart';
+import '../../../../../core/errors/app_error.dart';
+import '../../../../../core/haptic/haptic_service.dart';
+import '../../../../../core/network/api_client.dart';
+import '../../../../../core/network/ws_client.dart';
+import '../../../../../core/storage/local_db.dart';
+import '../../../../../core/utils/logger.dart';
+import '../../screens/chat_detail_screen.dart';
 
 // ─── Events ────────────────────────────────────────────────────────
 

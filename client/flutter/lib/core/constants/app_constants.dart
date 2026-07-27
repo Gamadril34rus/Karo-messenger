@@ -137,7 +137,7 @@ class AppConstants {
     'tr': 'Türkçe',
   };
 
-  static const List<Locale> supportedLocales = supportedLanguages.keys
+  static List<Locale> supportedLocales = supportedLanguages.keys
       .map((code) => Locale(code))
       .toList();
 

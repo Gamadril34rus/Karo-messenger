@@ -300,8 +300,8 @@ class _CharoAvatarState extends State<CharoAvatar>
         children: [
           // Ring shimmer
           if (widget.showRing)
-            AnimatedBuilder(
-              animation: _shimmerController,
+            ListenableBuilder(
+              listenable: _shimmerController,
               builder: (context, child) {
                 final progress = _shimmerController.value;
                 return Container(
@@ -311,7 +311,7 @@ class _CharoAvatarState extends State<CharoAvatar>
                     shape: BoxShape.circle,
                     gradient: SweepGradient(
                       startAngle: 0.0,
-                      endAngle: 6.283, // 2π
+                      endAngle: 6.283,
                       colors: [
                         ringColors[0].withOpacity(0.3 + 0.7 * progress),
                         ringColors[1],

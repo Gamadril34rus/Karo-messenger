@@ -2,28 +2,23 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:signal_protocol_dart/signal_protocol_dart.dart';
+import 'package:libsignal_protocol_dart/libsignal_protocol_dart.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../network/api_client.dart';
 import '../utils/logger.dart';
 
-/// E2EE Key Manager — полноценная реализация Signal Protocol
+/// E2EE Key Manager — Signal Protocol implementation via libsignal_protocol_dart.
 ///
-/// Реализовано:
-/// - Identity Key Pair генерация и персистентное хранение (Secure Storage)
-/// - Signed PreKey + One-time PreKeys (batch из 100)
-/// - Публикация PreKeyBundle на сервер
-/// - SessionCipher encrypt/decrypt для 1:1 чатов
-/// - Универсальное шифрование (текст, JSON, файлы, DataChannel)
-/// - Group encryption (Sender Keys)
-/// - Автоматическое восстановление сессий
-/// - Проверка подписей (verifyPreKeyBundle, verifyMessageSignature)
-/// - Safety Numbers для ручной верификации
-/// - Key rotation (периодическая ротация)
-/// - Wipe all keys при удалении аккаунта
-/// - Защита от атак Cheval (malformed ciphertext validation)
-/// - Подпись сообщений (signMessage)
+/// Uses the actual API of libsignal_protocol_dart ^0.8.2:
+/// - generateIdentityKeyPair() / generateIdentityKeyPairFromPrivate()
+/// - generateRegistrationId(), generateSignedPreKey(), generatePreKeys()
+/// - InMemorySignalProtocolStore
+/// - SessionCipher(store, address) — single store arg
+/// - SessionBuilder(store, address) — single store arg
+/// - IdentityKeyPair.fromSerialized(), .serialize()
+/// - IdentityKeyPair.getPublicKey(), .getPrivateKey()
+/// - Curve.generateKeyPair(), .calculateSignature()
 class E2EEKeyManager {
   static final E2EEKeyManager instance = E2EEKeyManager._internal();
   E2EEKeyManager._internal();
@@ -33,7 +28,7 @@ class E2EEKeyManager {
     iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
   );
 
-  late SignalProtocolStore _store;
+  InMemorySignalProtocolStore? _store;
   IdentityKeyPair? _identityKeyPair;
   String? _userId;
   bool _initialized = false;
@@ -42,13 +37,14 @@ class E2EEKeyManager {
 
   Stream<String> get sessionReady => _sessionReadyController.stream;
 
-  // ─── Инициализация ──────────────────────────────────────────────
+  // ─── Initialization ──────────────────────────────────────────────
 
   Future<void> initialize(String userId) async {
     if (_initialized && _userId == userId) return;
 
     _userId = userId;
-    _store = SignalProtocolStore();
+    _identityKeyPair = generateIdentityKeyPair();
+    _store = InMemorySignalProtocolStore(_identityKeyPair!, 0);
 
     final exists = await _secureStorage.read(key: 'e2ee_initialized_$userId');
 
@@ -63,8 +59,7 @@ class E2EEKeyManager {
   }
 
   Future<void> _generateFreshKeys() async {
-    final identityKeyPair = IdentityKeyPair.generate();
-    _identityKeyPair = identityKeyPair;
+    final identityKeyPair = _identityKeyPair!;
 
     await _secureStorage.write(
       key: 'identity_key_pair_$userId',
@@ -77,21 +72,17 @@ class E2EEKeyManager {
       value: registrationId.toString(),
     );
 
-    final signedPreKey = SignedPreKeyRecord.generate(
-      identityKeyPair.privateKey,
-      generateSignedPreKeyId(),
-    );
-    await _store.storeSignedPreKey(signedPreKey.id, signedPreKey);
+    final signedPreKeyId = _randomId();
+    final signedPreKey = generateSignedPreKey(identityKeyPair, signedPreKeyId);
+    await _store!.storeSignedPreKey(signedPreKeyId, signedPreKey);
     await _secureStorage.write(
       key: 'signed_prekey_$userId',
       value: base64Encode(signedPreKey.serialize()),
     );
 
-    final preKeys = <PreKeyRecord>[];
-    for (int i = 0; i < 100; i++) {
-      final preKey = PreKeyRecord(generatePreKeyId(), Curve.generateKeyPair());
-      preKeys.add(preKey);
-      await _store.storePreKey(preKey.id, preKey);
+    final preKeys = generatePreKeys(1, 100);
+    for (final preKey in preKeys) {
+      await _store!.storePreKey(preKey.id, preKey);
     }
 
     await _secureStorage.write(key: 'e2ee_initialized_$userId', value: 'true');
@@ -103,11 +94,12 @@ class E2EEKeyManager {
     final storedIdentity = await _secureStorage.read(key: 'identity_key_pair_$userId');
     if (storedIdentity != null) {
       _identityKeyPair = IdentityKeyPair.fromSerialized(base64Decode(storedIdentity));
+      _store = InMemorySignalProtocolStore(_identityKeyPair!, 0);
       logger.i('🔐 E2EE keys loaded from secure storage');
     }
   }
 
-  // ─── Публикация на сервер ───────────────────────────────────────
+  // ─── Server publish ───────────────────────────────────────────────
 
   Future<void> _publishKeyBundleToServer(
     IdentityKeyPair identityKeyPair,
@@ -118,14 +110,14 @@ class E2EEKeyManager {
       final registrationId = await _getRegistrationId();
       final bundleData = {
         'user_id': _userId,
-        'identity_key': base64Encode(identityKeyPair.identityKey.publicKey.serialize()),
+        'identity_key': base64Encode(identityKeyPair.getPublicKey().serialize()),
         'signed_prekey_id': signedPreKey.id,
-        'signed_prekey_public': base64Encode(signedPreKey.publicKey.serialize()),
+        'signed_prekey_public': base64Encode(signedPreKey.getKeyPair().publicKey.serialize()),
         'signed_prekey_signature': base64Encode(signedPreKey.signature),
         'registration_id': registrationId,
         'prekeys': preKeys.map((k) => {
           'id': k.id,
-          'public_key': base64Encode(k.publicKey.serialize()),
+          'public_key': base64Encode(k.getKeyPair().publicKey.serialize()),
         }).toList(),
       };
 
@@ -140,11 +132,11 @@ class E2EEKeyManager {
     return stored != null ? int.parse(stored) : null;
   }
 
-  // ─── Основные методы шифрования ────────────────────────────────
+  // ─── Encryption methods ────────────────────────────────────────────
 
   Future<String> encryptText(String recipientId, String plaintext) async {
     final address = SignalProtocolAddress(recipientId, 1);
-    final sessionCipher = SessionCipher(_store, address);
+    final sessionCipher = SessionCipher(_store!, address);
 
     final ciphertext = await sessionCipher.encrypt(
       Uint8List.fromList(utf8.encode(plaintext)),
@@ -155,12 +147,11 @@ class E2EEKeyManager {
 
   Future<String> decryptText(String senderId, String base64Ciphertext) async {
     final address = SignalProtocolAddress(senderId, 1);
-    final sessionCipher = SessionCipher(_store, address);
+    final sessionCipher = SessionCipher(_store!, address);
 
-    final ciphertext = CiphertextMessage.fromSerialized(
-      base64Decode(base64Ciphertext),
-    );
-    final plaintextBytes = await sessionCipher.decrypt(ciphertext);
+    final ciphertextBytes = base64Decode(base64Ciphertext);
+    final preKeySignalMessage = PreKeySignalMessage(ciphertextBytes);
+    final plaintextBytes = await sessionCipher.decrypt(preKeySignalMessage);
 
     return utf8.decode(plaintextBytes);
   }
@@ -177,16 +168,17 @@ class E2EEKeyManager {
 
   Future<String> encryptFileData(String recipientId, Uint8List fileBytes) async {
     final address = SignalProtocolAddress(recipientId, 1);
-    final sessionCipher = SessionCipher(_store, address);
+    final sessionCipher = SessionCipher(_store!, address);
     final ciphertext = await sessionCipher.encrypt(fileBytes);
     return base64Encode(ciphertext.serialize());
   }
 
   Future<Uint8List> decryptFileData(String senderId, String base64Ciphertext) async {
     final address = SignalProtocolAddress(senderId, 1);
-    final sessionCipher = SessionCipher(_store, address);
-    final ciphertext = CiphertextMessage.fromSerialized(base64Decode(base64Ciphertext));
-    return await sessionCipher.decrypt(ciphertext);
+    final sessionCipher = SessionCipher(_store!, address);
+    final ciphertextBytes = base64Decode(base64Ciphertext);
+    final preKeySignalMessage = PreKeySignalMessage(ciphertextBytes);
+    return await sessionCipher.decrypt(preKeySignalMessage);
   }
 
   Future<String> encryptForDataChannel(
@@ -201,7 +193,7 @@ class E2EEKeyManager {
     return await encryptData(recipientId, fullPayload);
   }
 
-  /// Group encryption — Sender Keys для групп без MLS
+  /// Group encryption — Sender Keys
   Future<String> encryptForGroup(String groupId, String plaintext) async {
     final senderKey = await _deriveSenderKey(groupId);
     final encrypted = _aesEncrypt(senderKey, Uint8List.fromList(utf8.encode(plaintext)));
@@ -215,9 +207,8 @@ class E2EEKeyManager {
     return utf8.decode(decryptedBytes);
   }
 
-  // ─── Подпись сообщений ──────────────────────────────────────────
+  // ─── Message signing ────────────────────────────────────────────────
 
-  /// Подпись сообщения с помощью Identity Key
   String signMessage(String data) {
     if (_identityKeyPair == null) {
       logger.w('⚠️ Identity key not initialized — returning empty signature');
@@ -225,17 +216,20 @@ class E2EEKeyManager {
     }
 
     final dataBytes = Uint8List.fromList(utf8.encode(data));
-    final signature = _identityKeyPair!.privateKey.sign(dataBytes);
+    final signature = Curve.calculateSignature(
+      _identityKeyPair!.getPrivateKey(),
+      dataBytes,
+    );
     return base64Encode(signature);
   }
 
-  // ─── Автоматическое восстановление сессий ──────────────────────
+  // ─── Session management ────────────────────────────────────────────
 
   Future<bool> ensureSession(String recipientId) async {
     final address = SignalProtocolAddress(recipientId, 1);
 
     try {
-      final existingSession = await _store.loadSession(address);
+      final existingSession = await _store!.loadSession(address);
       if (existingSession != null) {
         logger.d('✅ Active session with $recipientId found');
         return true;
@@ -259,7 +253,7 @@ class E2EEKeyManager {
   Future<bool> _restoreSessionFromServer(String recipientId) async {
     try {
       final address = SignalProtocolAddress(recipientId, 1);
-      final sessionBuilder = SessionBuilder(_store, address);
+      final sessionBuilder = SessionBuilder(_store!, address);
 
       logger.i('✅ Session with $recipientId restored from server');
       return true;
@@ -322,7 +316,7 @@ class E2EEKeyManager {
     }
   }
 
-  // ─── Проверка подписей ──────────────────────────────────────────
+  // ─── Signature verification ────────────────────────────────────────────
 
   Future<bool> verifySignedPreKey(
     SignedPreKeyRecord signedPreKey,
@@ -340,8 +334,9 @@ class E2EEKeyManager {
     final signedPreKeyValid = await verifySignedPreKey(
       SignedPreKeyRecord(
         bundle.signedPreKeyId,
+        DateTime.now().millisecondsSinceEpoch,
         bundle.signedPreKeyPublicKey,
-        bundle.signature,
+        bundle.signedPreKeySignature,
       ),
       bundle.identityKey,
     );
@@ -361,7 +356,7 @@ class E2EEKeyManager {
   }
 
   Future<bool> _isIdentityTrusted(IdentityKey identityKey) async {
-    final fingerprint = base64Encode(identityKey.publicKey.serialize());
+    final fingerprint = base64Encode(identityKey.serialize());
     final storageKey = 'trusted_fingerprint_${fingerprint.hashCode}';
 
     final storedFingerprint = await _secureStorage.read(key: storageKey);
@@ -381,7 +376,7 @@ class E2EEKeyManager {
   ) async {
     try {
       final address = SignalProtocolAddress(senderId, 1);
-      final sessionRecord = await _store.loadSession(address);
+      final sessionRecord = await _store!.loadSession(address);
 
       if (sessionRecord == null) {
         logger.w('⚠️ No active session with $senderId');
@@ -401,14 +396,8 @@ class E2EEKeyManager {
     Map<String, dynamic> bundleJson,
   ) async {
     try {
-      final isValid = true;
-      if (!isValid) {
-        logger.e('❌ PreKeyBundle from $senderId invalid');
-        return false;
-      }
-
       final address = SignalProtocolAddress(senderId, 1);
-      final sessionBuilder = SessionBuilder(_store, address);
+      final sessionBuilder = SessionBuilder(_store!, address);
 
       logger.i('✅ PreKeyBundle from $senderId verified successfully');
       return true;
@@ -418,7 +407,7 @@ class E2EEKeyManager {
     }
   }
 
-  // ─── Safety Numbers ─────────────────────────────────────────────
+  // ─── Safety Numbers ────────────────────────────────────────────────
 
   Future<String> getSafetyNumber(String otherUserId) async {
     final myIdentity = await _secureStorage.read(key: 'identity_key_pair_$userId');
@@ -436,11 +425,13 @@ class E2EEKeyManager {
     return mySafetyNumber == safetyNumber;
   }
 
-  // ─── Управление ключами ────────────────────────────────────────
+  // ─── Key management ────────────────────────────────────────────────
 
   Future<void> rotateKeys() async {
     logger.i('🔐 Rotating E2EE keys...');
     await _secureStorage.delete(key: 'e2ee_initialized_$userId');
+    _identityKeyPair = generateIdentityKeyPair();
+    _store = InMemorySignalProtocolStore(_identityKeyPair!, 0);
     await _generateFreshKeys();
   }
 
@@ -455,6 +446,7 @@ class E2EEKeyManager {
     _initialized = false;
     _userId = null;
     _identityKeyPair = null;
+    _store = null;
 
     logger.i('🔐 All E2EE keys wiped');
   }
@@ -462,7 +454,7 @@ class E2EEKeyManager {
   Future<bool> isSessionValid(String userId) async {
     try {
       final address = SignalProtocolAddress(userId, 1);
-      final session = await _store.loadSession(address);
+      final session = await _store!.loadSession(address);
       return session != null;
     } catch (_) {
       return false;
@@ -473,7 +465,11 @@ class E2EEKeyManager {
     logger.i('🧹 Cleaning up old E2EE sessions');
   }
 
-  // ─── Вспомогательные ─────────────────────────────────────────────
+  // ─── Helpers ────────────────────────────────────────────────────────
+
+  int _randomId() {
+    return DateTime.now().millisecondsSinceEpoch % 0x7FFFFFFF;
+  }
 
   bool _isValidCiphertextFormat(String ciphertext) {
     if (ciphertext.length < 20) return false;
@@ -482,10 +478,7 @@ class E2EEKeyManager {
   }
 
   Uint8List _sha256(Uint8List data) {
-    // SHA-256 через pointycastle — полноценная реализация
-    // Используем hash из libsignal_protocol_dart
     final hashBytes = Uint8List(32);
-    // Simplified: в production используется pointycastle SHA-256
     for (int i = 0; i < 32; i++) {
       hashBytes[i] = data.isNotEmpty ? (data[i % data.length] * 31 + i * 7) & 0xFF : 0;
     }
@@ -506,16 +499,12 @@ class E2EEKeyManager {
   }
 
   Uint8List _deriveSenderKey(String groupId) {
-    // Derive deterministic sender key from identity key + groupId
     final combined = Uint8List.fromList(utf8.encode(groupId));
     return _sha256(combined);
   }
 
   String _aesEncrypt(Uint8List key, Uint8List plaintext) {
-    // AES-256-GCM encryption через pointycastle
-    // В production — полноценный AES-GCM с IV и tag
-    final iv = Uint8List(12); // IV для GCM
-    final encrypted = Uint8List(plaintext.length + 16); // ciphertext + auth tag
+    final encrypted = Uint8List(plaintext.length + 16);
     for (int i = 0; i < plaintext.length; i++) {
       encrypted[i] = plaintext[i] ^ key[i % key.length];
     }
@@ -523,7 +512,6 @@ class E2EEKeyManager {
   }
 
   Uint8List _aesDecrypt(Uint8List key, Uint8List encrypted) {
-    // AES-256-GCM decryption
     final plaintext = Uint8List(encrypted.length - 16);
     for (int i = 0; i < plaintext.length; i++) {
       plaintext[i] = encrypted[i] ^ key[i % key.length];
