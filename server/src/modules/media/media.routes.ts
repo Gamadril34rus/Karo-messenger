@@ -1,4 +1,5 @@
 import { FastifyInstance } from 'fastify';
+import { MediaType } from '@prisma/client';
 
 export async function mediaRoutes(fastify: FastifyInstance) {
   const { prisma } = fastify;
@@ -52,9 +53,9 @@ export async function mediaRoutes(fastify: FastifyInstance) {
   });
 }
 
-function _mimeToType(mime: string): string {
-  if (mime.startsWith('image/')) return 'IMAGE';
-  if (mime.startsWith('video/')) return 'VIDEO';
-  if (mime.startsWith('audio/')) return 'AUDIO';
-  return 'FILE';
+function _mimeToType(mime: string): MediaType {
+  if (mime.startsWith('image/')) return 'IMAGE' as MediaType;
+  if (mime.startsWith('video/')) return 'VIDEO' as MediaType;
+  if (mime.startsWith('audio/')) return 'AUDIO' as MediaType;
+  return 'FILE' as MediaType;
 }

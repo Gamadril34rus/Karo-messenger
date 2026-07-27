@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../bloc/calls_bloc.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/haptic/haptic_service.dart';
+import '../../../../shared/widgets/charo_widgets.dart';
+import '../bloc/calls_bloc.dart';
+import '../../data/call_item.dart';
 
 /// Экран звонков — история входящих, исходящих, пропущенных
 class CallsScreen extends StatefulWidget {
@@ -24,7 +28,10 @@ class _CallsScreenState extends State<CallsScreen> {
       appBar: AppBar(
         title: const Text('Звонки'),
         actions: [
-          IconButton(icon: const Icon(Icons.search), onPressed: _showSearch),
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () => HapticService.light(),
+          ),
         ],
       ),
       body: BlocBuilder<CallsBloc, CallsState>(
@@ -33,51 +40,103 @@ class _CallsScreenState extends State<CallsScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (state is CallsError) {
-            return Center(child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.error_outline, size: 48, color: context.colors.error),
-                const SizedBox(height: 16),
-                Text(state.message),
-                FilledButton(onPressed: () => context.read<CallsBloc>().add(CallsLoadRequested()), child: const Text('Повторить')),
-              ],
-            ));
+            return Center(
+              child: CharoCard(
+                gradientColors: [context.colors.error.withOpacity(0.08), context.colors.outlineVariant],
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.error_outline, size: 48, color: context.colors.error),
+                    const SizedBox(height: 16),
+                    Text(state.message, style: context.typography.bodyLarge),
+                    const SizedBox(height: 16),
+                    FilledButton(
+                      onPressed: () {
+                        HapticService.light();
+                        context.read<CallsBloc>().add(CallsLoadRequested());
+                      },
+                      child: const Text('Повторить'),
+                    ),
+                  ],
+                ),
+              ),
+            );
           }
           final calls = state is CallsLoaded ? state.calls : <CallItem>[];
           if (calls.isEmpty) {
             return Center(
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                Icon(Icons.call_outlined, size: 64, color: context.colors.onSurface.withOpacity(0.2)),
-                const SizedBox(height: 16),
-                Text('Нет звонков', style: context.typography.titleLarge?.copyWith(color: context.colors.onSurface.withOpacity(0.5))),
-              ]),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.call_outlined, size: 64, color: context.colors.onSurface.withOpacity(0.15)),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Нет звонков',
+                    style: context.typography.titleLarge?.copyWith(
+                      color: context.colors.onSurface.withOpacity(0.4),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Начните новый звонок',
+                    style: context.typography.bodyMedium?.copyWith(
+                      color: context.colors.onSurface.withOpacity(0.3),
+                    ),
+                  ),
+                ],
+              ),
             );
           }
           return ListView.builder(
+            padding: const EdgeInsets.symmetric(vertical: 8),
             itemCount: calls.length,
             itemBuilder: (context, index) => _CallTile(call: calls[index]),
           );
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showNewCallSheet(context),
+        onPressed: () {
+          HapticService.medium();
+          _showNewCallSheet(context);
+        },
         child: const Icon(Icons.dialpad),
       ),
     );
   }
 
-  void _showSearch() {
-    showSearch(context: context, delegate: _CallsSearchDelegate());
-  }
-
   void _showNewCallSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (ctx) => SafeArea(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Padding(padding: const EdgeInsets.all(16), child: Text('Новый звонок', style: context.typography.titleLarge)),
-          ListTile(leading: const Icon(Icons.person_add), title: const Text('Выбрать контакт'), onTap: () { Navigator.pop(ctx); context.go('/contacts'); }),
-        ]),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text('Новый звонок', style: context.typography.titleLarge),
+            ),
+            CharoTile(
+              icon: Icons.person_add,
+              title: 'Выбрать контакт',
+              onTap: () {
+                HapticService.light();
+                Navigator.pop(ctx);
+                context.go('/contacts');
+              },
+            ),
+            CharoTile(
+              icon: Icons.dialpad,
+              title: 'Набрать номер',
+              onTap: () {
+                HapticService.light();
+                Navigator.pop(ctx);
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -91,38 +150,83 @@ class _CallTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final isMissed = call.status == 'missed';
     final isIncoming = call.direction == 'incoming';
-    return ListTile(
-      leading: CircleAvatar(
-        backgroundColor: context.colors.primary.withOpacity(0.1),
-        child: call.avatarUrl != null
-            ? null
-            : Text((call.name ?? '?')[0].toUpperCase(), style: TextStyle(color: context.colors.primary)),
-      ),
-      title: Text(call.name ?? 'Неизвестный', style: TextStyle(
-        color: isMissed ? context.colors.error : context.colors.onSurface,
-        fontWeight: isMissed ? FontWeight.w600 : FontWeight.w500,
-      )),
-      subtitle: Row(children: [
-        Icon(
-          isIncoming ? Icons.call_received : Icons.call_made,
-          size: 16,
-          color: isMissed ? context.colors.error : context.colors.success,
-        ),
-        const SizedBox(width: 4),
-        Text(call.type == 'video' ? 'Видеозвонок' : 'Голосовой звонок', style: context.typography.bodySmall),
-        if (call.duration != null) ...[
-          const SizedBox(width: 8),
-          Text('• ${_formatDuration(call.duration!)}', style: context.typography.bodySmall),
+    final colors = context.colors;
+
+    return CharoCard(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      padding: const EdgeInsets.all(12),
+      radius: 14,
+      borderWidth: isMissed ? 1 : 0,
+      borderColor: isMissed ? colors.error.withOpacity(0.3) : null,
+      child: Row(
+        children: [
+          CharoAvatar(
+            radius: 22,
+            imageUrl: call.avatarUrl,
+            fallbackText: call.name ?? '?',
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  call.name ?? 'Неизвестный',
+                  style: context.typography.titleMedium?.copyWith(
+                    color: isMissed ? colors.error : colors.onSurface,
+                    fontWeight: isMissed ? FontWeight.w600 : FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    Icon(
+                      isIncoming ? Icons.call_received : Icons.call_made,
+                      size: 14,
+                      color: isMissed ? colors.error : context.colors.success,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      call.type == 'video' ? 'Видеозвонок' : 'Голосовой',
+                      style: context.typography.bodySmall,
+                    ),
+                    if (call.duration != null) ...[
+                      const SizedBox(width: 6),
+                      Text('• ${_formatDuration(call.duration!)}', style: context.typography.bodySmall),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(_formatTime(call.time), style: context.typography.bodySmall),
+              const SizedBox(height: 4),
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: colors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: IconButton(
+                  icon: Icon(
+                    call.type == 'video' ? Icons.videocam : Icons.call,
+                    color: colors.primary,
+                    size: 18,
+                  ),
+                  onPressed: () {
+                    HapticService.light();
+                  },
+                  padding: EdgeInsets.zero,
+                ),
+              ),
+            ],
+          ),
         ],
-      ]),
-      trailing: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-        Text(_formatTime(call.time), style: context.typography.bodySmall),
-        IconButton(
-          icon: Icon(call.type == 'video' ? Icons.videocam : Icons.call, color: context.colors.primary),
-          onPressed: () {/* Перезвонить */},
-        ),
-      ]),
-      onTap: () {/* Показать детали звонка */},
+      ),
     );
   }
 
@@ -139,31 +243,4 @@ class _CallTile extends StatelessWidget {
     final s = seconds % 60;
     return '$m:${s.toString().padLeft(2, '0')}';
   }
-}
-
-class _CallsSearchDelegate extends SearchDelegate {
-  @override
-  List<Widget> buildActions(BuildContext context) => [IconButton(icon: const Icon(Icons.clear), onPressed: () => query = '')];
-
-  @override
-  Widget buildLeading(BuildContext context) => IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => close(context, null));
-
-  @override
-  Widget buildResults(BuildContext context) => const Center(child: Text('Результаты поиска'));
-
-  @override
-  Widget buildSuggestions(BuildContext context) => const Center(child: Text('Поиск звонков...'));
-}
-
-class CallItem {
-  final String id;
-  final String? name;
-  final String? avatarUrl;
-  final String type;       // voice, video
-  final String direction;  // incoming, outgoing
-  final String status;     // active, ended, missed, declined
-  final DateTime time;
-  final int? duration;
-
-  const CallItem({required this.id, this.name, this.avatarUrl, required this.type, required this.direction, required this.status, required this.time, this.duration});
 }

@@ -1,4 +1,5 @@
 import { FastifyInstance } from 'fastify';
+import { ChatType } from '@prisma/client';
 import { z } from 'zod';
 
 const createChatSchema = z.object({
@@ -68,7 +69,7 @@ export async function chatsRoutes(fastify: FastifyInstance) {
 
     const chat = await prisma.chat.create({
       data: {
-        type: body.type,
+        type: body.type?.toUpperCase() as ChatType,
         title: body.title,
         createdBy: userId,
         members: {

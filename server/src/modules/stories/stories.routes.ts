@@ -83,7 +83,7 @@ export async function storyRoutes(fastify: FastifyInstance) {
   });
 
   // GET /stories/:id/views — Просмотры истории
-  fastipy.get('/:id/views', async (request, reply) => {
+  fastify.get('/:id/views', async (request, reply) => {
     const { id } = request.params as { id: string };
     const userId = request.userId!;
 

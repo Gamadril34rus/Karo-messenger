@@ -44,7 +44,11 @@ model User {
   sentReactions    Reaction[]
   devices          Device[]
   stories          Story[]
+  storyViews       StoryView[]
   calls            Call[]     @relation("CallCaller")
+  callMemberships  CallMember[]
+  chatCreator      Chat[]
+  messageStatuses  MessageStatus[]
   aiConversations  AiConversation[]
   privacySettings  PrivacySettings?
   pushSettings     PushSettings?
@@ -55,7 +59,8 @@ model User {
   mlsGroupMemberships MlsGroupMember[]
   mlsCommits          MlsCommit[]
   mlsMessages         MlsMessage[]
-  mlsProposals        MlsProposal[]
+  mlsProposalsSent    MlsProposal[] @relation("MlsProposalSender")
+  mlsProposalsTarget  MlsProposal[] @relation("MlsProposalTarget")
   userKeys            UserKey[]
   keyRequestsMade     KeyRequest[] @relation("KeyRequester")
   keyRequestsReceived KeyRequest[] @relation("KeyTarget")
@@ -575,8 +580,8 @@ model MlsProposal {
   createdAt    DateTime        @default(now()) @map("created_at")
 
   group     MlsGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
-  targetUser User?   @relation(fields: [targetUserId], references: [id], onDelete: Cascade)
+  sender    User     @relation("MlsProposalSender", fields: [senderId], references: [id], onDelete: Cascade)
+  targetUser User?   @relation("MlsProposalTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
 
   @@index([groupId, epoch])
   @@map("mls_proposals")

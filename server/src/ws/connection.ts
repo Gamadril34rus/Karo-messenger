@@ -29,13 +29,15 @@ interface ClientConnection {
 // ─── Connection Manager ────────────────────────────────────────────
 
 class ConnectionManager {
-  private connections: Map<string, Map<string, ClientConnection>> = new Map();
+  connections: Map<string, Map<string, ClientConnection>> = new Map();
   // userId -> deviceId -> connection
 
   constructor(
     private prisma: PrismaClient,
-    private redis: Redis,
+    private _redis: Redis,
   ) {}
+
+  get redis(): Redis { return this._redis; }
 
   addConnection(userId: string, deviceId: string, ws: WebSocket): void {
     if (!this.connections.has(userId)) {
@@ -208,7 +210,7 @@ export function wsHandler(prisma: PrismaClient, redis: Redis) {
             logger.warn(`Unknown WS event: ${msg.type}`);
         }
       } catch (err) {
-        logger.error('WS message error:', err);
+        (logger as any).error('WS message error:', String(err));
       }
     });
 
@@ -221,7 +223,7 @@ export function wsHandler(prisma: PrismaClient, redis: Redis) {
 
     // Error handler
     ws.on('error', (err) => {
-      logger.error(`WS error for ${userId}:`, err);
+      (logger as any).error("WS error for " + userId + ": " + String(err));
       manager.removeConnection(userId, deviceId);
     });
   };

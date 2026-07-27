@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/network/api_client.dart';
-import '../screens/contacts_screen.dart';
+import '../../data/contact_item.dart';
 
 // Events
 sealed class ContactsEvent extends Equatable { @override List<Object?> get props => []; }

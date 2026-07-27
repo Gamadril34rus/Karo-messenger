@@ -12,24 +12,24 @@ class AppTheme {
 
   // ─── Цвета ────────────────────────────────────────────────────
 
-  static const Color _primaryLight = Color(0xFF2563EB);  // charo Blue
-  static const Color _primaryDark = Color(0xFF60A5FA);
-  static const Color _accentLight = Color(0xFF8B5CF6);   // Violet accent
-  static const Color _accentDark = Color(0xFFA78BFA);
-  static const Color _success = Color(0xFF10B981);
-  static const Color _warning = Color(0xFFF59E0B);
-  static const Color _error = Color(0xFFEF4444);
-  static const Color _info = Color(0xFF3B82F6);
+  static const Color primaryLight = Color(0xFF2563EB);  // Charo Blue
+  static const Color primaryDark = Color(0xFF60A5FA);
+  static const Color accentLight = Color(0xFF8B5CF6);   // Violet accent
+  static const Color accentDark = Color(0xFFA78BFA);
+  static const Color success = Color(0xFF10B981);
+  static const Color warning = Color(0xFFF59E0B);
+  static const Color error = Color(0xFFEF4444);
+  static const Color info = Color(0xFF3B82F6);
 
   // ─── Светлая тема ─────────────────────────────────────────────
 
   static ThemeData light() {
     final colorScheme = ColorScheme.light(
-      primary: _primaryLight,
-      secondary: _accentLight,
+      primary: primaryLight,
+      secondary: accentLight,
       surface: const Color(0xFFFAFAFA),
       onSurface: const Color(0xFF1A1A2E),
-      error: _error,
+      error: error,
       outline: const Color(0xFFE2E8F0),
       outlineVariant: const Color(0xFFF1F5F9),
     );
@@ -41,8 +41,8 @@ class AppTheme {
 
   static ThemeData dark() {
     final colorScheme = ColorScheme.dark(
-      primary: _primaryDark,
-      secondary: _accentDark,
+      primary: primaryDark,
+      secondary: accentDark,
       surface: const Color(0xFF0F172A),
       onSurface: const Color(0xFFE2E8F0),
       error: const Color(0xFFF87171),
@@ -57,8 +57,8 @@ class AppTheme {
 
   static ThemeData amoled() {
     final colorScheme = ColorScheme.dark(
-      primary: _primaryDark,
-      secondary: _accentDark,
+      primary: primaryDark,
+      secondary: accentDark,
       surface: Colors.black,
       onSurface: const Color(0xFFE2E8F0),
       error: const Color(0xFFF87171),
@@ -290,4 +290,10 @@ extension CharoColors on BuildContext {
   ColorScheme get colors => Theme.of(this).colorScheme;
   TextTheme get typography => Theme.of(this).textTheme;
   bool get isDarkMode => Theme.of(this).brightness == Brightness.dark;
+
+  // ─── Custom semantic colors (not in ColorScheme) ──────────────
+  Color get success => isDarkMode ? const Color(0xFF34D399) : AppTheme.success;
+  Color get warning => isDarkMode ? const Color(0xFFFBBF24) : AppTheme.warning;
+  Color get info => isDarkMode ? const Color(0xFF60A5FA) : AppTheme.info;
+  Color get accentLight => isDarkMode ? AppTheme.accentDark : AppTheme.accentLight;
 }

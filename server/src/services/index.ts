@@ -1,10 +1,9 @@
-import { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
 export class AuthService {
-  async register(phone: string, email?: string, password: string, username?: string) {
+  async register(phone: string, email?: string, password: string = '', username?: string) {
     const existingUser = await prisma.user.findFirst({
       where: { phone },
     });
@@ -13,14 +12,14 @@ export class AuthService {
     }
     const hashedPassword = await this.hashPassword(password);
     const user = await prisma.user.create({
-      data: { phone, email, username, passwordHash: hashedPassword, status: 'ACTIVE' },
+      data: { phone, email, username: username ?? phone, passwordHash: hashedPassword, status: 'ACTIVE' },
     });
     return user;
   }
 
   async login(phone: string, password: string) {
     const user = await prisma.user.findFirst({ where: { phone, status: 'ACTIVE' } });
-    if (!user || !user.passwordHash) {
+    if (!user || !user.passwordHash || !password) {
       throw new Error('Invalid credentials');
     }
     const valid = await this.verifyPassword(password, user.passwordHash);
@@ -33,7 +32,7 @@ export class AuthService {
   async deleteAccount(userId: string) {
     await prisma.user.update({
       where: { id: userId },
-      data: { status: 'DELETED', deletedAt: new Date() },
+      data: { status: 'DELETED' as any, deletedAt: new Date() },
     });
   }
 
@@ -44,7 +43,7 @@ export class AuthService {
 
   async verifyPassword(password: string, hash: string): Promise<boolean> {
     const bcrypt = await import('bcryptjs');
-    return bcrypt.compare(password, hash);
+    return bcrypt.compare(password, hash!);
   }
 }
 

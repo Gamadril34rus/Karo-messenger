@@ -65,7 +65,7 @@ export async function messagesRoutes(fastify: FastifyInstance) {
       return reply.code(403).send({ message: 'Недостаточно прав' });
     }
 
-    await prisma.message.update({ where: { id }, data: { isDeleted: true, content: null } });
+    await prisma.message.update({ where: { id }, data: { isDeleted: true, content: { isSet: false } } });
     return reply.code(204).send();
   });
 

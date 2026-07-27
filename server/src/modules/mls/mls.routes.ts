@@ -70,7 +70,7 @@ export async function mlsRoutes(app: FastifyInstance) {
     const group = await prisma.mlsGroup.findUnique({
       where: { id },
       include: {
-        members: { include: { user: { select: { id: true, username: true, displayName: true, avatarUrl: true } } } } },
+        members: { include: { user: true } },
         treeNodes: { orderBy: { index: 'asc' } },
       },
     });

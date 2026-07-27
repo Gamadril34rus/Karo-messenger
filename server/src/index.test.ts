@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { FastifyInstance } from 'fastify';
-import { buildServer } from '../index.js';
+import { buildServer } from '../dist/index';
 
 describe('Server Health', () => {
   let server: FastifyInstance;

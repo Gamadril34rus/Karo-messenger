@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/network/api_client.dart';
-import '../screens/nearby_screen.dart';
+import '../../data/nearby_user.dart';
 
 // Events
 sealed class NearbyEvent extends Equatable { @override List<Object?> get props => []; }
@@ -34,8 +34,8 @@ class NearbyBloc extends Bloc<NearbyEvent, NearbyState> {
     try {
       final response = await _apiClient.get('/api/v1/nearby');
       final users = (response.asList).map<NearbyUser>((json) => NearbyUser(
-        userId: json['user_id'] as String? ?? '',
-        displayName: json['display_name'] as String? ?? 'Аноним',
+        userId: json['user_id'] as String,
+        displayName: json['display_name'] as String,
         distance: json['distance'] as String? ?? '? м',
         status: json['status'] as String?,
       )).toList();

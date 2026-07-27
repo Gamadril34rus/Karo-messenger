@@ -13,16 +13,16 @@ import { PrismaClient } from '@prisma/client';
 import Redis from 'ioredis';
 
 import { authRoutes } from './modules/auth/auth.routes';
-import { messageRoutes } from './modules/messages/messages.routes';
-import { chatRoutes } from './modules/chats/chats.routes';
-import { userRoutes } from './modules/users/users.routes';
+import { messagesRoutes } from './modules/messages/messages.routes';
+import { chatsRoutes } from './modules/chats/chats.routes';
+import { usersRoutes } from './modules/users/users.routes';
 import { mediaRoutes } from './modules/media/media.routes';
-import { callRoutes } from './modules/calls/calls.routes';
+import { callsRoutes } from './modules/calls/calls.routes';
 import { storyRoutes } from './modules/stories/stories.routes';
-import { contactRoutes } from './modules/contacts/contacts.routes';
+import { contactsRoutes } from './modules/contacts/contacts.routes';
 import { settingsRoutes } from './modules/settings/settings.routes';
 import { aiRoutes } from './modules/ai/ai.routes';
-import { stickerRoutes } from './modules/stickers/stickers.routes';
+import { stickersRoutes } from './modules/stickers/stickers.routes';
 import { nearbyRoutes } from './modules/nearby/nearby.routes';
 import { mlsRoutes } from './modules/mls/mls.routes';
 
@@ -60,6 +60,10 @@ declare module 'fastify' {
   interface FastifyRequest {
     userId?: string;
     deviceId?: string;
+  }
+  interface FastifyInstance {
+    prisma: import('@prisma/client').PrismaClient;
+    redis: import('ioredis').Redis;
   }
 }
 
@@ -120,16 +124,16 @@ async function bootstrap() {
       // Защищённые маршруты
       api.addHook('preHandler', authMiddleware);
 
-      api.register(userRoutes, { prefix: '/users' });
-      api.register(chatRoutes, { prefix: '/chats' });
-      api.register(messageRoutes, { prefix: '/messages' });
+      api.register(usersRoutes, { prefix: '/users' });
+      api.register(chatsRoutes, { prefix: '/chats' });
+      api.register(messagesRoutes, { prefix: '/messages' });
       api.register(mediaRoutes, { prefix: '/media' });
-      api.register(callRoutes, { prefix: '/calls' });
+      api.register(callsRoutes, { prefix: '/calls' });
       api.register(storyRoutes, { prefix: '/stories' });
-      api.register(contactRoutes, { prefix: '/contacts' });
+      api.register(contactsRoutes, { prefix: '/contacts' });
       api.register(settingsRoutes, { prefix: '/settings' });
       api.register(aiRoutes, { prefix: '/ai' });
-      api.register(stickerRoutes, { prefix: '/stickers' });
+      api.register(stickersRoutes, { prefix: '/stickers' });
       api.register(nearbyRoutes, { prefix: '/nearby' });
 
       // MLS маршруты — полные пути внутри mls.routes.ts (/api/v1/mls/...)

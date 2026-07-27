@@ -76,7 +76,7 @@ export async function authRoutes(fastify: FastifyInstance) {
 
     // Генерируем OTP
     const code = generateOtp();
-    await prisma.oTPCode.create({
+    await prisma.otpCode.create({
       data: {
         identifier,
         code,
@@ -117,7 +117,7 @@ export async function authRoutes(fastify: FastifyInstance) {
     const { identifier, code, method } = request.body as z.infer<typeof verifySchema>;
 
     // Ищем валидный OTP
-    const otp = await prisma.oTPCode.findFirst({
+    const otp = await prisma.otpCode.findFirst({
       where: {
         identifier,
         code,
@@ -135,7 +135,7 @@ export async function authRoutes(fastify: FastifyInstance) {
     }
 
     // Помечаем как использованный
-    await prisma.oTPCode.update({
+    await prisma.otpCode.update({
       where: { id: otp.id },
       data: { isUsed: true },
     });
@@ -225,7 +225,7 @@ export async function authRoutes(fastify: FastifyInstance) {
     const method = data.phone ? 'phone' : 'email';
     const code = generateOtp();
 
-    await prisma.oTPCode.create({
+    await prisma.otpCode.create({
       data: {
         identifier,
         code,
