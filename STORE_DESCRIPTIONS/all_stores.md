@@ -8,11 +8,11 @@
 ЧАРО
 
 ### Краткое описание (80 символов)
-Быстрый, приватный мессенджер с AI, звонками и стикерами из любого мессенджера
+Быстрый, приватный мессенджер с AI, звонками и стикерами
 
 ### Полное описание
 
-⚡ **ЧАРО** — мессенджер нового поколения, в котором собрано всё лучшее от Telegram, WhatsApp, Viber, VK Messenger и ICQ!
+⚡ **ЧАРО** — мессенджер нового поколения: быстрый, приватный, с AI и премиум UI!
 
 💬 **ОБЩЕНИЕ БЕЗ ГРАНИЦ**
 • Мгновенные сообщения с галочками доставки и прочтения
@@ -28,8 +28,8 @@
 • AI-шумоподавление
 
 🎨 **ЭКСПРЕССИЯ И МЕДИА**
-• Классические эмодзи + лegendарный ICQ-пак 🤜💥
-• Стикеры из Telegram, VK, WhatsApp, Viber — импортируйте любые!
+• Классические эмодзи + легендарный Charo-пак 🤜💥
+• Стикеры — импортируйте из ZIP-архивов и локальных папок!
 • GIF-анимации со встроенным поиском
 • Файлы до 2 ГБ каждый
 
@@ -91,11 +91,11 @@ https://charo.chat/privacy
 ЧАРО
 
 ### Краткое описание
-Мессенджер нового поколения: быстрый, приватный, с AI и стикерами из всех мессенджеров
+Мессенджер нового поколения: быстрый, приватный, с AI и стикерами
 
 ### Полное описание
 
-⚡ **ЧАРО** — российский мессенджер нового поколения, объединяющий лучшие функции Telegram, WhatsApp, Viber, VK Messenger и ICQ в одном приложении!
+⚡ **ЧАРО** — российский мессенджер нового поколения: быстрый, приватный, с AI и премиум UI!
 
 🔥 **Почему выбирают ЧАРО:**
 
@@ -112,8 +112,8 @@ https://charo.chat/privacy
 • AI-шумоподавление для чистого звука
 
 🎨 **Медиа и стикеры**
-• Импорт стикеров из VK, Telegram, WhatsApp, Viber
-• Легендарный ICQ-пак со смайликом, бьющимся об стену 🤜💥
+• Импорт стикеров из ZIP-архивов и локальных папок
+• Легендарный Charo-пак со смайликом, бьющимся об стену 🤜💥
 • GIF-анимации и эмодзи
 • Файлы до 2 ГБ
 
@@ -172,7 +172,7 @@ Private Messenger with AI & Stickers
 
 ### Description
 
-⚡ **ЧАРО** — the next-generation messenger that combines the best of Telegram, WhatsApp, Viber, VK Messenger, and ICQ!
+⚡ **ЧАРО** — the next-generation messenger: fast, private, with AI and premium UI!
 
 💬 **MESSAGING**
 • Instant messages with delivery & read receipts and precise timestamps
@@ -188,8 +188,8 @@ Private Messenger with AI & Stickers
 • AI-powered noise suppression
 
 🎨 **EXPRESS YOURSELF**
-• Full emoji library + legendary ICQ pack 🤜💥
-• Import stickers from Telegram, VK, WhatsApp, Viber — any format!
+• Full emoji library + legendary Charo pack 🤜💥
+• Import stickers from ZIP archives and local folders — any format!
 • GIF search built-in
 • Files up to 2 GB
 
@@ -223,7 +223,7 @@ Private Messenger with AI & Stickers
 
 Download ЧАРО for free and communicate without limits!
 
-### Keywords
+### keywords
 messenger, chat, calls, video, stickers, AI, privacy, encryption, E2E, secure
 
 ### Category

@@ -2,7 +2,7 @@
 
 > Быстрый. Приватный. Мощный. Красивый.
 
-ЧАРО — production-ready мессенджер с E2EE (Signal Protocol), MLS для групп, WebRTC звонками, DataChannel, ICQ-звуками, анти-блокировками и premium UI.
+ЧАРО — production-ready мессенджер с E2EE (Signal Protocol), MLS для групп, WebRTC звонками, DataChannel, Charo-звуками, анти-блокировками и premium UI.
 
 ## 📱 Архитектура
 
@@ -102,15 +102,15 @@ flutter run -d linux      # Linux
 | `CharoSwitchTile` | Toggle с подписью |
 | `CharoProgressRing` | Круговой progress indicator |
 
-## 🔊 Звуки ICQ
+## 🔊 Звуки Charo
 
 | Файл | Описание |
 |---|---|
-| `icq_message.wav` | Входящее сообщение (Uh-oh!) |
-| `icq_send.wav` | Отправка сообщения |
-| `icq_call.wav` | Входящий звонок (4-ring) |
-| `icq_online.wav` | Контакт онлайн |
-| `icq_system.wav` | Системное уведомление |
+| `charo_message.wav` | Входящее сообщение (Uh-oh!) |
+| `charo_send.wav` | Отправка сообщения |
+| `charo_call.wav` | Входящий звонок (4-ring) |
+| `charo_online.wav` | Контакт онлайн |
+| `charo_system.wav` | Системное уведомление |
 
 ## 🗂️ Структура проекта
 
@@ -125,9 +125,9 @@ charo-messenger/
 │   │   └── main.dart
 │   ├── assets/
 │   │   ├── fonts/          # CharoSans (Open Sans rebrand)
-│   │   ├── sounds/         # ICQ WAV sounds
+│   │   ├── sounds/         # Charo WAV sounds
 │   │   ├── stickers/       # 15 packs, 132 stickers
-│   │   ├── emoji/          # ICQ classic + animated
+│   │   ├── emoji/          # Charo classic + animated
 │   │   └── icons/          # App icon 1024×1024
 │   └── pubspec.yaml
 ├── server/
@@ -165,10 +165,10 @@ flutter analyze         # Static analysis (0 errors target)
 - [x] Safety Numbers — SHA-256(sorted fingerprints) + server fetch
 - [x] WebRTC calls + DataChannel + E2EE
 - [x] Anti-blocking — DoH + mirrors + proxy + domain fronting
-- [x] ICQ sounds + haptic feedback
+- [x] Charo sounds + haptic feedback
 - [x] Premium CharoWidgets UI (8 widgets)
 - [x] 35+ languages of Russia
-- [x] Sticker import from Telegram/VK/WhatsApp/Viber
+- [x] Sticker import from local ZIP/folder (WhatsApp format supported)
 - [x] Animated emoji (6 packs)
 - [x] Server: 0 TypeScript errors
 - [x] Docker + docker-compose

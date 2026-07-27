@@ -108,13 +108,13 @@ flutter:
   assets:
     - assets/icons/
     - assets/emoji/
-    - assets/emoji/icq_classic/
-    - assets/emoji/icq_animated/bang_wall/
-    - assets/emoji/icq_animated/wave/
-    - assets/emoji/icq_animated/pushup/
-    - assets/emoji/icq_animated/roll_eyes/
-    - assets/emoji/icq_animated/walk_away/
-    - assets/emoji/icq_animated/bloom/
+    - assets/emoji/charo_classic/
+    - assets/emoji/charo_animated/bang_wall/
+    - assets/emoji/charo_animated/wave/
+    - assets/emoji/charo_animated/pushup/
+    - assets/emoji/charo_animated/roll_eyes/
+    - assets/emoji/charo_animated/walk_away/
+    - assets/emoji/charo_animated/bloom/
     - assets/fonts/
     - assets/stickers/
     - assets/stickers/charo_basics/
@@ -130,7 +130,7 @@ flutter:
     - assets/stickers/charo_travel/
     - assets/stickers/charo_gaming/
     - assets/stickers/charo_love/
-    - assets/stickers/charo_retro_icq/
+    - assets/stickers/charo_retro/
     - assets/stickers/charo_food_ru/
     - assets/sounds/
 

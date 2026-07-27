@@ -118,9 +118,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **MLS (Messaging Layer Security)**: GroupContext, MlsWelcomeMessage, RatchetTree, Commit+Proposal — 8 Prisma models, 16 server endpoints
 - **WebRTC calls**: AdaptiveQualityManager, WebRtcMonitor, SecureDataChannel, DataChannelService
 - **Anti-blocking mechanisms**: DoH, domain fronting, proxy, mirror domains, obfuscation — AntiBlockInterceptor
-- **ICQ-style sound pack**: 5 notification sounds (message, send, call, online, system)
+- **Charo sound pack**: 5 notification sounds (message, send, call, online, system)
 - **Haptic feedback service**: Platform-adaptive haptic patterns
-- **Notification service**: ICQ sounds + FlutterLocalNotifications + FCM integration
+- **Notification service**: Charo sounds + FlutterLocalNotifications + FCM integration
 - **File upload service**: E2EE + progress stream + 512KB chunked upload
 - **Account deletion**: Full privacy compliance with GDPR/Russian data law
 - **Privacy policy**: PRIVACY_POLICY.md

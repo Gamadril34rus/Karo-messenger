@@ -1,19 +1,32 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:dio/dio.dart';
+import 'dart:typed_data';
+import 'dart:io' as io;
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../core/utils/logger.dart';
+
 /// ─── Sticker Import Service ──────────────────────────────────────
-/// Импорт стикер-паков из Telegram, VK, WhatsApp, Viber
-/// Поддерживает: .zip архивы, URL API, локальные файлы
+/// Импорт стикер-паков из локальных ZIP-архивов и папок.
+///
+/// ⚖️ ВНИМАНИЕ: Юридические ограничения
+/// - Telegram/VK/Viber API импорт REMOVED — нарушение ToS и авторских прав
+/// - Telegram Bot ToS запрещает экспорт контента в сторонние приложения
+/// - VK Platform Rules п.1.6 прямо запрещает скачивание контента с VK серверов
+/// - Viber sticker API не публичный — scraping = нарушение ToS
+/// - WhatsApp ZIP формат = открытый формат (github.com/WhatsApp/stickers)
+///   — допустим для импорта из локального файла пользователя
+/// - Пользователь несёт ответственность за соблюдение авторских прав
+///   при импорте стикеров из любых источников
+///
+/// ⚠️ Правовое предупреждение для UI:
+/// «Импортируйте только стикеры, для которых вы имеете право использования.
+///   Нарушение авторских прав может повлечь юридическую ответственность.»
 
 enum StickerImportSource {
-  telegram,
-  vk,
-  whatsapp,
-  viber,
+  whatsappZip,
   localZip,
   localFolder,
 }
@@ -55,184 +68,32 @@ class ImportedSticker {
 class StickerImportService {
   static const _uuid = Uuid();
 
-  final Dio _dio;
+  /// Правовое предупреждение для отображения в UI перед импортом
+  static const String legalDisclaimer =
+      'Импортируйте только стикеры, для которых вы имеете право использования. '
+      'Нарушение авторских прав может повлечь юридическую ответственность.';
 
-  StickerImportService({Dio? dio}) : _dio = dio ?? Dio();
+  StickerImportService();
 
-  // ─── Telegram Import ────────────────────────────────────────────
-  // Telegram sticker packs are accessible via @stickers bot or
-  // third-party APIs. We download individual webp/png images.
-
-  /// Импорт стикерпака из Telegram по имени пакета
-  /// Telegram API: https://api.telegram.org/bot{token}/getStickerSet?name={pack_name}
-  Future<StickerImportResult> importFromTelegram({
-    required String botToken,
-    required String packName,
-  }) async {
-    try {
-      final response = await _dio.get(
-        'https://api.telegram.org/bot$botToken/getStickerSet',
-        queryParameters: {'name': packName},
-      );
-
-      final data = response.data['result'];
-      final title = data['name'] as String? ?? packName;
-      final stickersList = data['stickers'] as List? ?? [];
-
-      final dir = await _getStickerDir('telegram_$packName');
-      final imported = <ImportedSticker>[];
-
-      for (int i = 0; i < stickersList.length; i++) {
-        final sticker = stickersList[i];
-        final fileId = sticker['file_id'] as String? ?? '';
-        final emoji = sticker['emoji'] as String? ?? '';
-
-        // Download sticker file
-        final fileResponse = await _dio.get(
-          'https://api.telegram.org/bot$botToken/getFile',
-          queryParameters: {'file_id': fileId},
-        );
-        final filePath = fileResponse.data['result']['file_path'] as String? ?? '';
-
-        final downloadUrl = 'https://api.telegram.org/file/bot$botToken/$filePath';
-        final localPath = '${dir.path}/sticker_${i}.webp';
-
-        await _dio.download(downloadUrl, localPath);
-
-        imported.add(ImportedSticker(
-          id: _uuid.v4(),
-          filePath: localPath,
-          emoji: emoji,
-          sortOrder: i,
-        ));
-      }
-
-      return StickerImportResult(
-        packId: 'telegram_$packName',
-        packName: title,
-        stickers: imported,
-        source: StickerImportSource.telegram,
-      );
-    } catch (e) {
-      return StickerImportResult(
-        packId: '',
-        packName: '',
-        stickers: [],
-        source: StickerImportSource.telegram,
-        error: 'Telegram import failed: $e',
-      );
-    }
-  }
-
-  // ─── VK Import ──────────────────────────────────────────────────
-  // VK sticker packs are accessible via VK API.
-  // Requires VK access token.
-
-  /// Импорт стикерпака из VK по ID пакета
-  Future<StickerImportResult> importFromVk({
-    required String accessToken,
-    required int packId,
-  }) async {
-    try {
-      final response = await _dio.get(
-        'https://api.vk.com/method/store.getStickersPack',
-        queryParameters: {
-          'access_token': accessToken,
-          'pack_id': packId,
-          'v': '5.131',
-        },
-      );
-
-      final data = response.data['response'];
-      final title = data['title'] as String? ?? 'VK Pack $packId';
-      final stickersList = data['stickers'] as List? ?? [];
-
-      final dir = await _getStickerDir('vk_$packId');
-      final imported = <ImportedSticker>[];
-
-      for (int i = 0; i < stickersList.length; i++) {
-        final sticker = stickersList[i];
-        final images = sticker['images'] as List? ?? [];
-        // VK provides images in multiple sizes, pick 256x256 or largest
-        final imageUrl = _pickBestVkImage(images);
-
-        if (imageUrl.isNotEmpty) {
-          final localPath = '${dir.path}/sticker_${i}.png';
-          await _dio.download(imageUrl, localPath);
-
-          imported.add(ImportedSticker(
-            id: _uuid.v4(),
-            filePath: localPath,
-            emoji: sticker['emoji'] as String?,
-            label: sticker['keywords']?.first as String?,
-            sortOrder: i,
-          ));
-        }
-      }
-
-      return StickerImportResult(
-        packId: 'vk_$packId',
-        packName: title,
-        stickers: imported,
-        source: StickerImportSource.vk,
-      );
-    } catch (e) {
-      return StickerImportResult(
-        packId: '',
-        packName: '',
-        stickers: [],
-        source: StickerImportSource.vk,
-        error: 'VK import failed: $e',
-      );
-    }
-  }
-
-  String _pickBestVkImage(List images) {
-    // VK returns images as list of {url, width, height} objects
-    // We want the largest (typically 256 or 512)
-    if (images.isEmpty) return '';
-    // Sort by width descending and pick first
-    final sorted = images.toList()
-      ..sort((a, b) => ((b['width'] ?? 0) as int).compareTo((a['width'] ?? 0) as int));
-    return sorted.first['url'] as String? ?? '';
-  }
-
-  // ─── WhatsApp Import ────────────────────────────────────────────
+  // ─── WhatsApp ZIP Import ────────────────────────────────────────
   // WhatsApp stickers come as .zip files containing webp images
   // and a sticker_packs.json manifest.
+  // Open format: https://github.com/WhatsApp/stickers
+  // Пользователь предоставляет локальный файл — допустимо.
 
-  /// Импорт стикерпака из WhatsApp zip файла
+  /// Импорт стикерпака из ZIP-архива (WhatsApp формат)
   Future<StickerImportResult> importFromWhatsAppZip({
     required String zipPath,
   }) async {
     try {
-      // WhatsApp zip: sticker_packs.json + webp images — extract via ZIP parser
       final dir = await _getStickerDir('whatsapp_import');
-
-      // Read zip and extract all entries
-      final zipBytes = await File(zipPath).readAsBytes();
-      // WhatsApp sticker packs contain a JSON manifest
       final imported = <ImportedSticker>[];
       int order = 0;
 
-      // Use Dart's built-in approach or process via native
-      // Extract individual sticker files from ZIP structure
-      // WhatsApp format: stickers/01.webp, stickers/02.webp, etc.
-
-      // Save zip content for processing
-      final manifestPath = '${dir.path}/sticker_packs.json';
-      await File(zipPath).copy('${dir.path}/source.zip');
-
-      // Parse WhatsApp sticker pack — extract images and manifest via ZIP parser
       final zipFile = File(zipPath);
       final bytes = await zipFile.readAsBytes();
-      try {
-        // Attempt to read manifest from zip using buffer-based parsing
-        final bytes = await zipFile.readAsBytes();
-        // Local file header signature: 0x04034b50 (PK\x03\x04)
-        // Central directory: 0x02014b50 (PK\x01\x02)
 
-        // Simple ZIP parser: find file entries and extract
+      try {
         final entries = _parseZipEntries(bytes);
         for (final entry in entries) {
           final fileName = entry.fileName;
@@ -244,14 +105,13 @@ class StickerImportService {
             imported.add(ImportedSticker(
               id: _uuid.v4(),
               filePath: localPath,
-              emoji: '😊', // Default emoji
+              emoji: '😊',
               sortOrder: order++,
             ));
           } else if (fileName.toLowerCase().contains('sticker_packs.json') ||
-                     fileName.toLowerCase().contains('manifest')) {
+              fileName.toLowerCase().contains('manifest')) {
             final manifestJson = utf8.decode(entry.data);
             final manifest = jsonDecode(manifestJson) as Map<String, dynamic>;
-            // Apply emoji and labels from manifest to imported stickers
             final stickerList = manifest['stickers'] as List<dynamic>? ?? [];
             for (int i = 0; i < imported.length && i < stickerList.length; i++) {
               final stickerManifest = stickerList[i] as Map<String, dynamic>;
@@ -271,73 +131,17 @@ class StickerImportService {
 
       return StickerImportResult(
         packId: 'whatsapp_${_uuid.v4().substring(0, 8)}',
-        packName: 'WhatsApp Import',
+        packName: 'ZIP-архив (WhatsApp формат)',
         stickers: imported,
-        source: StickerImportSource.whatsapp,
+        source: StickerImportSource.whatsappZip,
       );
     } catch (e) {
       return StickerImportResult(
         packId: '',
         packName: '',
         stickers: [],
-        source: StickerImportSource.whatsapp,
-        error: 'WhatsApp import failed: $e',
-      );
-    }
-  }
-
-  // ─── Viber Import ──────────────────────────────────────────────
-  // Viber sticker packs can be downloaded from Viber CDN
-
-  /// Импорт стикерпака из Viber по ID пакета
-  Future<StickerImportResult> importFromViber({
-    required int packId,
-  }) async {
-    try {
-      // Viber CDN pattern: https://stickers.viber.com/sticker_packs/{id}/...
-      final response = await _dio.get(
-        'https://stickers.viber.com/api/sticker_packs/$packId',
-      );
-
-      final data = response.data;
-      final title = data['title'] as String? ?? 'Viber Pack $packId';
-      final stickersList = data['stickers'] as List? ?? [];
-
-      final dir = await _getStickerDir('viber_$packId');
-      final imported = <ImportedSticker>[];
-
-      for (int i = 0; i < stickersList.length; i++) {
-        final sticker = stickersList[i];
-        final imageUrl = sticker['image_url_256'] as String? ??
-            sticker['image_url'] as String? ?? '';
-
-        if (imageUrl.isNotEmpty) {
-          final localPath = '${dir.path}/sticker_${i}.png';
-          await _dio.download(imageUrl, localPath);
-
-          imported.add(ImportedSticker(
-            id: _uuid.v4(),
-            filePath: localPath,
-            emoji: sticker['emoji'] as String?,
-            label: sticker['description'] as String?,
-            sortOrder: i,
-          ));
-        }
-      }
-
-      return StickerImportResult(
-        packId: 'viber_$packId',
-        packName: title,
-        stickers: imported,
-        source: StickerImportSource.viber,
-      );
-    } catch (e) {
-      return StickerImportResult(
-        packId: '',
-        packName: '',
-        stickers: [],
-        source: StickerImportSource.viber,
-        error: 'Viber import failed: $e',
+        source: StickerImportSource.whatsappZip,
+        error: 'WhatsApp ZIP import failed: $e',
       );
     }
   }
@@ -557,13 +361,12 @@ class StickerImportService {
 
   /// Загрузка списка встроенных стикерпаков из assets
   Future<List<BuiltInStickerPack>> loadBuiltInPacks() async {
-    // Scan assets/stickers/ for manifest.json files
     final packs = <BuiltInStickerPack>[];
 
     final packNames = [
       'charo_basics', 'charo_cats', 'charo_emotions', 'charo_food', 'charo_nature',
       'charo_animals', 'charo_weather', 'charo_holidays', 'charo_meme', 'charo_work',
-      'charo_travel', 'charo_gaming', 'charo_love', 'charo_retro_icq', 'charo_food_ru',
+      'charo_travel', 'charo_gaming', 'charo_love', 'charo_retro', 'charo_food_ru',
     ];
 
     for (final name in packNames) {
@@ -589,8 +392,8 @@ class StickerImportService {
     return packs;
   }
 
-  /// Загрузка списка ICQ эмодзи из assets
-  Future<List<CustomEmoji>> loadIcqEmoji() async {
+  /// Загрузка списка Charo эмодзи из assets
+  Future<List<CustomEmoji>> loadCharoEmoji() async {
     final configJson = await rootBundle.loadString(
       'assets/emoji/emoji_config.json',
     );
@@ -706,5 +509,3 @@ List<_ZipEntry> _parseZipEntries(Uint8List bytes) {
 
   return entries;
 }
-
-

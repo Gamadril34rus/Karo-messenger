@@ -17,7 +17,7 @@ import '../../data/webrtc_monitor.dart';
 /// - Local/remote video rendering via RTCVideoRenderer
 /// - Adaptive quality management
 /// - Haptic feedback for call events
-/// - ICQ call sound (loop until answered)
+/// - Charo call sound (loop until answered)
 /// - Camera/mic/speaker toggles
 /// - Call timer
 /// - Minimize call (floating bubble)
@@ -81,7 +81,7 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
     _initRenderers();
     _setupCall();
 
-    // Play ICQ call sound for outgoing calls
+    // Play Charo call sound for outgoing calls
     if (widget.isOutgoing) {
       NotificationService.instance.playCallSound();
     }

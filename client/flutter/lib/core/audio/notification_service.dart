@@ -7,14 +7,14 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../haptic/haptic_service.dart';
 import '../utils/logger.dart';
 
-/// NotificationService — сервис звуков и push-уведомлений (ICQ sounds)
+/// NotificationService — сервис звуков и push-уведомлений (Charo sounds)
 ///
-/// Звуки ЧАРО (по мотивам ICQ):
-/// - icq_message.wav — входящее сообщение ("Uh-oh!")
-/// - icq_send.wav — отправленное сообщение
-/// - icq_call.wav — входящий звонок (loop)
-/// - icq_online.wav — контакт появился онлайн
-/// - icq_system.wav — системное уведомление
+/// Звуки ЧАРО (по мотивам Charo):
+/// - charo_message.wav — входящее сообщение ("Uh-oh!")
+/// - charo_send.wav — отправленное сообщение
+/// - charo_call.wav — входящий звонок (loop)
+/// - charo_online.wav — контакт появился онлайн
+/// - charo_system.wav — системное уведомление
 ///
 /// Push-уведомления:
 /// - flutter_local_notifications для локальных уведомлений
@@ -116,7 +116,7 @@ class NotificationService {
       showWhen: true,
       enableVibration: true,
       playSound: true,
-      sound: RawResourceAndroidNotificationSound('icq_message'),
+      sound: RawResourceAndroidNotificationSound('charo_message'),
       category: AndroidNotificationCategory.message,
       styleInformation: BigTextStyleInformation(messageText),
     );
@@ -125,7 +125,7 @@ class NotificationService {
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
-      sound: 'icq_message.wav',
+      sound: 'charo_message.wav',
       categoryIdentifier: 'charo_message',
     );
 
@@ -163,7 +163,7 @@ class NotificationService {
       showWhen: true,
       enableVibration: true,
       playSound: true,
-      sound: RawResourceAndroidNotificationSound('icq_call'),
+      sound: RawResourceAndroidNotificationSound('charo_call'),
       category: AndroidNotificationCategory.call,
       fullScreenIntent: true,
       autoCancel: false,
@@ -177,7 +177,7 @@ class NotificationService {
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
-      sound: 'icq_call.wav',
+      sound: 'charo_call.wav',
       categoryIdentifier: 'charo_call',
     );
 
@@ -221,13 +221,13 @@ class NotificationService {
     // This is handled by the app's navigation system
   }
 
-  // ─── Звуки ICQ ──────────────────────────────────────────────────
+  // ─── Звуки Charo ──────────────────────────────────────────────────
 
   Future<void> playMessageSound() async {
     if (!_soundEnabled) return;
     try {
-      await _player.play(AssetSource('sounds/icq_message.wav'));
-      logger.d('🔔 ICQ message sound played');
+      await _player.play(AssetSource('sounds/charo_message.wav'));
+      logger.d('🔔 Charo message sound played');
     } catch (e) {
       logger.e('Failed to play message sound: $e');
     }
@@ -236,8 +236,8 @@ class NotificationService {
   Future<void> playSendSound() async {
     if (!_soundEnabled) return;
     try {
-      await _player.play(AssetSource('sounds/icq_send.wav'));
-      logger.d('🔔 ICQ send sound played');
+      await _player.play(AssetSource('sounds/charo_send.wav'));
+      logger.d('🔔 Charo send sound played');
     } catch (e) {
       logger.e('Failed to play send sound: $e');
     }
@@ -248,8 +248,8 @@ class NotificationService {
     try {
       await _player.setVolume(1.0);
       await _player.setReleaseMode(ReleaseMode.loop);
-      await _player.play(AssetSource('sounds/icq_call.wav'));
-      logger.d('🔔 ICQ call sound playing (loop)');
+      await _player.play(AssetSource('sounds/charo_call.wav'));
+      logger.d('🔔 Charo call sound playing (loop)');
     } catch (e) {
       logger.e('Failed to play call sound: $e');
     }
@@ -268,8 +268,8 @@ class NotificationService {
   Future<void> playOnlineSound() async {
     if (!_soundEnabled) return;
     try {
-      await _player.play(AssetSource('sounds/icq_online.wav'));
-      logger.d('🔔 ICQ online sound played');
+      await _player.play(AssetSource('sounds/charo_online.wav'));
+      logger.d('🔔 Charo online sound played');
     } catch (e) {
       logger.e('Failed to play online sound: $e');
     }
@@ -278,8 +278,8 @@ class NotificationService {
   Future<void> playSystemSound() async {
     if (!_soundEnabled) return;
     try {
-      await _player.play(AssetSource('sounds/icq_system.wav'));
-      logger.d('🔔 ICQ system sound played');
+      await _player.play(AssetSource('sounds/charo_system.wav'));
+      logger.d('🔔 Charo system sound played');
     } catch (e) {
       logger.e('Failed to play system sound: $e');
     }

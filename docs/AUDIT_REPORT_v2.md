@@ -52,7 +52,7 @@
 | `client/flutter/lib/main.dart` | ✅ |
 | `client/flutter/assets/icons/app_icon.png` | ✅ |
 | `client/flutter/assets/fonts/CharoSans-*.ttf` (4 шт.) | ✅ |
-| `client/flutter/assets/sounds/icq_*.wav` (5 шт.) | ✅ |
+| `client/flutter/assets/sounds/charo_*.wav` (5 шт.) | ✅ |
 | `client/flutter/analysis_options.yaml` | ✅ (добавлен) |
 | `client/flutter/.gitignore` | ✅ (добавлен) |
 | `server/package.json` | ✅ |
@@ -87,11 +87,11 @@
 | SHA-256 | Файлы | Причина |
 |---------|-------|---------|
 | `e3b0c44298fc1c149...` (empty) | `CharoSans-Regular/Medium/SemiBold/Bold.ttf` | 0-byte placeholder шрифтов |
-| `13a125777f855e896...` (identical) | `icq_call/message/online/send/system.wav` | Одинаковый silence WAV |
+| `13a125777f855e896...` (identical) | `charo_call/message/online/send/system.wav` | Одинаковый silence WAV |
 
 **Решение:** Перед релизом заменить:
 - 4 пустых .ttf → реальные шрифты (или убрать `fonts:` из pubspec.yaml)
-- 5 одинаковых WAV → реальные ICQ-звуки различной длины/тона
+- 5 одинаковых WAV → реальные Charo-звуки различной длины/тона
 
 ---
 
@@ -304,7 +304,7 @@ RUN find ./dist -name '*.map' -delete && \
 | Docker services | `charo-<name>` | ✅ charo-postgres, charo-redis, charo-minio, etc. |
 | Nginx upstream | `charo_api` | ✅ |
 | Container names | `charo-*` | ✅ |
-| Asset files | `snake_case.wav/ttf/png` | ✅ icq_message.wav, CharoSans-Regular.ttf |
+| Asset files | `snake_case.wav/ttf/png` | ✅ charo_message.wav, CharoSans-Regular.ttf |
 
 ---
 
@@ -318,16 +318,16 @@ RUN find ./dist -name '*.map' -delete && \
 | `pubspec.yaml` assets section | ✅ | 5 asset dirs declared |
 | `pubspec.yaml` fonts section | ✅ | CharoSans 4 weights |
 | `uses-material-design: true` | ✅ | Material Icons |
-| `assets/emoji/` dir | ✅ (empty) | **Требует заполнения ICQ emoji pack** |
+| `assets/emoji/` dir | ✅ (empty) | **Требует заполнения Charo emoji pack** |
 | `assets/stickers/` dir | ✅ (empty) | **Требует заполнения встроенными стикерами** |
 | `assets/fonts/` (4 TTF) | ⚠️ (empty) | **0-byte placeholder → заменить на реальные шрифты** |
-| `assets/sounds/` (5 WAV) | ⚠️ (identical) | **Все одинаковые silence → заменить на реальные ICQ звуки** |
+| `assets/sounds/` (5 WAV) | ⚠️ (identical) | **Все одинаковые silence → заменить на реальные Charo звуки** |
 
 **Решение:**
-1. Заполнить `assets/emoji/` ICQ emoji pack (35+ языков России)
+1. Заполнить `assets/emoji/` Charo emoji pack (35+ языков России)
 2. Заполнить `assets/stickers/` встроенными стикерами + импорт из VK/WhatsApp/Viber/Telegram
 3. Заменить 4 пустых .ttf на реальные шрифты (или убрать fonts из pubspec)
-4. Записать/найти 5 различающихся ICQ-style WAV звуков
+4. Записать/найти 5 различающихся Charo WAV звуков
 
 ---
 
@@ -434,8 +434,8 @@ RUN find ./dist -name '*.map' -delete && \
 | # | Вопрос | Критичность | Рекомендация |
 |---|--------|-------------|--------------|
 | 1 | 4 font .ttf = 0-byte empty | 🟡 HIGH | Заменить на реальные шрифты или убрать `fonts:` из pubspec |
-| 2 | 5 WAV = identical silence | 🟡 HIGH | Записать/найти реальные ICQ-style звуки |
-| 3 | `assets/emoji/` = empty | 🟡 HIGH | Заполнить ICQ emoji pack (35+ языков) |
+| 2 | 5 WAV = identical silence | 🟡 HIGH | Записать/найти реальные Charo звуки |
+| 3 | `assets/emoji/` = empty | 🟡 HIGH | Заполнить Charo emoji pack (35+ языков) |
 | 4 | `assets/stickers/` = empty | 🟡 HIGH | Заполнить встроенные стикеры + импорт |
 | 5 | `local_db.g.dart` = placeholder | 🟡 HIGH | `dart run build_runner build` |
 | 6 | `signal_protocol_dart` API compat | 🟡 HIGH | Verify API matches imports |

@@ -40,7 +40,7 @@
 | Файл | Описание |
 |------|----------|
 | `haptic/haptic_service.dart` | light/medium/heavy/error/notification + контекстные методы |
-| `audio/notification_service.dart` | ICQ sounds (icq_message/send/call/online/system.wav) |
+| `audio/notification_service.dart` | Charo sounds (charo_message/send/call/online/system.wav) |
 | `errors/app_error.dart` | ErrorType enum, AppError с userMessage, isRetryable |
 
 ### 🖥️ Widgets — `lib/shared/widgets/`

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 /// ─── Animated Emoji Service ──────────────────────────────────────
-/// Покадровая анимация ICQ-эмодзи в Flutter.
+/// Покадровая анимация Charo-эмодзи в Flutter.
 /// Загружает frames из assets и воспроизводит циклично.
 
 class AnimatedEmojiData {
@@ -45,7 +45,7 @@ class AnimatedEmojiData {
   }
 
   /// Asset prefix for this emoji's frames
-  String get assetPrefix => 'assets/emoji/icq_animated/$id';
+  String get assetPrefix => 'assets/emoji/charo_animated/$id';
 }
 
 /// ─── Animated Emoji Widget ────────────────────────────────────────
@@ -157,7 +157,7 @@ class _AnimatedEmojiState extends State<AnimatedEmoji> {
 }
 
 /// ─── Animated Emoji Registry ──────────────────────────────────────
-/// Central registry of all animated ICQ emoji.
+/// Central registry of all animated Charo emoji.
 /// Loads animation.json configs and provides AnimatedEmojiData instances.
 
 class AnimatedEmojiRegistry {
@@ -177,7 +177,7 @@ class AnimatedEmojiRegistry {
     for (final id in _emojiIds) {
       try {
         final jsonStr = await rootBundle.loadString(
-          'assets/emoji/icq_animated/$id/animation.json',
+          'assets/emoji/charo_animated/$id/animation.json',
         );
         final jsonMap = jsonDecode(jsonStr) as Map<String, dynamic>;
         _cache[id] = AnimatedEmojiData.fromJson(jsonMap);
