@@ -29,6 +29,7 @@ import '../../features/settings/presentation/screens/data_export_screen.dart';
 import '../../features/contacts/presentation/screens/contacts_screen.dart';
 import '../../features/ai_assistant/presentation/screens/ai_assistant_screen.dart';
 import '../../features/nearby/presentation/screens/nearby_screen.dart';
+import '../../features/chat/presentation/screens/sticker_import_screen.dart';
 import '../../core/haptic/haptic_service.dart';
 
 /// Навигация ЧАРО — GoRouter с вложенными маршрутами
@@ -106,6 +107,7 @@ class AppRouter {
       GoRoute(path: '/settings/media-quality', parentNavigatorKey: _rootNavigatorKey, builder: (context, state) => const SettingsMediaQualityScreen()),
       GoRoute(path: '/settings/about', parentNavigatorKey: _rootNavigatorKey, builder: (context, state) => const SettingsAboutScreen()),
       GoRoute(path: '/settings/data-export', parentNavigatorKey: _rootNavigatorKey, builder: (context, state) => const DataExportScreen()),
+      GoRoute(path: '/sticker-import', parentNavigatorKey: _rootNavigatorKey, builder: (context, state) => const StickerImportScreen()),
       GoRoute(path: '/ai', parentNavigatorKey: _rootNavigatorKey, builder: (context, state) => const AiAssistantScreen()),
       GoRoute(path: '/nearby', parentNavigatorKey: _rootNavigatorKey, builder: (context, state) => const NearbyScreen()),
 

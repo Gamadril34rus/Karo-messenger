@@ -1,18 +1,94 @@
 {
   "id": "charo_basics",
-  "name": "ЧАРО Базовые",
+  "name": "Charo Basics",
   "source": "CHARO",
-  "description": "Базовые стикеры ЧАРО — хамелеон приветствует, любит, прощается и смеётся",
+  "description": "Базовые стикеры для общения — привет, спасибо, ок, круто",
   "icon": "hello.png",
   "isFeatured": true,
   "stickers": [
-    {"id": "hello", "file": "hello.png", "emoji": "👋", "label": "Привет!", "sortOrder": 1},
-    {"id": "love_you", "file": "love_you.png", "emoji": "❤️", "label": "Люблю!", "sortOrder": 2},
-    {"id": "bye", "file": "bye.png", "emoji": "👋", "label": "Пока!", "sortOrder": 3},
-    {"id": "thanks", "file": "thanks.png", "emoji": "👍", "label": "Спасибо!", "sortOrder": 4},
-    {"id": "lol", "file": "lol.png", "emoji": "😂", "label": "😂", "sortOrder": 5},
-    {"id": "sorry", "file": "sorry.png", "emoji": "🙏", "label": "Прости!", "sortOrder": 6},
-    {"id": "cool", "file": "cool.png", "emoji": "😎", "label": "Круто!", "sortOrder": 7},
-    {"id": "miss_you", "file": "miss_you.png", "emoji": "🥺", "label": "Скучаю!", "sortOrder": 8}
+    {
+      "id": "hello",
+      "file": "hello.png",
+      "emoji": "👋",
+      "label": "Привет!",
+      "sortOrder": 1
+    },
+    {
+      "id": "bye",
+      "file": "bye.png",
+      "emoji": "👍",
+      "label": "Пока!",
+      "sortOrder": 2
+    },
+    {
+      "id": "thanks",
+      "file": "thanks.png",
+      "emoji": "🙏",
+      "label": "Спасибо!",
+      "sortOrder": 3
+    },
+    {
+      "id": "ok",
+      "file": "ok.png",
+      "emoji": "✅",
+      "label": "OK",
+      "sortOrder": 4
+    },
+    {
+      "id": "yes",
+      "file": "yes.png",
+      "emoji": "💯",
+      "label": "Yes!",
+      "sortOrder": 5
+    },
+    {
+      "id": "no",
+      "file": "no.png",
+      "emoji": "❌",
+      "label": "No!",
+      "sortOrder": 6
+    },
+    {
+      "id": "wait",
+      "file": "wait.png",
+      "emoji": "⏳",
+      "label": "Wait",
+      "sortOrder": 7
+    },
+    {
+      "id": "cool",
+      "file": "cool.png",
+      "emoji": "😎",
+      "label": "Круто!",
+      "sortOrder": 8
+    },
+    {
+      "id": "sorry",
+      "file": "sorry.png",
+      "emoji": "🙏",
+      "label": "Sorry",
+      "sortOrder": 9
+    },
+    {
+      "id": "idea",
+      "file": "idea.png",
+      "emoji": "💡",
+      "label": "Idea!",
+      "sortOrder": 10
+    },
+    {
+      "id": "question",
+      "file": "question.png",
+      "emoji": "❓",
+      "label": "Question",
+      "sortOrder": 11
+    },
+    {
+      "id": "fire",
+      "file": "fire.png",
+      "emoji": "🔥",
+      "label": "Fire!",
+      "sortOrder": 12
+    }
   ]
 }

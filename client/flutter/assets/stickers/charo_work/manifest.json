@@ -1,79 +1,79 @@
 {
   "id": "charo_work",
-  "name": "charo_work",
+  "name": "Charo Work",
   "source": "CHARO",
-  "description": "Sticker pack: charo_work",
-  "icon": "deadline.png",
+  "description": "Работа и офис — митинг, дедлайн, кофе-брейк",
+  "icon": "meeting.png",
   "isFeatured": false,
   "stickers": [
+    {
+      "id": "meeting",
+      "file": "meeting.png",
+      "emoji": "📋",
+      "label": "Meeting",
+      "sortOrder": 1
+    },
     {
       "id": "deadline",
       "file": "deadline.png",
       "emoji": "⏰",
-      "label": "Дедлайн!",
-      "sortOrder": 1
-    },
-    {
-      "id": "night_owl",
-      "file": "night_owl.png",
-      "emoji": "🦉",
-      "label": "Сова на работе",
+      "label": "Deadline!",
       "sortOrder": 2
-    },
-    {
-      "id": "meeting",
-      "file": "meeting.png",
-      "emoji": "🤝",
-      "label": "Переговоры",
-      "sortOrder": 3
     },
     {
       "id": "coffee_break",
       "file": "coffee_break.png",
       "emoji": "☕",
-      "label": "Кофе-брейк",
-      "sortOrder": 4
+      "label": "Coffee Break",
+      "sortOrder": 3
     },
     {
       "id": "done",
       "file": "done.png",
       "emoji": "✅",
       "label": "Done!",
+      "sortOrder": 4
+    },
+    {
+      "id": "busy",
+      "file": "busy.png",
+      "emoji": "🚫",
+      "label": "DND",
       "sortOrder": 5
     },
     {
-      "id": "fired",
-      "file": "fired.png",
-      "emoji": "🚪",
-      "label": "Уволен...",
+      "id": "email",
+      "file": "email.png",
+      "emoji": "📧",
+      "label": "Email",
       "sortOrder": 6
     },
     {
-      "id": "boss",
-      "file": "boss.png",
-      "emoji": "👔",
-      "label": "Начальник!",
+      "id": "spreadsheet",
+      "file": "spreadsheet.png",
+      "emoji": "📊",
+      "label": "Spreadsheet",
       "sortOrder": 7
     },
     {
-      "id": "freelance",
-      "file": "freelance.png",
-      "emoji": "💻",
-      "label": "Фриланс",
+      "id": "remote",
+      "file": "remote.png",
+      "emoji": "🏠",
+      "label": "Remote",
       "sortOrder": 8
-    },
-    {
-      "id": "mail",
-      "file": "mail.png",
-      "emoji": "📧",
-      "label": "Почта!",
-      "sortOrder": 9
     },
     {
       "id": "vacation",
       "file": "vacation.png",
       "emoji": "🏖️",
-      "label": "Отпуск!",
+      "label": "Vacation!",
+      "sortOrder": 9
+    },
+    {
+      "id": "focus",
+      "file": "focus.png",
+      "emoji": "🎯",
+      "label": "Focus",
       "sortOrder": 10
     }
   ]

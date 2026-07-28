@@ -1,16 +1,94 @@
 {
   "id": "charo_nature",
-  "name": "ЧАРО Природа",
+  "name": "Charo Nature",
   "source": "CHARO",
-  "description": "Природа ЧАРО — солнце, дождь, деревья, горы, цветы и океан",
-  "icon": "sun.png",
+  "description": "Природа — деревья, цветы, горы, океан",
+  "icon": "tree.png",
   "isFeatured": false,
   "stickers": [
-    {"id": "sun", "file": "sun.png", "emoji": "☀️", "label": "☀️ Солнце!", "sortOrder": 1},
-    {"id": "rain", "file": "rain.png", "emoji": "🌧️", "label": "🌧️ Дождь", "sortOrder": 2},
-    {"id": "tree", "file": "tree.png", "emoji": "🌿", "label": "🌿 Природа", "sortOrder": 3},
-    {"id": "mountain", "file": "mountain.png", "emoji": "🏔️", "label": "🏔️ Горы", "sortOrder": 4},
-    {"id": "flower", "file": "flower.png", "emoji": "🌸", "label": "🌸 Цветок", "sortOrder": 5},
-    {"id": "ocean", "file": "ocean.png", "emoji": "🌊", "label": "🌊 Океан", "sortOrder": 6}
+    {
+      "id": "tree",
+      "file": "tree.png",
+      "emoji": "🌳",
+      "label": "Tree",
+      "sortOrder": 1
+    },
+    {
+      "id": "flower",
+      "file": "flower.png",
+      "emoji": "🌸",
+      "label": "Flower",
+      "sortOrder": 2
+    },
+    {
+      "id": "mountain",
+      "file": "mountain.png",
+      "emoji": "🏔️",
+      "label": "Mountain",
+      "sortOrder": 3
+    },
+    {
+      "id": "ocean",
+      "file": "ocean.png",
+      "emoji": "🌊",
+      "label": "Ocean",
+      "sortOrder": 4
+    },
+    {
+      "id": "sunrise",
+      "file": "sunrise.png",
+      "emoji": "🌅",
+      "label": "Sunrise",
+      "sortOrder": 5
+    },
+    {
+      "id": "rainforest",
+      "file": "rainforest.png",
+      "emoji": "🌴",
+      "label": "Rainforest",
+      "sortOrder": 6
+    },
+    {
+      "id": "lake",
+      "file": "lake.png",
+      "emoji": "🏞️",
+      "label": "Lake",
+      "sortOrder": 7
+    },
+    {
+      "id": "cloud",
+      "file": "cloud.png",
+      "emoji": "☁️",
+      "label": "Cloud",
+      "sortOrder": 8
+    },
+    {
+      "id": "leaf",
+      "file": "leaf.png",
+      "emoji": "🍃",
+      "label": "Leaf",
+      "sortOrder": 9
+    },
+    {
+      "id": "stars_night",
+      "file": "stars_night.png",
+      "emoji": "⭐",
+      "label": "Stars",
+      "sortOrder": 10
+    },
+    {
+      "id": "volcano",
+      "file": "volcano.png",
+      "emoji": "🌋",
+      "label": "Volcano",
+      "sortOrder": 11
+    },
+    {
+      "id": "snow_peak",
+      "file": "snow_peak.png",
+      "emoji": "❄️",
+      "label": "Snow Peak",
+      "sortOrder": 12
+    }
   ]
 }

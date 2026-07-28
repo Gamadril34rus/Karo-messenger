@@ -1,80 +1,87 @@
 {
   "id": "charo_gaming",
-  "name": "charo_gaming",
+  "name": "Charo Gaming",
   "source": "CHARO",
-  "description": "Sticker pack: charo_gaming",
-  "icon": "gg.png",
+  "description": "Гейминг — WIN, LOSE, respawn, level up",
+  "icon": "win.png",
   "isFeatured": false,
   "stickers": [
-    {
-      "id": "gg",
-      "file": "gg.png",
-      "emoji": "🎮",
-      "label": "GG!",
-      "sortOrder": 1
-    },
-    {
-      "id": "lol_game",
-      "file": "lol_game.png",
-      "emoji": "😂",
-      "label": "Лол!",
-      "sortOrder": 2
-    },
-    {
-      "id": "rage_quit",
-      "file": "rage_quit.png",
-      "emoji": "🤬",
-      "label": "Rage Quit!",
-      "sortOrder": 3
-    },
-    {
-      "id": "lag",
-      "file": "lag.png",
-      "emoji": "🐢",
-      "label": "Лаги!",
-      "sortOrder": 4
-    },
     {
       "id": "win",
       "file": "win.png",
       "emoji": "🏆",
-      "label": "Win!",
+      "label": "WIN!",
+      "sortOrder": 1
+    },
+    {
+      "id": "lose",
+      "file": "lose.png",
+      "emoji": "💀",
+      "label": "LOSE",
+      "sortOrder": 2
+    },
+    {
+      "id": "respawn",
+      "file": "respawn.png",
+      "emoji": "🔄",
+      "label": "Respawn",
+      "sortOrder": 3
+    },
+    {
+      "id": "level_up",
+      "file": "level_up.png",
+      "emoji": "⬆️",
+      "label": "Level Up!",
+      "sortOrder": 4
+    },
+    {
+      "id": "game_over",
+      "file": "game_over.png",
+      "emoji": "🎮",
+      "label": "Game Over",
       "sortOrder": 5
     },
     {
-      "id": "stream",
-      "file": "stream.png",
-      "emoji": "📹",
-      "label": "Стрим!",
+      "id": "combo",
+      "file": "combo.png",
+      "emoji": "💥",
+      "label": "Combo!",
       "sortOrder": 6
     },
     {
-      "id": "esport",
-      "file": "esport.png",
-      "emoji": "🏅",
-      "label": "Киберспорт!",
+      "id": "boss",
+      "file": "boss.png",
+      "emoji": "👹",
+      "label": "Boss!",
       "sortOrder": 7
     },
     {
-      "id": "rating",
-      "file": "rating.png",
-      "emoji": "⭐",
-      "label": "Рейтинг!",
+      "id": "loot",
+      "file": "loot.png",
+      "emoji": "💎",
+      "label": "Loot!",
       "sortOrder": 8
     },
     {
-      "id": "team",
-      "file": "team.png",
-      "emoji": "👥",
-      "label": "Команда!",
+      "id": "pause",
+      "file": "pause.png",
+      "emoji": "⏸️",
+      "label": "Pause",
       "sortOrder": 9
     },
     {
-      "id": "afk",
-      "file": "afk.png",
-      "emoji": "💤",
-      "label": "AFK...",
+      "id": "glitch",
+      "file": "glitch.png",
+      "emoji": "⚠️",
+      "label": "Glitch",
       "sortOrder": 10
+    },
+    {
+      "id": "rage",
+      "file": "rage.png",
+      "emoji": "😡",
+      "label": "Rage!",
+      "sortOrder": 11
     }
   ]
 }

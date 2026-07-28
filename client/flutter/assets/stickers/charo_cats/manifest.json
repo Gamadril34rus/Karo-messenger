@@ -1,16 +1,80 @@
 {
   "id": "charo_cats",
-  "name": "ЧАРО Коты",
+  "name": "Charo Cats",
   "source": "CHARO",
-  "description": "Котики ЧАРО — мяукают, спят, играют, любят и требуют еды",
-  "icon": "cat_hello.png",
+  "description": "Милые котики — счастливый, грустный, сонный, злый",
+  "icon": "happy_cat.png",
   "isFeatured": true,
   "stickers": [
-    {"id": "cat_hello", "file": "cat_hello.png", "emoji": "🐱", "label": "Мяу-Привет!", "sortOrder": 1},
-    {"id": "cat_sleep", "file": "cat_sleep.png", "emoji": "😴", "label": "Сплю...", "sortOrder": 2},
-    {"id": "cat_play", "file": "cat_play.png", "emoji": "🎉", "label": "Играю!", "sortOrder": 3},
-    {"id": "cat_angry", "file": "cat_angry.png", "emoji": "😾", "label": "Мррр!", "sortOrder": 4},
-    {"id": "cat_love", "file": "cat_love.png", "emoji": "😻", "label": "Мяу-Люблю!", "sortOrder": 5},
-    {"id": "cat_food", "file": "cat_food.png", "emoji": "🐟", "label": "Корми!", "sortOrder": 6}
+    {
+      "id": "happy_cat",
+      "file": "happy_cat.png",
+      "emoji": "🐱",
+      "label": "Happy Cat",
+      "sortOrder": 1
+    },
+    {
+      "id": "sad_cat",
+      "file": "sad_cat.png",
+      "emoji": "😿",
+      "label": "Sad Cat",
+      "sortOrder": 2
+    },
+    {
+      "id": "sleepy_cat",
+      "file": "sleepy_cat.png",
+      "emoji": "😴",
+      "label": "Sleepy Cat",
+      "sortOrder": 3
+    },
+    {
+      "id": "angry_cat",
+      "file": "angry_cat.png",
+      "emoji": "😾",
+      "label": "Angry Cat",
+      "sortOrder": 4
+    },
+    {
+      "id": "cute_cat",
+      "file": "cute_cat.png",
+      "emoji": "😻",
+      "label": "Cute Cat",
+      "sortOrder": 5
+    },
+    {
+      "id": "purr_cat",
+      "file": "purr_cat.png",
+      "emoji": "😺",
+      "label": "Purr Cat",
+      "sortOrder": 6
+    },
+    {
+      "id": "silly_cat",
+      "file": "silly_cat.png",
+      "emoji": "😸",
+      "label": "Silly Cat",
+      "sortOrder": 7
+    },
+    {
+      "id": "boss_cat",
+      "file": "boss_cat.png",
+      "emoji": "👑",
+      "label": "Boss Cat",
+      "sortOrder": 8
+    },
+    {
+      "id": "fat_cat",
+      "file": "fat_cat.png",
+      "emoji": "🐱",
+      "label": "Fat Cat",
+      "sortOrder": 9
+    },
+    {
+      "id": "ninja_cat",
+      "file": "ninja_cat.png",
+      "emoji": "🥷",
+      "label": "Ninja Cat",
+      "sortOrder": 10
+    }
   ]
 }

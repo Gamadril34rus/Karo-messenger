@@ -1,16 +1,80 @@
 {
   "id": "charo_food",
-  "name": "ЧАРО Еда",
+  "name": "Charo Food",
   "source": "CHARO",
-  "description": "Еда ЧАРО — пицца, кофе, бургер, чай, торт и рамен",
+  "description": "Мировая еда — пицца, бургер, кофе, мороженое",
   "icon": "pizza.png",
   "isFeatured": false,
   "stickers": [
-    {"id": "pizza", "file": "pizza.png", "emoji": "🍕", "label": "Пицца!", "sortOrder": 1},
-    {"id": "coffee", "file": "coffee.png", "emoji": "☕", "label": "☕ Кофе!", "sortOrder": 2},
-    {"id": "burger", "file": "burger.png", "emoji": "🍔", "label": "🍔", "sortOrder": 3},
-    {"id": "tea", "file": "tea.png", "emoji": "🍵", "label": "🍵 Чай!", "sortOrder": 4},
-    {"id": "cake", "file": "cake.png", "emoji": "🍰", "label": "🍰 Торт!", "sortOrder": 5},
-    {"id": "ramen", "file": "ramen.png", "emoji": "🍜", "label": "🍜", "sortOrder": 6}
+    {
+      "id": "pizza",
+      "file": "pizza.png",
+      "emoji": "🍕",
+      "label": "Pizza!",
+      "sortOrder": 1
+    },
+    {
+      "id": "burger",
+      "file": "burger.png",
+      "emoji": "🍔",
+      "label": "Burger!",
+      "sortOrder": 2
+    },
+    {
+      "id": "coffee",
+      "file": "coffee.png",
+      "emoji": "☕",
+      "label": "Coffee!",
+      "sortOrder": 3
+    },
+    {
+      "id": "cake",
+      "file": "cake.png",
+      "emoji": "🎂",
+      "label": "Cake!",
+      "sortOrder": 4
+    },
+    {
+      "id": "sushi",
+      "file": "sushi.png",
+      "emoji": "🍣",
+      "label": "Sushi!",
+      "sortOrder": 5
+    },
+    {
+      "id": "donut",
+      "file": "donut.png",
+      "emoji": "🍩",
+      "label": "Donut!",
+      "sortOrder": 6
+    },
+    {
+      "id": "icecream",
+      "file": "icecream.png",
+      "emoji": "🍦",
+      "label": "Ice Cream!",
+      "sortOrder": 7
+    },
+    {
+      "id": "taco",
+      "file": "taco.png",
+      "emoji": "🌮",
+      "label": "Taco!",
+      "sortOrder": 8
+    },
+    {
+      "id": "cherry",
+      "file": "cherry.png",
+      "emoji": "🍒",
+      "label": "Cherry!",
+      "sortOrder": 9
+    },
+    {
+      "id": "watermelon",
+      "file": "watermelon.png",
+      "emoji": "🍉",
+      "label": "Watermelon!",
+      "sortOrder": 10
+    }
   ]
 }

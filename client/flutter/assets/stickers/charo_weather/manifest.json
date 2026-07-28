@@ -1,8 +1,8 @@
 {
   "id": "charo_weather",
-  "name": "charo_weather",
+  "name": "Charo Weather",
   "source": "CHARO",
-  "description": "Sticker pack: charo_weather",
+  "description": "Погода — солнце, дождь, снег, шторм",
   "icon": "sun.png",
   "isFeatured": false,
   "stickers": [
@@ -10,70 +10,70 @@
       "id": "sun",
       "file": "sun.png",
       "emoji": "☀️",
-      "label": "Солнце",
-      "sortOrder": 2
+      "label": "Sun",
+      "sortOrder": 1
     },
     {
       "id": "rain",
       "file": "rain.png",
       "emoji": "🌧️",
-      "label": "Дождь",
-      "sortOrder": 3
+      "label": "Rain",
+      "sortOrder": 2
     },
     {
       "id": "snow",
       "file": "snow.png",
       "emoji": "❄️",
-      "label": "Снег",
-      "sortOrder": 4
+      "label": "Snow",
+      "sortOrder": 3
     },
     {
       "id": "storm",
       "file": "storm.png",
       "emoji": "⛈️",
-      "label": "Гроза",
-      "sortOrder": 5
+      "label": "Storm",
+      "sortOrder": 4
     },
     {
-      "id": "clouds",
-      "file": "clouds.png",
+      "id": "cloudy",
+      "file": "cloudy.png",
       "emoji": "☁️",
-      "label": "Облака",
-      "sortOrder": 6
+      "label": "Cloudy",
+      "sortOrder": 5
     },
     {
       "id": "wind",
       "file": "wind.png",
       "emoji": "💨",
-      "label": "Ветер",
-      "sortOrder": 7
-    },
-    {
-      "id": "hail",
-      "file": "hail.png",
-      "emoji": "🌨️",
-      "label": "Град",
-      "sortOrder": 8
-    },
-    {
-      "id": "rainbow",
-      "file": "rainbow.png",
-      "emoji": "🌈",
-      "label": "Радуга",
-      "sortOrder": 9
+      "label": "Wind",
+      "sortOrder": 6
     },
     {
       "id": "fog",
       "file": "fog.png",
       "emoji": "🌫️",
-      "label": "Туман",
+      "label": "Fog",
+      "sortOrder": 7
+    },
+    {
+      "id": "hot",
+      "file": "hot.png",
+      "emoji": "🔥",
+      "label": "Hot!",
+      "sortOrder": 8
+    },
+    {
+      "id": "cold",
+      "file": "cold.png",
+      "emoji": "🥶",
+      "label": "Cold!",
       "sortOrder": 9
     },
     {
       "id": "tornado",
       "file": "tornado.png",
       "emoji": "🌪️",
-      "label": "Торнадо",
+      "label": "Tornado",
       "sortOrder": 10
     }
   ]

@@ -1,80 +1,87 @@
 {
   "id": "charo_love",
-  "name": "charo_love",
+  "name": "Charo Love",
   "source": "CHARO",
-  "description": "Sticker pack: charo_love",
-  "icon": "kiss.png",
+  "description": "Любовь и романтика — сердце, поцелуй, роза",
+  "icon": "heart.png",
   "isFeatured": true,
   "stickers": [
+    {
+      "id": "heart",
+      "file": "heart.png",
+      "emoji": "❤️",
+      "label": "Heart",
+      "sortOrder": 1
+    },
     {
       "id": "kiss",
       "file": "kiss.png",
       "emoji": "💋",
-      "label": "Поцелуй!",
+      "label": "Kiss!",
       "sortOrder": 2
     },
     {
-      "id": "flowers",
-      "file": "flowers.png",
-      "emoji": "💐",
-      "label": "Цветы!",
-      "sortOrder": 2
-    },
-    {
-      "id": "date",
-      "file": "date.png",
-      "emoji": "❤️",
-      "label": "Свидание!",
+      "id": "couple",
+      "file": "couple.png",
+      "emoji": "💑",
+      "label": "Couple",
       "sortOrder": 3
     },
     {
-      "id": "hug",
-      "file": "hug.png",
-      "emoji": "🤗",
-      "label": "Обнимашки!",
+      "id": "rose",
+      "file": "rose.png",
+      "emoji": "🌹",
+      "label": "Rose",
       "sortOrder": 4
-    },
-    {
-      "id": "wedding",
-      "file": "wedding.png",
-      "emoji": "💒",
-      "label": "Свадьба!",
-      "sortOrder": 5
-    },
-    {
-      "id": "party",
-      "file": "party.png",
-      "emoji": "🎉",
-      "label": "Вечеринка!",
-      "sortOrder": 6
-    },
-    {
-      "id": "serenade",
-      "file": "serenade.png",
-      "emoji": "🎵",
-      "label": "Серенада!",
-      "sortOrder": 7
-    },
-    {
-      "id": "compliment",
-      "file": "compliment.png",
-      "emoji": "💖",
-      "label": "Комплимент!",
-      "sortOrder": 8
-    },
-    {
-      "id": "letter",
-      "file": "letter.png",
-      "emoji": "💌",
-      "label": "Письмо!",
-      "sortOrder": 9
     },
     {
       "id": "ring",
       "file": "ring.png",
       "emoji": "💍",
-      "label": "Кольцо!",
+      "label": "Ring",
+      "sortOrder": 5
+    },
+    {
+      "id": "wedding_day",
+      "file": "wedding_day.png",
+      "emoji": "💕",
+      "label": "Forever",
+      "sortOrder": 6
+    },
+    {
+      "id": "flirt",
+      "file": "flirt.png",
+      "emoji": "😏",
+      "label": "Flirt",
+      "sortOrder": 7
+    },
+    {
+      "id": "hug",
+      "file": "hug.png",
+      "emoji": "🤗",
+      "label": "Hug!",
+      "sortOrder": 8
+    },
+    {
+      "id": "miss_you",
+      "file": "miss_you.png",
+      "emoji": "🥺",
+      "label": "Miss You",
+      "sortOrder": 9
+    },
+    {
+      "id": "romantic",
+      "file": "romantic.png",
+      "emoji": "💜",
+      "label": "Romantic",
       "sortOrder": 10
+    },
+    {
+      "id": "love_letter",
+      "file": "love_letter.png",
+      "emoji": "💌",
+      "label": "Love Letter",
+      "sortOrder": 11
     }
   ]
 }

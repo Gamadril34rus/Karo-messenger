@@ -1,80 +1,87 @@
 {
   "id": "charo_holidays",
-  "name": "charo_holidays",
+  "name": "Charo Holidays",
   "source": "CHARO",
-  "description": "Sticker pack: charo_holidays",
-  "icon": "new_year.png",
+  "description": "Праздники — день рождения, Новый год, Рождество",
+  "icon": "birthday.png",
   "isFeatured": false,
   "stickers": [
-    {
-      "id": "new_year",
-      "file": "new_year.png",
-      "emoji": "🎄",
-      "label": "НГ!",
-      "sortOrder": 1
-    },
-    {
-      "id": "march8",
-      "file": "march8.png",
-      "emoji": "🌸",
-      "label": "8 марта!",
-      "sortOrder": 2
-    },
-    {
-      "id": "feb23",
-      "file": "feb23.png",
-      "emoji": "🎖️",
-      "label": "23 февраля!",
-      "sortOrder": 3
-    },
     {
       "id": "birthday",
       "file": "birthday.png",
       "emoji": "🎂",
-      "label": "День рождения!",
+      "label": "Birthday!",
+      "sortOrder": 1
+    },
+    {
+      "id": "new_year",
+      "file": "new_year.png",
+      "emoji": "🎆",
+      "label": "New Year!",
+      "sortOrder": 2
+    },
+    {
+      "id": "christmas",
+      "file": "christmas.png",
+      "emoji": "🎄",
+      "label": "Christmas!",
+      "sortOrder": 3
+    },
+    {
+      "id": "valentine",
+      "file": "valentine.png",
+      "emoji": "💕",
+      "label": "Valentine's!",
       "sortOrder": 4
-    },
-    {
-      "id": "easter",
-      "file": "easter.png",
-      "emoji": "🐣",
-      "label": "Пасха!",
-      "sortOrder": 5
-    },
-    {
-      "id": "maslenitsa",
-      "file": "maslenitsa.png",
-      "emoji": "🥞",
-      "label": "Масленица!",
-      "sortOrder": 6
-    },
-    {
-      "id": "sep1",
-      "file": "sep1.png",
-      "emoji": "📚",
-      "label": "1 сентября!",
-      "sortOrder": 7
-    },
-    {
-      "id": "victory",
-      "file": "victory.png",
-      "emoji": "🎖️",
-      "label": "День Победы!",
-      "sortOrder": 8
     },
     {
       "id": "halloween",
       "file": "halloween.png",
       "emoji": "🎃",
-      "label": "Хэллоуин!",
+      "label": "Halloween!",
+      "sortOrder": 5
+    },
+    {
+      "id": "spring",
+      "file": "spring.png",
+      "emoji": "🌷",
+      "label": "Spring!",
+      "sortOrder": 6
+    },
+    {
+      "id": "summer",
+      "file": "summer.png",
+      "emoji": "☀️",
+      "label": "Summer!",
+      "sortOrder": 7
+    },
+    {
+      "id": "autumn",
+      "file": "autumn.png",
+      "emoji": "🍂",
+      "label": "Autumn!",
+      "sortOrder": 8
+    },
+    {
+      "id": "wedding",
+      "file": "wedding.png",
+      "emoji": "💒",
+      "label": "Wedding!",
       "sortOrder": 9
     },
     {
-      "id": "valentine",
-      "file": "valentine.png",
-      "emoji": "❤️",
-      "label": "Valentine!",
+      "id": "graduation",
+      "file": "graduation.png",
+      "emoji": "🎓",
+      "label": "Graduation!",
       "sortOrder": 10
+    },
+    {
+      "id": "mother_day",
+      "file": "mother_day.png",
+      "emoji": "🌹",
+      "label": "Mother's Day!",
+      "sortOrder": 11
     }
   ]
 }

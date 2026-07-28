@@ -1,79 +1,79 @@
 {
   "id": "charo_travel",
-  "name": "charo_travel",
+  "name": "Charo Travel",
   "source": "CHARO",
-  "description": "Sticker pack: charo_travel",
-  "icon": "moscow.png",
+  "description": "Путешествия — самолёт, пляж, карта, камера",
+  "icon": "plane.png",
   "isFeatured": false,
   "stickers": [
     {
-      "id": "moscow",
-      "file": "moscow.png",
-      "emoji": "🏛️",
-      "label": "Москва!",
+      "id": "plane",
+      "file": "plane.png",
+      "emoji": "✈️",
+      "label": "Plane",
       "sortOrder": 1
-    },
-    {
-      "id": "spb",
-      "file": "spb.png",
-      "emoji": "🌉",
-      "label": "Питер!",
-      "sortOrder": 2
-    },
-    {
-      "id": "sochi",
-      "file": "sochi.png",
-      "emoji": "☀️",
-      "label": "Сочи!",
-      "sortOrder": 3
-    },
-    {
-      "id": "baikal",
-      "file": "baikal.png",
-      "emoji": "🏔️",
-      "label": "Байкал!",
-      "sortOrder": 4
-    },
-    {
-      "id": "kamchatka",
-      "file": "kamchatka.png",
-      "emoji": "🌋",
-      "label": "Камчатка!",
-      "sortOrder": 5
-    },
-    {
-      "id": "fareast",
-      "file": "fareast.png",
-      "emoji": "🌊",
-      "label": "ДВ!",
-      "sortOrder": 6
-    },
-    {
-      "id": "europe",
-      "file": "europe.png",
-      "emoji": "🇪🇺",
-      "label": "Европа!",
-      "sortOrder": 7
-    },
-    {
-      "id": "asia",
-      "file": "asia.png",
-      "emoji": "🇯🇵",
-      "label": "Азия!",
-      "sortOrder": 8
     },
     {
       "id": "beach",
       "file": "beach.png",
       "emoji": "🏖️",
-      "label": "Пляж!",
+      "label": "Beach",
+      "sortOrder": 2
+    },
+    {
+      "id": "map",
+      "file": "map.png",
+      "emoji": "🗺️",
+      "label": "Map",
+      "sortOrder": 3
+    },
+    {
+      "id": "camera",
+      "file": "camera.png",
+      "emoji": "📷",
+      "label": "Camera",
+      "sortOrder": 4
+    },
+    {
+      "id": "compass",
+      "file": "compass.png",
+      "emoji": "🧭",
+      "label": "Compass",
+      "sortOrder": 5
+    },
+    {
+      "id": "mountain_hike",
+      "file": "mountain_hike.png",
+      "emoji": "🥾",
+      "label": "Hiking",
+      "sortOrder": 6
+    },
+    {
+      "id": "suitcase",
+      "file": "suitcase.png",
+      "emoji": "🧳",
+      "label": "Suitcase",
+      "sortOrder": 7
+    },
+    {
+      "id": "passport",
+      "file": "passport.png",
+      "emoji": "📕",
+      "label": "Passport",
+      "sortOrder": 8
+    },
+    {
+      "id": "ticket",
+      "file": "ticket.png",
+      "emoji": "🎫",
+      "label": "Ticket",
       "sortOrder": 9
     },
     {
-      "id": "mountains",
-      "file": "mountains.png",
-      "emoji": "⛰️",
-      "label": "Горы!",
+      "id": "hotel",
+      "file": "hotel.png",
+      "emoji": "🏨",
+      "label": "Hotel",
       "sortOrder": 10
     }
   ]

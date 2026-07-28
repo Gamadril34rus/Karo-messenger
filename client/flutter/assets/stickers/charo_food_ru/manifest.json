@@ -1,80 +1,87 @@
 {
   "id": "charo_food_ru",
-  "name": "charo_food_ru",
+  "name": "Charo Русская Еда",
   "source": "CHARO",
-  "description": "Sticker pack: charo_food_ru",
-  "icon": "pelmeni.png",
-  "isFeatured": false,
+  "description": "Русская кухня — борщ, пельмени, блины, шашлык",
+  "icon": "borscht.png",
+  "isFeatured": true,
   "stickers": [
+    {
+      "id": "borscht",
+      "file": "borscht.png",
+      "emoji": "🥣",
+      "label": "Борщ!",
+      "sortOrder": 1
+    },
     {
       "id": "pelmeni",
       "file": "pelmeni.png",
       "emoji": "🥟",
       "label": "Пельмени!",
-      "sortOrder": 1
+      "sortOrder": 2
     },
     {
-      "id": "borsch",
-      "file": "borsch.png",
-      "emoji": "🥣",
-      "label": "Борщ!",
-      "sortOrder": 2
+      "id": "blini",
+      "file": "blini.png",
+      "emoji": "🥞",
+      "label": "Блины!",
+      "sortOrder": 3
     },
     {
       "id": "shashlik",
       "file": "shashlik.png",
       "emoji": "🍖",
       "label": "Шашлык!",
-      "sortOrder": 3
-    },
-    {
-      "id": "bliny",
-      "file": "bliny.png",
-      "emoji": "🥞",
-      "label": "Блины!",
       "sortOrder": 4
     },
     {
-      "id": "pirog",
-      "file": "pirog.png",
-      "emoji": "🥧",
-      "label": "Пирог!",
+      "id": "kasha",
+      "file": "kasha.png",
+      "emoji": "🥘",
+      "label": "Каша",
       "sortOrder": 5
     },
     {
-      "id": "kvas",
-      "file": "kvas.png",
-      "emoji": "🥤",
-      "label": "Квас!",
+      "id": "khachapuri",
+      "file": "khachapuri.png",
+      "emoji": "🧀",
+      "label": "Хачапури",
       "sortOrder": 6
     },
     {
-      "id": "samovar",
-      "file": "samovar.png",
-      "emoji": "🫖",
-      "label": "Самовар!",
+      "id": "smetana",
+      "file": "smetana.png",
+      "emoji": "🥛",
+      "label": "Сметана",
       "sortOrder": 7
     },
     {
-      "id": "icecream",
-      "file": "icecream.png",
-      "emoji": "🍦",
-      "label": "Мороженое!",
+      "id": "olivier",
+      "file": "olivier.png",
+      "emoji": "🥗",
+      "label": "Оливье!",
       "sortOrder": 8
     },
     {
-      "id": "tort",
-      "file": "tort.png",
-      "emoji": "🎂",
-      "label": "Торт!",
+      "id": "medovik",
+      "file": "medovik.png",
+      "emoji": "🍰",
+      "label": "Медовик",
       "sortOrder": 9
     },
     {
-      "id": "cheburek",
-      "file": "cheburek.png",
-      "emoji": "🥟",
-      "label": "Чебурек!",
+      "id": "vodka_shot",
+      "file": "vodka_shot.png",
+      "emoji": "🥃",
+      "label": "🥃",
       "sortOrder": 10
+    },
+    {
+      "id": "tea_glass",
+      "file": "tea_glass.png",
+      "emoji": "☕",
+      "label": "Чай",
+      "sortOrder": 11
     }
   ]
 }

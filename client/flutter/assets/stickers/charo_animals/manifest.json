@@ -1,80 +1,87 @@
 {
   "id": "charo_animals",
-  "name": "charo_animals",
+  "name": "Charo Animals",
   "source": "CHARO",
-  "description": "Sticker pack: charo_animals",
+  "description": "Животные — собака, птица, рыба, кролик",
   "icon": "dog.png",
-  "isFeatured": true,
+  "isFeatured": false,
   "stickers": [
     {
       "id": "dog",
       "file": "dog.png",
-      "emoji": "🐕",
-      "label": "Собака",
+      "emoji": "🐶",
+      "label": "Dog",
       "sortOrder": 1
-    },
-    {
-      "id": "cat",
-      "file": "cat.png",
-      "emoji": "🐱",
-      "label": "Кошка",
-      "sortOrder": 2
     },
     {
       "id": "bird",
       "file": "bird.png",
       "emoji": "🐦",
-      "label": "Птица",
-      "sortOrder": 3
+      "label": "Bird",
+      "sortOrder": 2
     },
     {
       "id": "fish",
       "file": "fish.png",
       "emoji": "🐟",
-      "label": "Рыба",
+      "label": "Fish",
+      "sortOrder": 3
+    },
+    {
+      "id": "rabbit",
+      "file": "rabbit.png",
+      "emoji": "🐰",
+      "label": "Rabbit",
       "sortOrder": 4
-    },
-    {
-      "id": "bear",
-      "file": "bear.png",
-      "emoji": "🐻",
-      "label": "Медведь",
-      "sortOrder": 5
-    },
-    {
-      "id": "fox",
-      "file": "fox.png",
-      "emoji": "🦊",
-      "label": "Лиса",
-      "sortOrder": 6
     },
     {
       "id": "owl",
       "file": "owl.png",
       "emoji": "🦉",
-      "label": "Сова",
-      "sortOrder": 7
+      "label": "Owl",
+      "sortOrder": 5
     },
     {
-      "id": "dolphin",
-      "file": "dolphin.png",
-      "emoji": "🐬",
-      "label": "Дельфин",
-      "sortOrder": 8
+      "id": "frog",
+      "file": "frog.png",
+      "emoji": "🐸",
+      "label": "Frog",
+      "sortOrder": 6
+    },
+    {
+      "id": "bear",
+      "file": "bear.png",
+      "emoji": "🐻",
+      "label": "Bear",
+      "sortOrder": 7
     },
     {
       "id": "penguin",
       "file": "penguin.png",
       "emoji": "🐧",
-      "label": "Пингвин",
+      "label": "Penguin",
+      "sortOrder": 8
+    },
+    {
+      "id": "turtle",
+      "file": "turtle.png",
+      "emoji": "🐢",
+      "label": "Turtle",
       "sortOrder": 9
     },
     {
-      "id": "raccoon",
-      "file": "raccoon.png",
-      "emoji": "🦝",
-      "label": "Енот",
+      "id": "dolphin",
+      "file": "dolphin.png",
+      "emoji": "🐬",
+      "label": "Dolphin",
       "sortOrder": 10
+    },
+    {
+      "id": "butterfly",
+      "file": "butterfly.png",
+      "emoji": "🦋",
+      "label": "Butterfly",
+      "sortOrder": 11
     }
   ]
 }

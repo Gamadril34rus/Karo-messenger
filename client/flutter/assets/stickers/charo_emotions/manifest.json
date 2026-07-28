@@ -1,16 +1,94 @@
 {
   "id": "charo_emotions",
-  "name": "ЧАРО Эмоции",
+  "name": "Charo Emotions",
   "source": "CHARO",
-  "description": "Эмоции ЧАРО — счастлив, плачет, злится, в шоке, чиллит и неловко",
-  "icon": "happy.png",
+  "description": "Эмоции и чувства — любовь, гнев, удивление, радость",
+  "icon": "love.png",
   "isFeatured": true,
   "stickers": [
-    {"id": "happy", "file": "happy.png", "emoji": "😊", "label": "Счастлив!", "sortOrder": 1},
-    {"id": "cry", "file": "cry.png", "emoji": "😭", "label": "😭", "sortOrder": 2},
-    {"id": "rage", "file": "rage.png", "emoji": "🤬", "label": "🤬", "sortOrder": 3},
-    {"id": "shocked", "file": "shocked.png", "emoji": "😱", "label": "😱", "sortOrder": 4},
-    {"id": "chill", "file": "chill.png", "emoji": "😌", "label": "Чилл", "sortOrder": 5},
-    {"id": "awkward", "file": "awkward.png", "emoji": "😅", "label": "😅", "sortOrder": 6}
+    {
+      "id": "love",
+      "file": "love.png",
+      "emoji": "❤️",
+      "label": "Love!",
+      "sortOrder": 1
+    },
+    {
+      "id": "anger",
+      "file": "anger.png",
+      "emoji": "😡",
+      "label": "Anger!",
+      "sortOrder": 2
+    },
+    {
+      "id": "surprise",
+      "file": "surprise.png",
+      "emoji": "😮",
+      "label": "Surprise!",
+      "sortOrder": 3
+    },
+    {
+      "id": "sad",
+      "file": "sad.png",
+      "emoji": "😢",
+      "label": "Sad",
+      "sortOrder": 4
+    },
+    {
+      "id": "happy",
+      "file": "happy.png",
+      "emoji": "😄",
+      "label": "Happy!",
+      "sortOrder": 5
+    },
+    {
+      "id": "jealous",
+      "file": "jealous.png",
+      "emoji": "🤢",
+      "label": "Jealous",
+      "sortOrder": 6
+    },
+    {
+      "id": "proud",
+      "file": "proud.png",
+      "emoji": "🥳",
+      "label": "Proud!",
+      "sortOrder": 7
+    },
+    {
+      "id": "shy",
+      "file": "shy.png",
+      "emoji": "🙈",
+      "label": "Shy",
+      "sortOrder": 8
+    },
+    {
+      "id": "laugh",
+      "file": "laugh.png",
+      "emoji": "😂",
+      "label": "LOL",
+      "sortOrder": 9
+    },
+    {
+      "id": "cry",
+      "file": "cry.png",
+      "emoji": "😭",
+      "label": "Cry",
+      "sortOrder": 10
+    },
+    {
+      "id": "peace",
+      "file": "peace.png",
+      "emoji": "☮️",
+      "label": "Peace",
+      "sortOrder": 11
+    },
+    {
+      "id": "hope",
+      "file": "hope.png",
+      "emoji": "✨",
+      "label": "Hope",
+      "sortOrder": 12
+    }
   ]
 }
