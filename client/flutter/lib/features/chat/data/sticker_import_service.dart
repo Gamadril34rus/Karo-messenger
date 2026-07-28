@@ -1,29 +1,41 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
-import 'dart:io' as io;
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/utils/logger.dart';
 
+/// ─── Supported Image Formats ─────────────────────────────────────
+/// Единый список поддерживаемых форматов для стикеров и эмодзи.
+/// WebP, PNG, JPG/JPEG, GIF, AVIF, BMP, SVG — все принимаются.
+
+const List<String> _supportedImageExtensions = [
+  '.webp', '.png', '.jpg', '.jpeg', '.gif', '.avif', '.bmp', '.svg',
+];
+
+/// Проверка: является ли файл поддерживаемым изображением
+bool _isImageFile(String fileName) {
+  final lower = fileName.toLowerCase();
+  return _supportedImageExtensions.any((ext) => lower.endsWith(ext));
+}
+
 /// ─── Sticker Import Service ──────────────────────────────────────
-/// Импорт стикер-паков из локальных ZIP-архивов и папок.
+/// Импорт стикер-паков и эмодзи-паков из локальных ZIP-архивов и папок.
+///
+/// Поддерживаемые форматы: WebP, PNG, JPG/JPEG, GIF, AVIF, BMP, SVG
 ///
 /// ⚖️ ВНИМАНИЕ: Юридические ограничения
 /// - Telegram/VK/Viber API импорт REMOVED — нарушение ToS и авторских прав
-/// - Telegram Bot ToS запрещает экспорт контента в сторонние приложения
-/// - VK Platform Rules п.1.6 прямо запрещает скачивание контента с VK серверов
-/// - Viber sticker API не публичный — scraping = нарушение ToS
-/// - WhatsApp ZIP формат = открытый формат (github.com/WhatsApp/stickers)
-///   — допустим для импорта из локального файла пользователя
+/// - WhatsApp ZIP формат = открытый формат — допустимо
 /// - Пользователь несёт ответственность за соблюдение авторских прав
-///   при импорте стикеров из любых источников
 ///
 /// ⚠️ Правовое предупреждение для UI:
-/// «Импортируйте только стикеры, для которых вы имеете право использования.
+/// «Импортируйте только стикеры и эмодзи, для которых вы имеете право использования.
 ///   Нарушение авторских прав может повлечь юридическую ответственность.»
+
+// ─── Sticker Import ──────────────────────────────────────────────
 
 enum StickerImportSource {
   whatsappZip,
@@ -65,23 +77,70 @@ class ImportedSticker {
   });
 }
 
+// ─── Emoji Import ────────────────────────────────────────────────
+
+enum EmojiImportSource {
+  localZip,
+  localFolder,
+}
+
+class EmojiImportResult {
+  final String packId;
+  final String packName;
+  final List<ImportedEmoji> emojis;
+  final EmojiImportSource source;
+  final String? error;
+
+  const EmojiImportResult({
+    required this.packId,
+    required this.packName,
+    required this.emojis,
+    required this.source,
+    this.error,
+  });
+
+  bool get isSuccess => error == null && emojis.isNotEmpty;
+}
+
+class ImportedEmoji {
+  final String id;
+  final String filePath;
+  final String unicode;
+  final String label;
+  final int sortOrder;
+
+  const ImportedEmoji({
+    required this.id,
+    required this.filePath,
+    this.unicode = '😊',
+    this.label = '',
+    required this.sortOrder,
+  });
+}
+
+// ─── Service ─────────────────────────────────────────────────────
+
 class StickerImportService {
   static const _uuid = Uuid();
 
   /// Правовое предупреждение для отображения в UI перед импортом
   static const String legalDisclaimer =
-      'Импортируйте только стикеры, для которых вы имеете право использования. '
+      'Импортируйте только стикеры и эмодзи, для которых вы имеете право использования. '
       'Нарушение авторских прав может повлечь юридическую ответственность.';
+
+  /// Поддерживаемые форматы изображений (для отображения в UI)
+  static const List<String> supportedFormats = _supportedImageExtensions;
 
   StickerImportService();
 
+  // ════════════════════════════════════════════════════════════════
+  //  STICKER IMPORT METHODS
+  // ════════════════════════════════════════════════════════════════
+
   // ─── WhatsApp ZIP Import ────────────────────────────────────────
-  // WhatsApp stickers come as .zip files containing webp images
-  // and a sticker_packs.json manifest.
-  // Open format: https://github.com/WhatsApp/stickers
-  // Пользователь предоставляет локальный файл — допустимо.
 
   /// Импорт стикерпака из ZIP-архива (WhatsApp формат)
+  /// Принимает изображения: WebP, PNG, JPG, GIF, AVIF, BMP, SVG
   Future<StickerImportResult> importFromWhatsAppZip({
     required String zipPath,
   }) async {
@@ -97,10 +156,10 @@ class StickerImportService {
         final entries = _parseZipEntries(bytes);
         for (final entry in entries) {
           final fileName = entry.fileName;
-          if (fileName.toLowerCase().endsWith('.webp') ||
-              fileName.toLowerCase().endsWith('.png')) {
+          if (_isImageFile(fileName)) {
             final stickerData = entry.data;
-            final localPath = '${dir.path}/${fileName.split('/').last}';
+            final localName = fileName.split('/').last;
+            final localPath = '${dir.path}/$localName';
             await File(localPath).writeAsBytes(stickerData);
             imported.add(ImportedSticker(
               id: _uuid.v4(),
@@ -147,9 +206,9 @@ class StickerImportService {
   }
 
   // ─── Local ZIP Import ──────────────────────────────────────────
-  // Import from a .zip file containing PNG/WebP images + manifest.json
 
   /// Импорт стикерпака из локального ZIP-архива
+  /// Принимает изображения: WebP, PNG, JPG/JPEG, GIF, AVIF, BMP, SVG
   Future<StickerImportResult> importFromLocalZip({
     required String zipPath,
     String? packNameOverride,
@@ -159,16 +218,13 @@ class StickerImportService {
       final packId = 'local_${_uuid.v4().substring(0, 8)}';
       final dir = await _getStickerDir(packId);
 
-      // Copy source zip for processing
       await File(zipPath).copy('${dir.path}/source.zip');
 
-      // Parse ZIP and extract sticker images
       final entries = _parseZipEntries(zipBytes);
       final imported = <ImportedSticker>[];
       int order = 0;
 
       Map<String, dynamic>? manifestData;
-      // First pass: find manifest
       for (final entry in entries) {
         if (entry.fileName.toLowerCase().contains('manifest.json') ||
             entry.fileName.toLowerCase().contains('sticker_packs.json')) {
@@ -178,13 +234,9 @@ class StickerImportService {
         }
       }
 
-      // Second pass: extract sticker images
       for (final entry in entries) {
         final fileName = entry.fileName.split('/').last;
-        if (fileName.toLowerCase().endsWith('.webp') ||
-            fileName.toLowerCase().endsWith('.png') ||
-            fileName.toLowerCase().endsWith('.jpg') ||
-            fileName.toLowerCase().endsWith('.gif')) {
+        if (_isImageFile(fileName)) {
           final localPath = '${dir.path}/$fileName';
           await File(localPath).writeAsBytes(entry.data);
           imported.add(ImportedSticker(
@@ -196,7 +248,6 @@ class StickerImportService {
         }
       }
 
-      // Apply manifest data if available
       if (manifestData != null) {
         final stickersList = manifestData['stickers'] as List<dynamic>? ?? [];
         for (int i = 0; i < imported.length && i < stickersList.length; i++) {
@@ -229,9 +280,9 @@ class StickerImportService {
   }
 
   // ─── Local Folder Import ───────────────────────────────────────
-  // Import all PNG/WebP images from a local directory
 
   /// Импорт стикерпака из локальной папки с изображениями
+  /// Принимает: WebP, PNG, JPG/JPEG, GIF, AVIF, BMP, SVG
   Future<StickerImportResult> importFromLocalFolder({
     required String folderPath,
     required String packName,
@@ -255,7 +306,6 @@ class StickerImportService {
       final imported = <ImportedSticker>[];
       int order = 0;
 
-      // Read manifest if available
       Map<String, dynamic>? manifest;
       if (manifestPath != null) {
         final manifestFile = File(manifestPath);
@@ -264,23 +314,19 @@ class StickerImportService {
         }
       }
 
-      // Scan for image files
-      final imageExtensions = ['.png', '.webp', '.jpg', '.jpeg', '.gif'];
       final files = await sourceDir.list().toList();
       final imageFiles = files
           .whereType<File>()
-          .where((f) => imageExtensions.any((ext) => f.path.toLowerCase().endsWith(ext)))
+          .where((f) => _isImageFile(f.path))
           .toList();
 
-      // Sort by name (natural order)
       imageFiles.sort((a, b) => a.path.compareTo(b.path));
 
       for (final file in imageFiles) {
         final fileName = file.path.split(Platform.pathSeparator).last;
-        final destPath = '${dir.path}/${fileName}';
+        final destPath = '${dir.path}/$fileName';
         await file.copy(destPath);
 
-        // Look up emoji from manifest if available
         String? emoji;
         String? label;
         if (manifest != null) {
@@ -297,7 +343,7 @@ class StickerImportService {
           id: _uuid.v4(),
           filePath: destPath,
           emoji: emoji ?? '😊',
-          label: label ?? fileName.replaceAll(imageExtensions, ''),
+          label: label ?? fileName.replaceAll(RegExp(r'\.(webp|png|jpg|jpeg|gif|avif|bmp|svg)$'), ''),
           sortOrder: order++,
         ));
       }
@@ -319,15 +365,185 @@ class StickerImportService {
     }
   }
 
-  // ─── Manifest Generation ───────────────────────────────────────
+  // ════════════════════════════════════════════════════════════════
+  //  EMOJI IMPORT METHODS
+  // ════════════════════════════════════════════════════════════════
+
+  // ─── Emoji ZIP Import ──────────────────────────────────────────
+
+  /// Импорт кастомных эмодзи из ZIP-архива
+  /// Принимает: WebP, PNG, JPG/JPEG, GIF, AVIF, BMP, SVG
+  ///
+  /// ZIP может содержать:
+  /// - manifest.json с полями emoji/label для каждого файла
+  /// - Или просто набор изображений (emoji = 😊 по умолчанию)
+  Future<EmojiImportResult> importEmojiFromZip({
+    required String zipPath,
+    String? packNameOverride,
+  }) async {
+    try {
+      final zipBytes = await File(zipPath).readAsBytes();
+      final packId = 'emoji_${_uuid.v4().substring(0, 8)}';
+      final dir = await _getEmojiDir(packId);
+
+      await File(zipPath).copy('${dir.path}/source.zip');
+
+      final entries = _parseZipEntries(zipBytes);
+      final imported = <ImportedEmoji>[];
+      int order = 0;
+
+      Map<String, dynamic>? manifestData;
+      for (final entry in entries) {
+        if (entry.fileName.toLowerCase().contains('manifest.json') ||
+            entry.fileName.toLowerCase().contains('emoji_config.json')) {
+          try {
+            manifestData = jsonDecode(utf8.decode(entry.data, allowMalformed: true)) as Map<String, dynamic>;
+          } catch (_) {}
+        }
+      }
+
+      for (final entry in entries) {
+        final fileName = entry.fileName.split('/').last;
+        if (_isImageFile(fileName)) {
+          final localPath = '${dir.path}/$fileName';
+          await File(localPath).writeAsBytes(entry.data);
+
+          String unicode = '😊';
+          String label = '';
+          if (manifestData != null) {
+            final emojiList = manifestData['emojis'] as List<dynamic>? ?? manifestData['customImages'] as List<dynamic>? ?? [];
+            final match = emojiList.firstWhere(
+              (e) => (e['file'] as String?)?.split('/').last == fileName || (e['file'] as String?) == fileName,
+              orElse: () => {},
+            );
+            unicode = match?['unicode'] as String? ?? '😊';
+            label = match?['label'] as String? ?? '';
+          }
+
+          imported.add(ImportedEmoji(
+            id: _uuid.v4(),
+            filePath: localPath,
+            unicode: unicode,
+            label: label,
+            sortOrder: order++,
+          ));
+        }
+      }
+
+      return EmojiImportResult(
+        packId: packId,
+        packName: packNameOverride ?? manifestData?['name'] as String? ?? 'Custom Emoji',
+        emojis: imported,
+        source: EmojiImportSource.localZip,
+      );
+    } catch (e) {
+      return EmojiImportResult(
+        packId: '',
+        packName: '',
+        emojis: [],
+        source: EmojiImportSource.localZip,
+        error: 'Emoji ZIP import failed: $e',
+      );
+    }
+  }
+
+  // ─── Emoji Folder Import ───────────────────────────────────────
+
+  /// Импорт кастомных эмодзи из локальной папки
+  /// Принимает: WebP, PNG, JPG/JPEG, GIF, AVIF, BMP, SVG
+  Future<EmojiImportResult> importEmojiFromFolder({
+    required String folderPath,
+    required String packName,
+    String? manifestPath,
+  }) async {
+    try {
+      final packId = 'emoji_${_uuid.v4().substring(0, 8)}';
+      final dir = await _getEmojiDir(packId);
+
+      final sourceDir = Directory(folderPath);
+      if (!await sourceDir.exists()) {
+        return EmojiImportResult(
+          packId: '',
+          packName: '',
+          emojis: [],
+          source: EmojiImportSource.localFolder,
+          error: 'Source folder does not exist: $folderPath',
+        );
+      }
+
+      final imported = <ImportedEmoji>[];
+      int order = 0;
+
+      Map<String, dynamic>? manifest;
+      if (manifestPath != null) {
+        final manifestFile = File(manifestPath);
+        if (await manifestFile.exists()) {
+          manifest = jsonDecode(await manifestFile.readAsString());
+        }
+      }
+
+      final files = await sourceDir.list().toList();
+      final imageFiles = files
+          .whereType<File>()
+          .where((f) => _isImageFile(f.path))
+          .toList();
+
+      imageFiles.sort((a, b) => a.path.compareTo(b.path));
+
+      for (final file in imageFiles) {
+        final fileName = file.path.split(Platform.pathSeparator).last;
+        final destPath = '${dir.path}/$fileName';
+        await file.copy(destPath);
+
+        String unicode = '😊';
+        String label = '';
+        if (manifest != null) {
+          final emojiList = manifest['emojis'] as List<dynamic>? ?? manifest['customImages'] as List<dynamic>? ?? [];
+          final match = emojiList.firstWhere(
+            (e) => (e['file'] as String?)?.split('/').last == fileName || (e['file'] as String?) == fileName,
+            orElse: () => {},
+          );
+          unicode = match?['unicode'] as String? ?? '😊';
+          label = match?['label'] as String? ?? '';
+        }
+
+        imported.add(ImportedEmoji(
+          id: _uuid.v4(),
+          filePath: destPath,
+          unicode: unicode,
+          label: label.isEmpty ? fileName.replaceAll(RegExp(r'\.(webp|png|jpg|jpeg|gif|avif|bmp|svg)$'), '') : label,
+          sortOrder: order++,
+        ));
+      }
+
+      return EmojiImportResult(
+        packId: packId,
+        packName: packName,
+        emojis: imported,
+        source: EmojiImportSource.localFolder,
+      );
+    } catch (e) {
+      return EmojiImportResult(
+        packId: '',
+        packName: '',
+        emojis: [],
+        source: EmojiImportSource.localFolder,
+        error: 'Emoji folder import failed: $e',
+      );
+    }
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  //  MANIFEST + BUILT-IN PACKS
+  // ════════════════════════════════════════════════════════════════
 
   /// Генерация manifest.json для импортированного стикерпака
-  Future<String> generateManifest(StickerImportResult result) async {
+  Future<String> generateStickerManifest(StickerImportResult result) async {
     final manifest = {
       'id': result.packId,
       'name': result.packName,
       'source': result.source.name.toUpperCase(),
-      'description': 'Imported from ${result.source.name}',
+      'description': 'Imported sticker pack',
       'icon': result.stickers.isNotEmpty ? result.stickers.first.filePath.split('/').last : '',
       'isFeatured': false,
       'stickers': result.stickers.map((s) => {
@@ -348,11 +564,44 @@ class StickerImportService {
     return manifestPath;
   }
 
+  /// Генерация emoji_config.json для импортированного эмодзи-пака
+  Future<String> generateEmojiManifest(EmojiImportResult result) async {
+    final config = {
+      'name': result.packName,
+      'version': '1.0.0',
+      'description': 'Custom imported emoji pack',
+      'license': 'User-provided — check rights before distribution',
+      'customImages': result.emojis.map((e) => {
+        return {
+          'id': e.id,
+          'file': e.filePath.split('/').last,
+          'unicode': e.unicode,
+          'label': e.label,
+        };
+      }).toList(),
+    };
+
+    final dir = Directory(result.emojis.first.filePath).parent;
+    final manifestPath = '${dir.path}/emoji_config.json';
+    await File(manifestPath).writeAsString(jsonEncode(config));
+
+    return manifestPath;
+  }
+
   // ─── Helpers ────────────────────────────────────────────────────
 
   Future<Directory> _getStickerDir(String packId) async {
     final appDir = await getApplicationDocumentsDirectory();
     final dir = Directory('${appDir.path}/stickers/$packId');
+    if (!await dir.exists()) {
+      await dir.create(recursive: true);
+    }
+    return dir;
+  }
+
+  Future<Directory> _getEmojiDir(String packId) async {
+    final appDir = await getApplicationDocumentsDirectory();
+    final dir = Directory('${appDir.path}/emoji/$packId');
     if (!await dir.exists()) {
       await dir.create(recursive: true);
     }
@@ -384,9 +633,7 @@ class StickerImportService {
           stickerCount: (manifest['stickers'] as List).length,
           assetPrefix: 'assets/stickers/$name',
         ));
-      } catch (_) {
-        // Pack not found in assets, skip
-      }
+      } catch (_) {}
     }
 
     return packs;
@@ -443,9 +690,7 @@ class CustomEmoji {
   });
 }
 
-// ─── ZIP Parser — minimal local file header extraction ──────────────
-// Parses ZIP local file headers without external dependencies
-// Format: https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT
+// ─── ZIP Parser ────────────────────────────────────────────────────
 
 class _ZipEntry {
   final String fileName;
@@ -458,19 +703,15 @@ List<_ZipEntry> _parseZipEntries(Uint8List bytes) {
   int pos = 0;
 
   while (pos < bytes.length - 4) {
-    // Local file header signature: 0x04034b50
     final sig = bytes[pos] | (bytes[pos + 1] << 8) | (bytes[pos + 2] << 16) | (bytes[pos + 3] << 24);
     if (sig != 0x04034b50) {
       pos++;
       continue;
     }
 
-    // Skip to file name and data
     final compressionMethod = bytes[pos + 8] | (bytes[pos + 9] << 8);
     final compressedSize = bytes[pos + 18] | (bytes[pos + 19] << 8) |
                           (bytes[pos + 20] << 16) | (bytes[pos + 21] << 24);
-    final uncompressedSize = bytes[pos + 22] | (bytes[pos + 23] << 8) |
-                            (bytes[pos + 24] << 16) | (bytes[pos + 25] << 24);
     final fileNameLen = bytes[pos + 26] | (bytes[pos + 27] << 8);
     final extraFieldLen = bytes[pos + 28] | (bytes[pos + 29] << 8);
 
@@ -483,27 +724,21 @@ List<_ZipEntry> _parseZipEntries(Uint8List bytes) {
 
     Uint8List data;
     if (compressionMethod == 0) {
-      // Stored (no compression)
       data = Uint8List.fromList(compressedData);
     } else if (compressionMethod == 8) {
-      // Deflated — use dart's built-in zlib decompression
       try {
         final decoded = zlib.decode(compressedData);
         data = Uint8List.fromList(decoded);
       } catch (e) {
-        // Decompression failed — skip this entry
         pos = dataStart + compressedSize;
         continue;
       }
     } else {
-      // Unsupported compression — skip
       pos = dataStart + compressedSize;
       continue;
     }
 
     entries.add(_ZipEntry(fileName: fileName, data: data));
-
-    // Move to next entry
     pos = dataStart + compressedSize;
   }
 
