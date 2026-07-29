@@ -971,6 +971,94 @@ export async function authRoutes(fastify: FastifyInstance) {
       user: formatUser(user),
     });
   });
+
+  // ─── POST /auth/verify-email — Отправить код подтверждения email ──
+  fastify.post('/verify-email', async (request, reply) => {
+    const userId = request.userId!;
+    const { email } = request.body as { email: string };
+
+    if (!email) {
+      return reply.code(400).send({ message: 'Укажите email' });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return reply.code(400).send({ message: 'Неверный формат email' });
+    }
+
+    // Generate 6-digit code
+    const code = generateSecureOtp();
+
+    // Store verification code in DB
+    await prisma.otpCode.create({
+      data: {
+        identifier: email,
+        code,
+        method: 'email',
+        expiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5 minutes
+      },
+    });
+
+    // Send email
+    await sendOtpEmail(email, code);
+
+    logger.info(`Email verification code sent to ${email}`);
+
+    return reply.send({ message: 'Код подтверждения отправлен', expires_in: 300 });
+  });
+
+  // ─── POST /auth/verify-email/confirm — Подтвердить email кодом ──
+  fastify.post('/verify-email/confirm', async (request, reply) => {
+    const userId = request.userId!;
+    const { email, code } = request.body as { email: string; code: string };
+
+    if (!email || !code) {
+      return reply.code(400).send({ message: 'Укажите email и код' });
+    }
+
+    // Anti brute-force
+    const attemptsKey = `email_verify:${email}`;
+    const attempts = parseInt(await redis.get(attemptsKey) || '0');
+    if (attempts >= 5) {
+      return reply.code(429).send({ message: 'Слишком много попыток. Попробуйте через 15 минут.' });
+    }
+
+    const otp = await prisma.otpCode.findFirst({
+      where: {
+        identifier: email,
+        code,
+        method: 'email',
+        isUsed: false,
+        expiresAt: { gt: new Date() },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (!otp) {
+      await redis.set(attemptsKey, (attempts + 1).toString(), 'EX', 15 * 60);
+      return reply.code(400).send({ message: 'Неверный или просроченный код' });
+    }
+
+    // Mark OTP as used
+    await prisma.otpCode.update({
+      where: { id: otp.id },
+      data: { isUsed: true },
+    });
+
+    // Clear attempt counter
+    await redis.del(attemptsKey);
+
+    // Mark email as verified
+    await prisma.user.update({
+      where: { id: userId },
+      data: { emailVerified: true },
+    });
+
+    logger.info(`Email verified for user ${userId}: ${email}`);
+
+    return reply.send({ message: 'Email подтверждён', verified: true });
+  });
 }
 
 // ─── Helper functions ──────────────────────────────────────────────

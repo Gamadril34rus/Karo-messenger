@@ -5,6 +5,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/services/reactions_service.dart';
+import '../../../../core/services/media_viewer_service.dart';
+import '../../../../core/services/voice_message_service.dart';
+import '../../../../core/services/offline_sync_service.dart';
 import '../../../../shared/widgets/charo_widgets.dart';
 import '../bloc/chat_detail/chat_bloc.dart';
 import '../../../../shared/widgets/message_bubble.dart';
@@ -26,6 +30,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   final _inputFocusNode = FocusNode();
   Timer? _typingTimer;
   bool _isTyping = false;
+  bool _isRecordingVoice = false;
+  Duration _recordingDuration = Duration.zero;
+  Timer? _recordingTimer;
 
   @override
   void initState() {
@@ -40,6 +47,10 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     _scrollController.dispose();
     _inputFocusNode.dispose();
     _typingTimer?.cancel();
+    _recordingTimer?.cancel();
+    if (_isRecordingVoice) {
+      VoiceMessageService.instance.cancelRecording();
+    }
     super.dispose();
   }
 
@@ -121,7 +132,44 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       ),
       body: Column(
         children: [
-          // Typing indicator
+          // ─── Offline / Sync indicator ────────────────────────────
+          StreamBuilder<OfflineSyncStatus>(
+            stream: OfflineSyncService.instance.statusStream,
+            initialData: const OfflineSyncStatus(isOnline: true, pendingCount: 0, failedCount: 0, isSyncing: false),
+            builder: (context, snapshot) {
+              final status = snapshot.data!;
+              if (!status.isOnline) {
+                return Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  color: Colors.orange.shade700,
+                  child: Text(
+                    'Нет подключения • ${status.pendingCount} в очереди',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500),
+                  ),
+                );
+              }
+              if (status.isSyncing) {
+                return Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  color: Colors.blue.shade600,
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
+                      SizedBox(width: 8),
+                      Text('Синхронизация...', style: TextStyle(color: Colors.white, fontSize: 12)),
+                    ],
+                  ),
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
+
+          // ─── Typing indicator ────────────────────────────────────
           BlocBuilder<ChatDetailBloc, ChatDetailState>(
             builder: (context, state) {
               if (state is ChatDetailLoaded && state.typingUserId != null) {
@@ -153,7 +201,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             },
           ),
 
-          // Messages
+          // ─── Messages ────────────────────────────────────────────
           Expanded(
             child: BlocBuilder<ChatDetailBloc, ChatDetailState>(
               builder: (context, state) {
@@ -188,8 +236,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Container(
-                          width: 80,
-                          height: 80,
+                          width: 80, height: 80,
                           decoration: BoxDecoration(
                             color: context.colors.primary.withOpacity(0.08),
                             borderRadius: BorderRadius.circular(24),
@@ -214,7 +261,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             ),
           ),
 
-          // Premium input bar
+          // ─── Premium input bar ──────────────────────────────────
           _buildInputBar(context),
         ],
       ),
@@ -282,138 +329,194 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       sentAt: msg.sentAt,
       readAt: msg.readAt,
       reactions: msg.reactions,
+      onTap: () => _onMessageTap(msg),
       onLongPress: () => _showMessageActions(context, msg),
-      onReplyTap: () {},
+      onReplyTap: () => _replyToMessage(msg),
     );
   }
 
+  /// Нажатие на сообщение — открыть медиа, если фото/видео
+  void _onMessageTap(MessageItem msg) {
+    if (msg.type == 'image' || msg.type == 'video') {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => MediaViewerScreen(
+            mediaItems: [
+              MediaItem(
+                id: msg.id,
+                type: msg.type == 'video' ? MediaType.video : MediaType.image,
+                url: msg.mediaUrl,
+                thumbnailUrl: msg.mediaThumbnail,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+  }
+
+  // ─── Input Bar ──────────────────────────────────────────────────
+
   Widget _buildInputBar(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
         color: context.colors.surface,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
-        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withOpacity(0.06),
             blurRadius: 8,
             offset: const Offset(0, -2),
           ),
         ],
       ),
       child: SafeArea(
-        top: false,
-        child: Row(
-          children: [
-            // Attach button
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: context.colors.outlineVariant,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: IconButton(
-                icon: Icon(Icons.attach_file, size: 20, color: context.colors.onSurface.withOpacity(0.7)),
-                onPressed: _showAttachSheet,
-                padding: EdgeInsets.zero,
-              ),
-            ),
-            const SizedBox(width: 6),
-
-            // Text field with rounded background
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: context.colors.outlineVariant,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: TextField(
-                  controller: _messageController,
-                  focusNode: _inputFocusNode,
-                  onChanged: _onTextChanged,
-                  decoration: const InputDecoration(
-                    hintText: 'Сообщение...',
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(vertical: 10),
-                  ),
-                  maxLines: 5,
-                  minLines: 1,
-                  textInputAction: TextInputAction.newline,
-                  style: TextStyle(fontSize: 15),
-                ),
-              ),
-            ),
-            const SizedBox(width: 6),
-
-            // Emoji button
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: context.colors.outlineVariant,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: IconButton(
-                icon: Icon(Icons.emoji_emotions_outlined, size: 20, color: context.colors.onSurface.withOpacity(0.7)),
-                onPressed: _showEmojiSheet,
-                padding: EdgeInsets.zero,
-              ),
-            ),
-            const SizedBox(width: 4),
-
-            // Send/mic button — animated swap
-            ValueListenableBuilder<TextEditingValue>(
-              valueListenable: _messageController,
-              builder: (context, value, child) {
-                final hasText = value.text.trim().isNotEmpty;
-                return AnimatedSwitcher(
-                  duration: AppConstants.animationDurationShort,
-                  transitionBuilder: (child, animation) => ScaleTransition(
-                    scale: animation,
-                    child: child,
-                  ),
-                  child: hasText
-                      ? Container(
-                          key: const ValueKey('send'),
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: context.colors.primary,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: IconButton(
-                            icon: const Icon(Icons.send, color: Colors.white, size: 20),
-                            onPressed: _sendMessage,
-                            padding: EdgeInsets.zero,
-                          ),
-                        )
-                      : Container(
-                          key: const ValueKey('mic'),
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: context.colors.outlineVariant,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: IconButton(
-                            icon: Icon(Icons.mic, size: 20, color: context.colors.onSurface.withOpacity(0.7)),
-                            onPressed: _startVoiceRecording,
-                            padding: EdgeInsets.zero,
-                          ),
-                        ),
-                );
-              },
-            ),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          child: _isRecordingVoice ? _buildVoiceRecordingBar() : _buildTextInputBar(context),
         ),
       ),
     );
   }
+
+  Widget _buildTextInputBar(BuildContext context) {
+    return Row(
+      children: [
+        // Attach button
+        IconButton(
+          icon: Icon(Icons.attach_file, color: context.colors.primary),
+          onPressed: _showAttachSheet,
+        ),
+        // Text input
+        Expanded(
+          child: Container(
+            decoration: BoxDecoration(
+              color: context.colors.outlineVariant.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: Icon(Icons.emoji_emotions_outlined, color: context.colors.onSurface.withOpacity(0.5)),
+                  onPressed: _showEmojiSheet,
+                ),
+                Expanded(
+                  child: TextField(
+                    controller: _messageController,
+                    focusNode: _inputFocusNode,
+                    onChanged: _onTextChanged,
+                    decoration: InputDecoration(
+                      hintText: 'Сообщение...',
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                    ),
+                    maxLines: 5,
+                    minLines: 1,
+                    textInputAction: TextInputAction.newline,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(width: 4),
+        // Voice / Send button
+        BlocBuilder<ChatDetailBloc, ChatDetailState>(
+          builder: (context, state) {
+            final hasText = _messageController.text.trim().isNotEmpty;
+            if (hasText) {
+              return IconButton.filled(
+                icon: const Icon(Icons.send),
+                onPressed: _sendMessage,
+              );
+            }
+            return IconButton(
+              icon: const Icon(Icons.mic),
+              onPressed: _startVoiceRecording,
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildVoiceRecordingBar() {
+    return Row(
+      children: [
+        // Cancel
+        IconButton(
+          icon: const Icon(Icons.delete_outline, color: Colors.red),
+          onPressed: _cancelVoiceRecording,
+        ),
+        const SizedBox(width: 8),
+        // Recording indicator
+        Container(
+          width: 12, height: 12,
+          decoration: BoxDecoration(
+            color: Colors.red,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          '${_recordingDuration.inMinutes.remainder(60).toString().padLeft(2, '0')}:${_recordingDuration.inSeconds.remainder(60).toString().padLeft(2, '0')}',
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+        ),
+        const SizedBox(width: 16),
+        // Waveform placeholder
+        Expanded(
+          child: Container(
+            height: 28,
+            decoration: BoxDecoration(
+              color: context.colors.outlineVariant.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        // Send
+        IconButton.filled(
+          icon: const Icon(Icons.send),
+          onPressed: _sendVoiceRecording,
+        ),
+      ],
+    );
+  }
+
+  // ─── Voice Recording ────────────────────────────────────────────
+
+  Future<void> _startVoiceRecording() async {
+    final path = await VoiceMessageService.instance.startRecording();
+    if (path != null) {
+      setState(() {
+        _isRecordingVoice = true;
+        _recordingDuration = Duration.zero;
+      });
+      _recordingTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+        setState(() {
+          _recordingDuration = VoiceMessageService.instance.currentDuration;
+        });
+      });
+    }
+  }
+
+  Future<void> _sendVoiceRecording() async {
+    _recordingTimer?.cancel();
+    final result = await VoiceMessageService.instance.stopRecording();
+    setState(() => _isRecordingVoice = false);
+
+    if (result != null) {
+      context.read<ChatDetailBloc>().add(ChatDetailVoiceRecorded(chatId: widget.chatId));
+      // In real implementation: upload file via FileUploadService then send
+    }
+  }
+
+  void _cancelVoiceRecording() async {
+    _recordingTimer?.cancel();
+    await VoiceMessageService.instance.cancelRecording();
+    setState(() => _isRecordingVoice = false);
+  }
+
+  // ─── Attach / Emoji / Actions ──────────────────────────────────
 
   void _showAttachSheet() {
     showModalBottomSheet(
@@ -427,8 +530,6 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Прикрепить', style: context.typography.titleLarge?.copyWith(fontWeight: FontWeight.w600)),
-              const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
@@ -500,6 +601,22 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // ─── Quick Reactions ────────────────────────────────
+              ReactionsPicker(
+                onReactionSelected: (emoji) {
+                  Navigator.pop(ctx);
+                  context.read<ChatDetailBloc>().add(ChatDetailReactionSent(
+                    chatId: widget.chatId,
+                    messageId: msg.id,
+                    emoji: emoji,
+                  ));
+                },
+              ),
+              const SizedBox(height: 12),
+              const Divider(height: 1),
+              const SizedBox(height: 8),
+
+              // ─── Action buttons ─────────────────────────────────
               CharoTile(icon: Icons.reply_outlined, iconColor: context.colors.primary, title: 'Ответить',
                   onTap: () { Navigator.pop(ctx); _replyToMessage(msg); }),
               CharoTile(icon: Icons.forward_outlined, iconColor: const Color(0xFF10B981), title: 'Переслать',
@@ -531,9 +648,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   }
 
   void _copyMessage(MessageItem msg) {
-    if (msg.text != null) {
-      // Clipboard.setData(ClipboardData(text: msg.text!));
-    }
+    // Clipboard.setData(ClipboardData(text: msg.text ?? ''));
   }
 
   void _editMessage(MessageItem msg) {
@@ -554,9 +669,6 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   }
   void _pickFile() {
     context.read<ChatDetailBloc>().add(ChatDetailMediaPicked(chatId: widget.chatId, type: 'file'));
-  }
-  void _startVoiceRecording() {
-    context.read<ChatDetailBloc>().add(ChatDetailVoiceRecorded(chatId: widget.chatId));
   }
   void _sendLocation() {
     context.read<ChatDetailBloc>().add(ChatDetailLocationSent(chatId: widget.chatId));
@@ -644,9 +756,6 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     return '${seconds ~/ 86400} дн';
   }
 }
-
-/// Модель сообщения для UI
-
 
 /// Premium attach option with rounded container
 class _AttachOption extends StatelessWidget {

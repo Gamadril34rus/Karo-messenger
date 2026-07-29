@@ -30,6 +30,9 @@ import '../../features/contacts/presentation/screens/contacts_screen.dart';
 import '../../features/ai_assistant/presentation/screens/ai_assistant_screen.dart';
 import '../../features/nearby/presentation/screens/nearby_screen.dart';
 import '../../features/chat/presentation/screens/sticker_import_screen.dart';
+import '../../features/chat/presentation/screens/group_management_screen.dart';
+import '../../features/settings/presentation/screens/block_list_screen.dart';
+import '../../core/services/media_viewer_service.dart';
 import '../../core/haptic/haptic_service.dart';
 
 /// Навигация ЧАРО — GoRouter с вложенными маршрутами
@@ -108,6 +111,41 @@ class AppRouter {
       GoRoute(path: '/settings/about', parentNavigatorKey: _rootNavigatorKey, builder: (context, state) => const SettingsAboutScreen()),
       GoRoute(path: '/settings/data-export', parentNavigatorKey: _rootNavigatorKey, builder: (context, state) => const DataExportScreen()),
       GoRoute(path: '/sticker-import', parentNavigatorKey: _rootNavigatorKey, builder: (context, state) => const StickerImportScreen()),
+
+      // ── Group Management ────────────────────────────────────────
+      GoRoute(
+        path: '/group-management/:id',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          return GroupManagementScreen(
+            chatId: state.pathParameters['id']!,
+            chatTitle: extra['chatTitle'] as String? ?? 'Группа',
+            avatarUrl: extra['avatarUrl'] as String?,
+          );
+        },
+      ),
+
+      // ── Block List ───────────────────────────────────────────────
+      GoRoute(
+        path: '/block-list',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const BlockListScreen(),
+      ),
+
+      // ── Media Viewer ─────────────────────────────────────────────
+      GoRoute(
+        path: '/media-viewer',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          return MediaViewerScreen(
+            mediaItems: (extra['items'] as List<MediaItem>?) ?? [],
+            initialIndex: extra['initialIndex'] as int? ?? 0,
+            chatTitle: extra['chatTitle'] as String? ?? '',
+          );
+        },
+      ),
       GoRoute(path: '/ai', parentNavigatorKey: _rootNavigatorKey, builder: (context, state) => const AiAssistantScreen()),
       GoRoute(path: '/nearby', parentNavigatorKey: _rootNavigatorKey, builder: (context, state) => const NearbyScreen()),
 

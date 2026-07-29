@@ -171,6 +171,15 @@ final class ChatDetailSearchRequested extends ChatDetailEvent {
   List<Object?> get props => [chatId, query];
 }
 
+final class ChatDetailReactionSent extends ChatDetailEvent {
+  final String chatId;
+  final String messageId;
+  final String emoji;
+  ChatDetailReactionSent({required this.chatId, required this.messageId, required this.emoji});
+  @override
+  List<Object?> get props => [chatId, messageId, emoji];
+}
+
 // ─── States ────────────────────────────────────────────────────────
 
 sealed class ChatDetailState extends Equatable {
@@ -288,6 +297,7 @@ class ChatDetailBloc extends Bloc<ChatDetailEvent, ChatDetailState> {
     on<ChatDetailExportRequested>(_onExportRequested);
     on<ChatDetailHistoryCleared>(_onHistoryCleared);
     on<ChatDetailSearchRequested>(_onSearchRequested);
+    on<ChatDetailReactionSent>(_onReactionSent);
 
     _wsClient.messages.listen(_onWsEvent);
   }
@@ -523,6 +533,41 @@ class ChatDetailBloc extends Bloc<ChatDetailEvent, ChatDetailState> {
     );
     final results = (response.asList).map<MessageItem>(_parseMessage).toList();
     emit(current.copyWith(messages: results));
+  }
+
+  void _onReactionSent(ChatDetailReactionSent event, Emitter<ChatDetailState> emit) {
+    final current = state;
+    if (current is! ChatDetailLoaded) return;
+
+    // Отправить реакцию на сервер через WS
+    _wsClient.send('message.react', {
+      'chatId': event.chatId,
+      'messageId': event.messageId,
+      'emoji': event.emoji,
+    });
+
+    // Оптимистичное обновление — добавляем реакцию локально
+    final updated = current.messages.map((m) {
+      if (m.id == event.messageId) {
+        final existing = m.reactions.where((r) => r.emoji == event.emoji).firstOrNull;
+        final updatedReactions = existing != null
+            ? m.reactions.map((r) => r.emoji == event.emoji
+                ? Reaction(emoji: r.emoji, count: r.count + 1, isSelected: true)
+                : r).toList()
+            : [...m.reactions, Reaction(emoji: event.emoji, count: 1, isSelected: true)];
+        return MessageItem(
+          id: m.id, chatId: m.chatId, senderId: m.senderId,
+          senderName: m.senderName, isMe: m.isMe, type: m.type,
+          text: m.text, mediaUrl: m.mediaUrl, mediaThumbnail: m.mediaThumbnail,
+          replyToText: m.replyToText, replyToSender: m.replyToSender,
+          isEdited: m.isEdited, isDeleted: m.isDeleted,
+          status: m.status, sentAt: m.sentAt, readAt: m.readAt,
+          reactions: updatedReactions,
+        );
+      }
+      return m;
+    }).toList();
+    emit(current.copyWith(messages: updated));
   }
 
   void _onWsEvent(WsEvent event) {

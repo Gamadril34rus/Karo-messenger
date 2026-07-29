@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -15,6 +16,15 @@ import 'core/e2ee/e2ee_manager.dart';
 import 'core/audio/notification_service.dart';
 import 'core/utils/logger.dart';
 import 'i18n/localizations_delegate.dart';
+
+import 'core/services/offline_sync_service.dart';
+import 'core/services/push_notification_service.dart';
+import 'core/services/voice_message_service.dart';
+import 'core/services/disappearing_messages_service.dart';
+import 'core/services/presence_service.dart';
+import 'core/services/block_list_service.dart';
+import 'core/services/group_management_service.dart';
+import 'core/services/email_verification_service.dart';
 
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/chat/presentation/bloc/chat_list/chat_bloc.dart';
@@ -75,7 +85,59 @@ Future<void> _setupDependencies(
   // E2EE — connect to ApiClient for server key publishing
   E2EEKeyManager.instance.setApiClient(apiClient);
 
-  // BLoCs
+  // ─── Сервисы ──────────────────────────────────────────────────────
+
+  // Offline-First: синхронизация очереди и gap-filling
+  sl.registerLazySingleton<OfflineSyncService>(() => OfflineSyncService.instance);
+
+  // Push-уведомления (FCM/APNS)
+  sl.registerLazySingleton<PushNotificationService>(() => PushNotificationService.instance);
+
+  // Голосовые сообщения (запись через record package)
+  sl.registerLazySingleton<VoiceMessageService>(() => VoiceMessageService.instance);
+
+  // Исчезающие сообщения (клиентские таймеры)
+  sl.registerLazySingleton<DisappearingMessagesService>(() => DisappearingMessagesService.instance);
+
+  // Присутствие (online/offline, «был(а) в сети»)
+  sl.registerLazySingleton<PresenceService>(() => PresenceService.instance);
+
+  // Чёрный список
+  sl.registerLazySingleton<BlockListService>(() => BlockListService(apiClient: sl()));
+
+  // Управление группами
+  sl.registerLazySingleton<GroupManagementService>(() => GroupManagementService(apiClient: sl()));
+
+  // Верификация email
+  sl.registerLazySingleton<EmailVerificationService>(() => EmailVerificationService(apiClient: sl()));
+
+  // ─── Инициализация сервисов ──────────────────────────────────────
+
+  // Disappearing messages — привязка к локальной БД
+  sl<DisappearingMessagesService>().initialize(localDb);
+
+  // Presence — подписка на WS events
+  sl<PresenceService>().initialize(sl<WsClient>());
+
+  // Push-уведомления — инициализация
+  await sl<PushNotificationService>().initialize();
+
+  // ─── Bridge: WsClient → OfflineSyncService ────────────────────────
+  // При восстановлении WS-соединения — помечаем онлайн и flush queue
+  sl<WsClient>().connectionState.listen((wsState) {
+    final offlineSync = sl<OfflineSyncService>();
+    if (wsState == WsConnectionState.connected) {
+      offlineSync.setOnline(true);
+      // Gap-fill sync при reconnect
+      offlineSync.syncAllChats(sl<ApiClient>(), sl<AppDatabase>());
+    } else if (wsState == WsConnectionState.disconnected ||
+               wsState == WsConnectionState.error ||
+               wsState == WsConnectionState.failed) {
+      offlineSync.setOnline(false);
+    }
+  });
+
+  // ─── BLoCs ────────────────────────────────────────────────────────
   sl.registerFactory(() => AuthBloc(
         apiClient: sl(),
         secureStorage: sl(),

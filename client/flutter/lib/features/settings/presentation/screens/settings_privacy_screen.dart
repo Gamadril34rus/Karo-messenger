@@ -140,8 +140,8 @@ class _SettingsPrivacyScreenState extends State<SettingsPrivacyScreen> {
                 icon: Icons.block_outlined,
                 iconColor: Colors.red,
                 title: 'Заблокированные',
-                subtitle: '0 пользователей',
-                onTap: _showBlockedUsers,
+                subtitle: 'Управление чёрным списком',
+                onTap: () => context.go('/block-list'),
               ),
             ],
           ),
@@ -314,56 +314,6 @@ class _SettingsPrivacyScreenState extends State<SettingsPrivacyScreen> {
                   Navigator.pop(ctx);
                 },
               )),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ─── Blocked Users ────────────────────────────────────────────────
-
-  void _showBlockedUsers() {
-    HapticService.selection();
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Заблокированные пользователи', style: context.typography.titleLarge?.copyWith(fontWeight: FontWeight.w600)),
-              const SizedBox(height: 8),
-              Text('Пользователи, которых вы заблокировали, не могут отправлять вам сообщения или звонить.',
-                style: context.typography.bodySmall?.copyWith(color: context.colors.onSurface.withOpacity(0.5))),
-              const SizedBox(height: 16),
-              CharoCard(
-                padding: const EdgeInsets.all(16),
-                borderWidth: 1,
-                borderColor: context.colors.outline.withOpacity(0.5),
-                child: Center(
-                  child: Column(
-                    children: [
-                      Icon(Icons.check_circle, size: 32, color: context.colors.success),
-                      const SizedBox(height: 8),
-                      Text('Нет заблокированных', style: context.typography.bodyMedium?.copyWith(
-                        color: context.colors.onSurface.withOpacity(0.5),
-                      )),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              FilledButton.icon(
-                onPressed: () => Navigator.pop(ctx),
-                icon: const Icon(Icons.check),
-                label: const Text('Готово'),
-              ),
             ],
           ),
         ),
