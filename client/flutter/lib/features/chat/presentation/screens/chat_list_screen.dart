@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/services/responsive_layout.dart';
+import '../../../../core/accessibility/charo_accessibility.dart';
 import '../../../../shared/widgets/charo_widgets.dart';
 import '../bloc/chat_list/chat_bloc.dart';
 import '../../data/chat_item.dart';
@@ -97,6 +98,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
             : [
                 IconButton(
                   icon: const Icon(Icons.search),
+                  tooltip: 'Поиск',
                   onPressed: () => context.go('/search'),
                 ),
               ],
@@ -188,11 +190,16 @@ class _ChatListScreenState extends State<ChatListScreen> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showNewChatSheet(context),
-        elevation: 2,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: const Icon(Icons.edit_outlined),
+      floatingActionButton: Semantics(
+        label: 'Новое сообщение',
+        hint: 'Нажмите для создания нового чата',
+        button: true,
+        child: FloatingActionButton(
+          onPressed: () => _showNewChatSheet(context),
+          elevation: 2,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: const Icon(Icons.edit_outlined),
+        ),
       ),
     );
   }
@@ -316,23 +323,30 @@ class _PremiumChatTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () {
-            final isDesktop = ResponsiveLayout.isDesktop(context);
-            if (isDesktop) {
-              // Desktop: select chat in master-detail
-              _selectChat(chat.id);
-            } else {
-              // Mobile: navigate to detail
-              context.go('/chat/${chat.id}');
-            }
-          },
-          onLongPress: () => _showChatActions(context),
+    return CharoAccessibility.chatItem(
+      chatTitle: chat.title ?? 'Чат',
+      lastMessage: chat.lastMessage ?? 'Нет сообщений',
+      unreadCount: chat.unreadCount,
+      isOnline: chat.isOnline,
+      isPinned: chat.isPinned,
+      isMuted: chat.isMuted,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () {
+              final isDesktop = ResponsiveLayout.isDesktop(context);
+              if (isDesktop) {
+                // Desktop: select chat in master-detail
+                _selectChat(chat.id);
+              } else {
+                // Mobile: navigate to detail
+                context.go('/chat/${chat.id}');
+              }
+            },
+            onLongPress: () => _showChatActions(context),
           child: Container(
             margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
@@ -426,6 +440,7 @@ class _PremiumChatTile extends StatelessWidget {
             ),
           ),
         ),
+      ),
       ),
     );
   }

@@ -30,6 +30,7 @@ import '../../features/settings/presentation/screens/settings_energy_screen.dart
 import '../../features/settings/presentation/screens/settings_media_quality_screen.dart';
 import '../../features/settings/presentation/screens/settings_about_screen.dart';
 import '../../features/settings/presentation/screens/data_export_screen.dart';
+import '../../features/settings/presentation/screens/settings_legal_screen.dart';
 import '../../features/contacts/presentation/screens/contacts_screen.dart';
 import '../../features/ai_assistant/presentation/screens/ai_assistant_screen.dart';
 import '../../features/nearby/presentation/screens/nearby_screen.dart';
@@ -120,6 +121,8 @@ class AppRouter {
       GoRoute(path: '/settings/media-quality', parentNavigatorKey: _rootNavigatorKey, builder: (context, state) => const SettingsMediaQualityScreen()),
       GoRoute(path: '/settings/about', parentNavigatorKey: _rootNavigatorKey, builder: (context, state) => const SettingsAboutScreen()),
       GoRoute(path: '/settings/data-export', parentNavigatorKey: _rootNavigatorKey, builder: (context, state) => const DataExportScreen()),
+      GoRoute(path: '/settings/privacy-policy', parentNavigatorKey: _rootNavigatorKey, builder: (context, state) => const PrivacyPolicyScreen()),
+      GoRoute(path: '/settings/terms', parentNavigatorKey: _rootNavigatorKey, builder: (context, state) => const TermsOfServiceScreen()),
       GoRoute(path: '/sticker-import', parentNavigatorKey: _rootNavigatorKey, builder: (context, state) => const StickerImportScreen()),
 
       // ── Group Management ────────────────────────────────────────

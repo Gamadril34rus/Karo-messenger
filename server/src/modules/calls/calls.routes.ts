@@ -1,16 +1,19 @@
 import { FastifyInstance } from 'fastify';
+import { z } from 'zod';
+
+const createCallSchema = z.object({
+  chatId: z.string().uuid().optional(),
+  type: z.enum(['VOICE', 'VIDEO']),
+  targetUserIds: z.array(z.string().uuid()).max(10).optional(),
+});
 
 export async function callsRoutes(fastify: FastifyInstance) {
   const { prisma } = fastify;
 
   // POST /calls — Инициировать звонок
-  fastify.post('/', async (request, reply) => {
+  fastify.post('/', { schema: { body: createCallSchema } }, async (request, reply) => {
     const userId = request.userId!;
-    const { chatId, type, targetUserIds } = request.body as {
-      chatId?: string;
-      type: 'VOICE' | 'VIDEO';
-      targetUserIds?: string[];
-    };
+    const { chatId, type, targetUserIds } = request.body as z.infer<typeof createCallSchema>;
 
     const call = await prisma.call.create({
       data: {

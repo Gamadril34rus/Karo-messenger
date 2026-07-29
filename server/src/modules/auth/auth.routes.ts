@@ -79,6 +79,7 @@ export async function authRoutes(fastify: FastifyInstance) {
 
   // ─── POST /auth/login — Отправить OTP ─────────────────────────
   fastify.post('/login', {
+    config: { rateLimit: { max: 5, timeWindow: '1 minute' } },
     schema: { body: loginSchema },
   }, async (request, reply) => {
     const { identifier, method } = request.body as z.infer<typeof loginSchema>;
@@ -140,6 +141,7 @@ export async function authRoutes(fastify: FastifyInstance) {
 
   // ─── POST /auth/login/password — Вход по паролю ──────────────
   fastify.post('/login/password', {
+    config: { rateLimit: { max: 5, timeWindow: '1 minute' } },
     schema: { body: loginPasswordSchema },
   }, async (request, reply) => {
     const { identifier, password } = request.body as z.infer<typeof loginPasswordSchema>;
@@ -195,6 +197,7 @@ export async function authRoutes(fastify: FastifyInstance) {
 
   // ─── POST /auth/verify — Верифицировать OTP ───────────────────
   fastify.post('/verify', {
+    config: { rateLimit: { max: 10, timeWindow: '1 minute' } },
     schema: { body: verifySchema },
   }, async (request, reply) => {
     const { identifier, code, method } = request.body as z.infer<typeof verifySchema>;
@@ -269,6 +272,7 @@ export async function authRoutes(fastify: FastifyInstance) {
 
   // ─── POST /auth/register — Регистрация ────────────────────────
   fastify.post('/register', {
+    config: { rateLimit: { max: 3, timeWindow: '1 minute' } },
     schema: { body: registerSchema },
   }, async (request, reply) => {
     const data = request.body as z.infer<typeof registerSchema>;
@@ -464,6 +468,7 @@ export async function authRoutes(fastify: FastifyInstance) {
 
   // ─── POST /auth/recover — Восстановление удалённого аккаунта ──
   fastify.post('/recover', {
+    config: { rateLimit: { max: 3, timeWindow: '1 minute' } },
     schema: { body: restoreSchema },
   }, async (request, reply) => {
     const { account_id, verification_code } = request.body as z.infer<typeof restoreSchema>;
@@ -747,6 +752,7 @@ export async function authRoutes(fastify: FastifyInstance) {
 
   // ─── POST /auth/2fa/enable — Enable TOTP 2FA ────────────────
   fastify.post('/2fa/enable', {
+    config: { rateLimit: { max: 3, timeWindow: '1 minute' } },
     preHandler: [fastify.authenticate],
   }, async (request, reply) => {
     const userId = request.userId!;

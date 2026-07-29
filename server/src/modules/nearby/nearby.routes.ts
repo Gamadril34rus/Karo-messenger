@@ -1,16 +1,19 @@
 import { FastifyInstance } from 'fastify';
+import { z } from 'zod';
+
+const nearbyQuerySchema = z.object({
+  lat: z.string().regex(/^-?\d+(\.\d+)?$/),
+  lng: z.string().regex(/^-?\d+(\.\d+)?$/),
+  radius: z.string().regex(/^\d+$/).optional(),
+});
 
 export async function nearbyRoutes(fastify: FastifyInstance) {
   const { prisma, redis } = fastify;
 
   // GET /nearby — Пользователи рядом
-  fastify.get('/', async (request, reply) => {
+  fastify.get('/', { schema: { querystring: nearbyQuerySchema } }, async (request, reply) => {
     const userId = request.userId!;
-    const { lat, lng, radius = '1000' } = request.query as {
-      lat?: string;
-      lng?: string;
-      radius?: string;
-    };
+    const { lat, lng, radius = '1000' } = request.query as z.infer<typeof nearbyQuerySchema> & { radius?: string };
 
     if (!lat || !lng) {
       return reply.code(400).send({ message: 'Укажите lat и lng' });

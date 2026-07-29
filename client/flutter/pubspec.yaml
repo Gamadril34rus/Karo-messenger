@@ -138,6 +138,7 @@ flutter:
     - assets/stickers/charo_retro/
     - assets/stickers/charo_food_ru/
     - assets/sounds/
+    - lib/i18n/
 
   fonts:
     - family: CharoSans

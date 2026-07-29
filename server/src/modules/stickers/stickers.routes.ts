@@ -1,6 +1,13 @@
 import { FastifyInstance } from 'fastify';
 import { StickerSource } from '@prisma/client';
+import { z } from 'zod';
 import { logger } from '../../utils/logger';
+
+const stickerImportSchema = z.object({
+  source: z.enum(['TELEGRAM', 'WHATSAPP', 'VIBER', 'VK', 'CUSTOM']),
+  sourceId: z.string().min(1).max(200),
+  name: z.string().max(200).optional(),
+});
 
 export async function stickersRoutes(fastify: FastifyInstance) {
   const { prisma } = fastify;
@@ -28,12 +35,8 @@ export async function stickersRoutes(fastify: FastifyInstance) {
 
   // POST /stickers/import — Import stickers from Telegram/VK/WhatsApp/Viber
   // Real implementation: downloads sticker images from source API and stores in MinIO
-  fastify.post('/import', async (request, reply) => {
-    const { source, sourceId, name } = request.body as {
-      source: 'TELEGRAM' | 'WHATSAPP' | 'VIBER' | 'VK' | 'CUSTOM';
-      sourceId: string;
-      name?: string;
-    };
+  fastify.post('/import', { schema: { body: stickerImportSchema } }, async (request, reply) => {
+    const { source, sourceId, name } = request.body as z.infer<typeof stickerImportSchema>;
 
     const CDN_BASE = process.env.CDN_BASE_URL || 'https://cdn.charo.chat';
 

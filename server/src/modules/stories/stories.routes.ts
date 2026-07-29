@@ -1,16 +1,19 @@
 import { FastifyInstance } from 'fastify';
+import { z } from 'zod';
+
+const createStorySchema = z.object({
+  type: z.enum(['IMAGE', 'VIDEO', 'TEXT']),
+  content: z.string().max(1000).optional(),
+  backgroundColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+});
 
 export async function storyRoutes(fastify: FastifyInstance) {
   const { prisma } = fastify;
 
   // POST /stories — Опубликовать историю
-  fastify.post('/', async (request, reply) => {
+  fastify.post('/', { schema: { body: createStorySchema } }, async (request, reply) => {
     const userId = request.userId!;
-    const { type, content, backgroundColor } = request.body as {
-      type: 'IMAGE' | 'VIDEO' | 'TEXT';
-      content?: string;
-      backgroundColor?: string;
-    };
+    const { type, content, backgroundColor } = request.body as z.infer<typeof createStorySchema>;
 
     const story = await prisma.story.create({
       data: {

@@ -1,6 +1,9 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/network/api_client.dart';
+import '../../../../core/storage/local_db.dart' as db;
+import '../../../../core/utils/logger.dart';
 import '../../data/contact_item.dart';
 
 // Events
@@ -36,7 +39,12 @@ final class ContactsError extends ContactsState {
 // BLoC
 class ContactsBloc extends Bloc<ContactsEvent, ContactsState> {
   final ApiClient _apiClient;
-  ContactsBloc({required ApiClient apiClient}) : _apiClient = apiClient, super(ContactsInitial()) {
+  final db.AppDatabase _localDb;
+
+  ContactsBloc({required ApiClient apiClient, db.AppDatabase? localDb})
+      : _apiClient = apiClient,
+        _localDb = localDb ?? db.AppDatabase(),
+        super(ContactsInitial()) {
     on<ContactsLoadRequested>(_onLoadRequested);
     on<ContactsSyncRequested>(_onSyncRequested);
     on<ContactAdded>(_onContactAdded);
@@ -45,6 +53,18 @@ class ContactsBloc extends Bloc<ContactsEvent, ContactsState> {
 
   Future<void> _onLoadRequested(ContactsLoadRequested event, Emitter<ContactsState> emit) async {
     emit(ContactsLoading());
+
+    // Try loading from local cache first
+    try {
+      final cachedContacts = await _localDb.getAllContacts();
+      if (cachedContacts.isNotEmpty) {
+        emit(ContactsLoaded(contacts: cachedContacts.map(_localContactToItem).toList()));
+      }
+    } catch (e) {
+      logger.w('Contacts local cache load failed: $e');
+    }
+
+    // Then fetch from server
     try {
       final response = await _apiClient.get('/api/v1/contacts');
       final contacts = (response.asList).map<ContactItem>((json) => ContactItem(
@@ -54,9 +74,16 @@ class ContactsBloc extends Bloc<ContactsEvent, ContactsState> {
         avatarUrl: json['contact_user']?['avatar_url'] as String?,
         isOnline: json['contact_user']?['is_online'] as bool? ?? false,
       )).toList();
+
+      // Persist to local DB
+      await _persistContacts(contacts);
+
       emit(ContactsLoaded(contacts: contacts));
     } on CharoApiException catch (e) {
-      emit(ContactsError(message: e.message));
+      // If we already have cached data, keep it — don't show error
+      if (state is! ContactsLoaded) {
+        emit(ContactsError(message: e.message));
+      }
     }
   }
 
@@ -72,9 +99,45 @@ class ContactsBloc extends Bloc<ContactsEvent, ContactsState> {
 
   Future<void> _onContactDeleted(ContactDeleted event, Emitter<ContactsState> emit) async {
     await _apiClient.delete('/api/v1/contacts/${event.userId}');
+
+    // Remove from local DB
+    try {
+      await _localDb.deleteContact(event.userId);
+    } catch (e) {
+      logger.w('Failed to delete contact from local DB: $e');
+    }
+
     final current = state;
     if (current is ContactsLoaded) {
       emit(ContactsLoaded(contacts: current.contacts.where((c) => c.userId != event.userId).toList()));
     }
+  }
+
+  // ─── Persistence helpers ──────────────────────────────────────────
+
+  Future<void> _persistContacts(List<ContactItem> contacts) async {
+    try {
+      await _localDb.deleteAllContacts();
+      for (final contact in contacts) {
+        await _localDb.insertContact(db.LocalContactsCompanion.insert(
+          id: contact.userId,
+          userId: contact.userId,
+          contactUserId: contact.userId,
+          displayName: Value(contact.displayName),
+        ));
+      }
+    } catch (e) {
+      logger.w('Failed to persist contacts to local DB: $e');
+    }
+  }
+
+  ContactItem _localContactToItem(db.LocalContact c) {
+    return ContactItem(
+      userId: c.userId,
+      displayName: c.displayName ?? 'Без имени',
+      username: '',
+      avatarUrl: null,
+      isOnline: false,
+    );
   }
 }

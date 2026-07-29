@@ -20,8 +20,13 @@ const notificationSchema = z.object({
   previewEnabled: z.boolean().optional(),
   groupMentions: z.boolean().optional(),
   quietHoursEnabled: z.boolean().optional(),
-  quietHoursStart: z.string().optional(),
-  quietHoursEnd: z.string().optional(),
+  quietHoursStart: z.string().regex(/^\d{2}:\d{2}$/).optional(),
+  quietHoursEnd: z.string().regex(/^\d{2}:\d{2}$/).optional(),
+});
+
+const appearanceSchema = z.object({
+  language: z.string().max(10).optional(),
+  theme: z.enum(['light', 'dark', 'system']).optional(),
 });
 
 export async function settingsRoutes(fastify: FastifyInstance) {
@@ -93,9 +98,9 @@ export async function settingsRoutes(fastify: FastifyInstance) {
   });
 
   // PATCH /settings/appearance — Настройки внешнего вида
-  fastify.patch('/appearance', async (request, reply) => {
+  fastify.patch('/appearance', { schema: { body: appearanceSchema } }, async (request, reply) => {
     const userId = request.userId!;
-    const body = request.body as { language?: string; theme?: string };
+    const body = request.body as z.infer<typeof appearanceSchema>;
     if (body.language) {
       await prisma.user.update({ where: { id: userId }, data: { language: body.language } });
     }

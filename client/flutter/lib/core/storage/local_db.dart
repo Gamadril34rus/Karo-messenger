@@ -95,6 +95,18 @@ class AppDatabase extends _$AppDatabase {
   Future<void> upsertUser(LocalUsersCompanion user) =>
       into(localUsers).insertOnConflictUpdate(user);
 
+  // ─── Contacts ───────────────────────────────────────────────────
+
+  Future<List<LocalContact>> getAllContacts() => select(localContacts).get();
+
+  Future<void> insertContact(LocalContactsCompanion contact) =>
+      into(localContacts).insertOnConflictUpdate(contact);
+
+  Future<void> deleteContact(String contactUserId) =>
+      (delete(localContacts)..where((t) => t.contactUserId.equals(contactUserId))).go();
+
+  Future<void> deleteAllContacts() => delete(localContacts).go();
+
   // ─── Очистка ────────────────────────────────────────────────────
 
   Future<void> clearAll() async {

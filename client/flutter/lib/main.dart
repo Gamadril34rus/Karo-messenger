@@ -188,11 +188,11 @@ Future<void> _setupDependencies(
         wsClient: sl(),
         localDb: sl(),
       ));
-  sl.registerFactory(() => ContactsBloc(apiClient: sl()));
+  sl.registerFactory(() => ContactsBloc(apiClient: sl(), localDb: sl()));
   sl.registerFactory(() => CallsBloc(apiClient: sl(), wsClient: sl()));
   sl.registerFactory(() => StoriesBloc(apiClient: sl()));
   sl.registerFactory(() => ProfileBloc(apiClient: sl(), secureStorage: sl(), wsClient: sl()));
-  sl.registerFactory(() => SettingsBloc());
+  sl.registerFactory(() => SettingsBloc(apiClient: sl()));
   sl.registerFactory(() => AiAssistantBloc(apiClient: sl()));
   sl.registerFactory(() => NearbyBloc(apiClient: sl()));
 }

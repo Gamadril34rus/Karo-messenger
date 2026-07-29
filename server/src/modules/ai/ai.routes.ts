@@ -1,4 +1,5 @@
 import { FastifyInstance } from 'fastify';
+import { z } from 'zod';
 import { logger } from '../../utils/logger';
 
 /// Gemini AI Integration — real Google Gemini API
@@ -62,17 +63,27 @@ function _fallbackResponse(prompt: string): string {
   return 'Я AI-ассистент ЧАРО. Могу помочь с переводом, саммаризацией чатов, генерацией стикеров и ответами на вопросы. Чем могу помочь?';
 }
 
+const aiChatSchema = z.object({
+  conversation_id: z.string().uuid().optional(),
+  message: z.string().max(4000).optional(),
+  action: z.enum(['new']).optional(),
+});
+
+const aiSummarizeSchema = z.object({
+  chat_id: z.string().uuid(),
+});
+
+const aiGenerateSchema = z.object({
+  prompt: z.string().min(1).max(500),
+});
+
 export async function aiRoutes(fastify: FastifyInstance) {
   const { prisma } = fastify;
 
   // POST /ai/chat — Chat with AI (real Gemini integration)
-  fastify.post('/chat', async (request, reply) => {
+  fastify.post('/chat', { schema: { body: aiChatSchema } }, async (request, reply) => {
     const userId = request.userId!;
-    const { conversation_id, message, action } = request.body as {
-      conversation_id?: string;
-      message?: string;
-      action?: string;
-    };
+    const { conversation_id, message, action } = request.body as z.infer<typeof aiChatSchema>;
 
     // If action=new — create a new conversation
     if (action === 'new') {
@@ -183,8 +194,8 @@ export async function aiRoutes(fastify: FastifyInstance) {
   });
 
   // POST /ai/summarize — Summarize chat messages
-  fastify.post('/summarize', async (request, reply) => {
-    const { chat_id } = request.body as { chat_id: string };
+  fastify.post('/summarize', { schema: { body: aiSummarizeSchema } }, async (request, reply) => {
+    const { chat_id } = request.body as z.infer<typeof aiSummarizeSchema>;
 
     const messages = await prisma.message.findMany({
       where: { chatId: chat_id, isDeleted: false },
@@ -205,8 +216,8 @@ export async function aiRoutes(fastify: FastifyInstance) {
   });
 
   // POST /ai/generate-sticker — Generate sticker image (real AI generation)
-  fastify.post('/generate-sticker', async (request, reply) => {
-    const { prompt } = request.body as { prompt: string };
+  fastify.post('/generate-sticker', { schema: { body: aiGenerateSchema } }, async (request, reply) => {
+    const { prompt } = request.body as z.infer<typeof aiGenerateSchema>;
 
     if (!GEMINI_API_KEY) {
       return reply.code(503).send({ message: 'AI генерация требует Gemini API key' });
@@ -265,8 +276,8 @@ export async function aiRoutes(fastify: FastifyInstance) {
   });
 
   // POST /ai/generate-avatar — Generate avatar image
-  fastify.post('/generate-avatar', async (request, reply) => {
-    const { prompt } = request.body as { prompt?: string };
+  fastify.post('/generate-avatar', { schema: { body: aiGenerateSchema } }, async (request, reply) => {
+    const { prompt } = request.body as z.infer<typeof aiGenerateSchema>;
 
     if (!GEMINI_API_KEY) {
       return reply.code(503).send({ message: 'AI генерация требует Gemini API key' });

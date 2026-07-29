@@ -27,6 +27,7 @@ import { aiRoutes } from './modules/ai/ai.routes';
 import { stickersRoutes } from './modules/stickers/stickers.routes';
 import { nearbyRoutes } from './modules/nearby/nearby.routes';
 import { mlsRoutes } from './modules/mls/mls.routes';
+import { searchRoutes } from './modules/search/search.routes';
 
 import { wsHandler } from './ws/connection';
 import { errorHandler } from './middleware/errorHandler';
@@ -95,13 +96,14 @@ export async function buildServer(): Promise<FastifyInstance> {
     credentials: true,
   });
 
-  // Rate limiting
+  // Rate limiting — global defaults
   await fastify.register(rateLimit, {
     max: 100,
     timeWindow: '1 minute',
     keyGenerator: (request) => {
       return request.ip;
     },
+    // Per-route overrides applied in route registrations
   });
 
   // Multipart upload
@@ -228,6 +230,9 @@ export async function buildServer(): Promise<FastifyInstance> {
 
       // MLS маршруты
       api.register(mlsRoutes);
+
+      // Global search (top-level)
+      api.register(searchRoutes, { prefix: '/search' });
     },
     { prefix: '/api/v1' }
   );

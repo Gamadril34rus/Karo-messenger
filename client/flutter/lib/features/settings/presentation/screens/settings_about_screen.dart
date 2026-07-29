@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/theme/app_theme.dart';
@@ -76,13 +77,13 @@ class SettingsAboutScreen extends StatelessWidget {
                 icon: Icons.security_outlined,
                 iconColor: const Color(0xFF8B5CF6),
                 title: 'Политика конфиденциальности',
-                onTap: () => _launchUrl('https://charo.chat/privacy'),
+                onTap: () => context.go('/settings/privacy-policy'),
               ),
               CharoTile(
                 icon: Icons.description_outlined,
                 iconColor: const Color(0xFF3B82F6),
                 title: 'Пользовательское соглашение',
-                onTap: () => _launchUrl('https://charo.chat/terms'),
+                onTap: () => context.go('/settings/terms'),
               ),
             ],
           ),

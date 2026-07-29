@@ -10,6 +10,10 @@ const sendSchema = z.object({
 
 const editSchema = z.object({ content: z.any() });
 
+const reactSchema = z.object({
+  emoji: z.string().min(1).max(10),
+});
+
 export async function messagesRoutes(fastify: FastifyInstance) {
   const { prisma } = fastify;
 
@@ -70,10 +74,10 @@ export async function messagesRoutes(fastify: FastifyInstance) {
   });
 
   // POST /messages/:id/react — Реакция
-  fastify.post('/:id/react', async (request, reply) => {
+  fastify.post('/:id/react', { schema: { body: reactSchema } }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const userId = request.userId!;
-    const { emoji } = request.body as { emoji: string };
+    const { emoji } = request.body as z.infer<typeof reactSchema>;
 
     const existing = await prisma.reaction.findUnique({
       where: { messageId_userId_emoji: { messageId: id, userId, emoji } },

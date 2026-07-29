@@ -1,6 +1,21 @@
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
+const addContactSchema = z.object({
+  identifier: z.string().optional(),
+  contactUserId: z.string().uuid().optional(),
+}).refine(data => data.identifier || data.contactUserId, {
+  message: 'Укажите identifier или contactUserId',
+});
+
+const syncSchema = z.object({
+  phones: z.array(z.string()).min(1).max(1000),
+});
+
+const blockSchema = z.object({
+  userId: z.string().uuid(),
+});
+
 export async function contactsRoutes(fastify: FastifyInstance) {
   const { prisma } = fastify;
 
@@ -22,12 +37,9 @@ export async function contactsRoutes(fastify: FastifyInstance) {
   });
 
   // POST /contacts — Добавить контакт
-  fastify.post('/', async (request, reply) => {
+  fastify.post('/', { schema: { body: addContactSchema } }, async (request, reply) => {
     const userId = request.userId!;
-    const { identifier, contactUserId } = request.body as {
-      identifier?: string;
-      contactUserId?: string;
-    };
+    const { identifier, contactUserId } = request.body as z.infer<typeof addContactSchema>;
 
     let targetId = contactUserId;
 
@@ -66,9 +78,9 @@ export async function contactsRoutes(fastify: FastifyInstance) {
   });
 
   // POST /contacts/sync — Синхронизация телефонной книги
-  fastify.post('/sync', async (request, reply) => {
+  fastify.post('/sync', { schema: { body: syncSchema } }, async (request, reply) => {
     const userId = request.userId!;
-    const { phones } = request.body as { phones: string[] };
+    const { phones } = request.body as z.infer<typeof syncSchema>;
 
     const existingUsers = await prisma.user.findMany({
       where: { phone: { in: phones }, status: 'ACTIVE' },
@@ -91,13 +103,9 @@ export async function contactsRoutes(fastify: FastifyInstance) {
   });
 
   // ─── POST /contacts/block — Заблокировать пользователя ────────────
-  fastify.post('/block', async (request, reply) => {
+  fastify.post('/block', { schema: { body: blockSchema } }, async (request, reply) => {
     const userId = request.userId!;
-    const { userId: targetUserId } = request.body as { userId: string };
-
-    if (!targetUserId) {
-      return reply.code(400).send({ message: 'Укажите userId' });
-    }
+    const { userId: targetUserId } = request.body as z.infer<typeof blockSchema>;
 
     if (targetUserId === userId) {
       return reply.code(400).send({ message: 'Нельзя заблокировать самого себя' });
