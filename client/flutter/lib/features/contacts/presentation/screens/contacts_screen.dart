@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/haptic/haptic_service.dart';
 import '../../../../shared/widgets/charo_widgets.dart';
 import '../bloc/contacts_bloc.dart';
 import '../../data/contact_item.dart';
 
-/// Экран контактов — список, поиск, синхронизация
+/// Экран контактов — список, поиск, добавление, удаление, синхронизация
 class ContactsScreen extends StatefulWidget {
   const ContactsScreen({super.key});
 
@@ -170,13 +171,45 @@ class _ContactTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CharoTile(
-      icon: Icons.person,
-      iconColor: contact.isOnline ? context.colors.success : context.colors.onSurface.withOpacity(0.5),
-      title: contact.displayName,
-      subtitle: '@${contact.username}',
-      onTap: () => HapticService.light(),
-      onLongPress: () => _showContactSheet(context, contact),
+    return Dismissible(
+      key: ValueKey(contact.userId),
+      direction: DismissDirection.endToStart,
+      confirmDismiss: (direction) => _confirmDelete(context),
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        color: Theme.of(context).colorScheme.error,
+        child: const Icon(Icons.person_remove, color: Colors.white),
+      ),
+      child: CharoTile(
+        icon: Icons.person,
+        iconColor: contact.isOnline ? context.colors.success : context.colors.onSurface.withOpacity(0.5),
+        title: contact.displayName,
+        subtitle: '@${contact.username}',
+        onTap: () {
+          HapticService.light();
+          _showContactSheet(context, contact);
+        },
+        onLongPress: () => _showContactSheet(context, contact),
+      ),
+    );
+  }
+
+  Future<bool?> _confirmDelete(BuildContext context) {
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Удалить контакт'),
+        content: Text('Удалить ${contact.displayName} из списка контактов?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Отмена')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: context.colors.error),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Удалить'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -208,15 +241,67 @@ class _ContactTile extends StatelessWidget {
             CharoSection(
               title: 'Действия',
               children: [
-                CharoTile(icon: Icons.chat, title: 'Написать', onTap: () { HapticService.light(); Navigator.pop(ctx); }),
-                CharoTile(icon: Icons.call, title: 'Позвонить', onTap: () { HapticService.light(); Navigator.pop(ctx); }),
-                CharoTile(icon: Icons.videocam, title: 'Видеозвонок', onTap: () { HapticService.light(); Navigator.pop(ctx); }),
-                CharoTile(icon: Icons.block, title: 'Заблокировать', isDestructive: true, onTap: () { HapticService.light(); Navigator.pop(ctx); }),
+                CharoTile(icon: Icons.chat, title: 'Написать', onTap: () {
+                  HapticService.light();
+                  Navigator.pop(ctx);
+                  context.go('/chat/${contact.userId}');
+                }),
+                CharoTile(icon: Icons.call, title: 'Позвонить', onTap: () {
+                  HapticService.light();
+                  Navigator.pop(ctx);
+                  context.go('/call/${contact.userId}', extra: {
+                    'recipientName': contact.displayName,
+                    'recipientAvatarUrl': contact.avatarUrl ?? '',
+                    'isVideo': false,
+                    'isOutgoing': true,
+                  });
+                }),
+                CharoTile(icon: Icons.videocam, title: 'Видеозвонок', onTap: () {
+                  HapticService.light();
+                  Navigator.pop(ctx);
+                  context.go('/call/${contact.userId}', extra: {
+                    'recipientName': contact.displayName,
+                    'recipientAvatarUrl': contact.avatarUrl ?? '',
+                    'isVideo': true,
+                    'isOutgoing': true,
+                  });
+                }),
+                CharoTile(icon: Icons.block, title: 'Заблокировать', isDestructive: true, onTap: () {
+                  HapticService.light();
+                  Navigator.pop(ctx);
+                  _confirmBlock(context);
+                }),
+                CharoTile(icon: Icons.person_remove, title: 'Удалить контакт', isDestructive: true, onTap: () {
+                  HapticService.light();
+                  Navigator.pop(ctx);
+                  context.read<ContactsBloc>().add(ContactDeleted(userId: contact.userId));
+                }),
               ],
             ),
             const SizedBox(height: 16),
           ],
         ),
+      ),
+    );
+  }
+
+  void _confirmBlock(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Заблокировать'),
+        content: Text('Заблокировать ${contact.displayName}? Пользователь не сможет отправлять вам сообщения.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Отмена')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: context.colors.error),
+            onPressed: () {
+              Navigator.pop(ctx);
+              context.read<ContactsBloc>().add(ContactDeleted(userId: contact.userId));
+            },
+            child: const Text('Заблокировать'),
+          ),
+        ],
       ),
     );
   }

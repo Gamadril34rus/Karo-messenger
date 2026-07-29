@@ -229,6 +229,10 @@ export function wsHandler(prisma: PrismaClient, redis: Redis) {
             await handleCallInitiate(manager, prisma, userId, msg);
             break;
 
+          case 'call.hangup':
+            await handleCallHangup(manager, prisma, userId, msg);
+            break;
+
           default:
             logger.warn(`Unknown WS event: ${msg.type}`);
         }
@@ -666,12 +670,20 @@ async function handleCallInitiate(
     });
 
     // Notify all participants of incoming call
+    // Include caller name and avatar for the incoming call screen
+    const caller = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { displayName: true, avatarUrl: true },
+    });
+
     for (const participantId of participants) {
       manager.sendToUser(participantId, {
         type: 'call.incoming',
         data: {
           callId: call.id,
           callerId: userId,
+          callerName: caller?.displayName ?? 'Неизвестный',
+          callerAvatarUrl: caller?.avatarUrl ?? null,
           type: type ?? 'voice',
           chatId: chatId ?? null,
         },
@@ -681,6 +693,65 @@ async function handleCallInitiate(
     logger.info(`Call ${call.id} initiated by ${userId} for ${participants.length} participants`);
   } catch (err) {
     logger.error(`Call initiate error: ${err}`);
+  }
+}
+
+async function handleCallHangup(
+  manager: ConnectionManager,
+  prisma: PrismaClient,
+  userId: string,
+  msg: WsMessage,
+): Promise<void> {
+  const { callId, reason } = msg.data;
+  if (!callId) {
+    logger.warn('Call hangup missing callId');
+    return;
+  }
+
+  try {
+    const call = await prisma.call.findUnique({
+      where: { id: callId as string },
+      include: { members: { select: { userId: true } } },
+    });
+
+    if (!call) {
+      logger.warn(`Call ${callId} not found for hangup`);
+      return;
+    }
+
+    // Update call status
+    const status = (reason as string) === 'declined' ? 'DECLINED' : 'ENDED';
+    const now = new Date();
+    const durationSec = call.startedAt
+      ? Math.round((now.getTime() - call.startedAt.getTime()) / 1000)
+      : null;
+
+    await prisma.call.update({
+      where: { id: callId as string },
+      data: {
+        status,
+        endedAt: now,
+        durationSec,
+      },
+    });
+
+    // Notify all other participants
+    for (const member of call.members) {
+      if (member.userId !== userId) {
+        manager.sendToUser(member.userId, {
+          type: 'call.hangup',
+          data: {
+            callId,
+            reason: reason ?? 'ended',
+            endedBy: userId,
+          },
+        });
+      }
+    }
+
+    logger.info(`Call ${callId} hung up by ${userId} (reason: ${reason ?? 'ended'})`);
+  } catch (err) {
+    logger.error(`Call hangup error: ${err}`);
   }
 }
 

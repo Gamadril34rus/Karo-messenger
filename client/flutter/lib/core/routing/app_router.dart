@@ -13,6 +13,7 @@ import '../../features/chat/presentation/screens/chat_list_screen.dart';
 import '../../features/chat/presentation/screens/chat_detail_screen.dart';
 import '../../features/calls/presentation/screens/calls_screen.dart';
 import '../../features/calls/presentation/screens/active_call_screen.dart';
+import '../../features/calls/presentation/screens/incoming_call_screen.dart';
 import '../../features/stories/presentation/screens/stories_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/settings/presentation/screens/settings_main_screen.dart';
@@ -171,6 +172,23 @@ class AppRouter {
             recipientAvatarUrl: extra['recipientAvatarUrl'] as String? ?? '',
             isVideo: extra['isVideo'] as bool? ?? false,
             isOutgoing: extra['isOutgoing'] as bool? ?? true,
+          );
+        },
+      ),
+
+      // ── Incoming Call ────────────────────────────────────────────
+      GoRoute(
+        path: '/incoming-call/:id',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final callId = state.pathParameters['id']!;
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          return IncomingCallScreen(
+            callId: callId,
+            callerId: extra['callerId'] as String? ?? '',
+            callerName: extra['callerName'] as String? ?? 'Неизвестный',
+            callerAvatarUrl: extra['callerAvatarUrl'] as String?,
+            isVideo: extra['isVideo'] as bool? ?? false,
           );
         },
       ),

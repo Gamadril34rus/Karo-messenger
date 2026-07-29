@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/haptic/haptic_service.dart';
 import '../../../../shared/widgets/charo_widgets.dart';
 import '../bloc/stories_bloc.dart';
 import '../../data/story_item.dart';
+import 'story_viewer_screen.dart';
 
 /// Экран историй — просмотр и публикация
 class StoriesScreen extends StatefulWidget {
@@ -87,7 +89,7 @@ class _StoriesScreenState extends State<StoriesScreen> {
             child: ListView.builder(
               padding: const EdgeInsets.symmetric(vertical: 8),
               itemCount: stories.length,
-              itemBuilder: (context, index) => _StoryTile(story: stories[index]),
+              itemBuilder: (context, index) => _StoryTile(story: stories[index], index: index),
             ),
           );
         },
@@ -127,7 +129,9 @@ class _StoriesScreenState extends State<StoriesScreen> {
 
 class _StoryTile extends StatelessWidget {
   final StoryItem story;
-  const _StoryTile({required this.story});
+  final int index;
+
+  const _StoryTile({required this.story, required this.index});
 
   @override
   Widget build(BuildContext context) {
@@ -137,6 +141,21 @@ class _StoryTile extends StatelessWidget {
       radius: 14,
       borderWidth: story.isViewed ? 0 : 1.5,
       borderColor: story.isViewed ? null : context.colors.primary.withOpacity(0.5),
+      onTap: () {
+        HapticService.medium();
+        // Открываем полноэкранный просмотрщик
+        final allStories = BlocProvider.of<StoriesBloc>(context).state is StoriesLoaded
+            ? (BlocProvider.of<StoriesBloc>(context).state as StoriesLoaded).stories
+            : <StoryItem>[];
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => StoryViewerScreen(
+              stories: allStories,
+              initialUserIndex: index,
+            ),
+          ),
+        );
+      },
       child: Row(
         children: [
           CharoAvatar(

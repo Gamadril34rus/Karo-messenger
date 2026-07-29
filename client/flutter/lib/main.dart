@@ -26,6 +26,8 @@ import 'core/services/block_list_service.dart';
 import 'core/services/group_management_service.dart';
 import 'core/services/email_verification_service.dart';
 
+import 'features/calls/presentation/screens/incoming_call_screen.dart';
+
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/chat/presentation/bloc/chat_list/chat_bloc.dart';
 import 'features/chat/presentation/bloc/chat_detail/chat_bloc.dart';
@@ -134,6 +136,32 @@ Future<void> _setupDependencies(
                wsState == WsConnectionState.error ||
                wsState == WsConnectionState.failed) {
       offlineSync.setOnline(false);
+    }
+  });
+
+  // ─── Bridge: WsClient → Incoming Call ─────────────────────────────
+  // При получении call.incoming — показываем экран входящего звонка
+  sl<WsClient>().messages.listen((event) {
+    if (event.type == 'call.incoming') {
+      final callId = event.data['callId'] as String? ?? '';
+      final callerId = event.data['callerId'] as String? ?? '';
+      final callType = event.data['type'] as String? ?? 'voice';
+      // Navigate to incoming call screen via global navigator
+      final navigatorKey = AppRouter.router.configuration.navigatorKey;
+      final context = navigatorKey.currentContext;
+      if (context != null) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => IncomingCallScreen(
+              callId: callId,
+              callerId: callerId,
+              callerName: event.data['callerName'] as String? ?? 'Неизвестный',
+              callerAvatarUrl: event.data['callerAvatarUrl'] as String?,
+              isVideo: callType == 'video',
+            ),
+          ),
+        );
+      }
     }
   });
 

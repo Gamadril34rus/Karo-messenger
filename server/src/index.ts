@@ -3,12 +3,14 @@
  * Fastify + TypeScript + Prisma + WebSocket
  */
 
-import Fastify from 'fastify';
+import Fastify, { FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import multipart from '@fastify/multipart';
 import websocket from '@fastify/websocket';
+import swagger from '@fastify/swagger';
+import swaggerUi from '@fastify/swagger-ui';
 import { PrismaClient } from '@prisma/client';
 import Redis from 'ioredis';
 
@@ -32,29 +34,7 @@ import { authMiddleware } from './middleware/auth';
 
 import { logger } from './utils/logger';
 
-// ─── Инициализация ────────────────────────────────────────────────
-
-const prisma = new PrismaClient();
-const redis = new Redis({
-  host: process.env.REDIS_HOST || 'localhost',
-  port: Number(process.env.REDIS_PORT) || 6379,
-  password: process.env.REDIS_PASSWORD,
-  maxRetriesPerRequest: null,
-});
-
-const fastify = Fastify({
-  logger: {
-    level: process.env.LOG_LEVEL || 'info',
-    transport: {
-      target: 'pino-pretty',
-      options: { colorize: true },
-    },
-  },
-  requestIdHeader: 'x-request-id',
-  requestIdLogLabel: 'reqId',
-});
-
-// ─── Глобальные декораторы ─────────────────────────────────────────
+// ─── Fastify type augmentation ──────────────────────────────────────
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -64,19 +44,44 @@ declare module 'fastify' {
   interface FastifyInstance {
     prisma: import('@prisma/client').PrismaClient;
     redis: import('ioredis').Redis;
+    authenticate: typeof authMiddleware;
   }
 }
 
-fastify.decorate('prisma', prisma);
-fastify.decorate('redis', redis);
+// ─── Build Server (exported for testing) ───────────────────────────
 
-// Auth authenticate decorator — для preHandler в защищённых маршрутах
-// (authRoutes.logout / authRoutes.delete-account используют fastify.authenticate)
-fastify.decorate('authenticate', authMiddleware);
+export async function buildServer(): Promise<FastifyInstance> {
+  const prisma = new PrismaClient();
+  const redis = new Redis({
+    host: process.env.REDIS_HOST || 'localhost',
+    port: Number(process.env.REDIS_PORT) || 6379,
+    password: process.env.REDIS_PASSWORD,
+    maxRetriesPerRequest: null,
+    lazyConnect: true,
+  });
 
-// ─── Плагины ──────────────────────────────────────────────────────
+  const fastify = Fastify({
+    logger: {
+      level: process.env.LOG_LEVEL || 'info',
+      transport: process.env.NODE_ENV !== 'test'
+        ? {
+            target: 'pino-pretty',
+            options: { colorize: true },
+          }
+        : undefined,
+    },
+    requestIdHeader: 'x-request-id',
+    requestIdLogLabel: 'reqId',
+  });
 
-async function bootstrap() {
+  // ─── Глобальные декораторы ─────────────────────────────────────────
+
+  fastify.decorate('prisma', prisma);
+  fastify.decorate('redis', redis);
+  fastify.decorate('authenticate', authMiddleware);
+
+  // ─── Плагины ──────────────────────────────────────────────────────
+
   // Security
   await fastify.register(helmet, {
     contentSecurityPolicy: false,
@@ -107,17 +112,98 @@ async function bootstrap() {
     },
   });
 
+  // OpenAPI / Swagger
+  await fastify.register(swagger, {
+    openapi: {
+      openapi: '3.0.3',
+      info: {
+        title: 'ЧАРО Messenger API',
+        description: 'Production-ready API for ЧАРО messenger — real-time messaging, calls, stories, contacts, E2EE, and more.',
+        version: '1.0.0',
+        contact: {
+          name: 'ЧАРО Team',
+          url: 'https://charo.chat',
+        },
+        license: {
+          name: 'Proprietary',
+        },
+      },
+      servers: [
+        { url: 'http://localhost:3000', description: 'Development' },
+        { url: 'https://api.charo.chat', description: 'Production' },
+      ],
+      components: {
+        securitySchemes: {
+          bearerAuth: {
+            type: 'http',
+            scheme: 'bearer',
+            bearerFormat: 'JWT',
+          },
+        },
+      },
+      tags: [
+        { name: 'auth', description: 'Authentication & sessions' },
+        { name: 'users', description: 'User profiles' },
+        { name: 'chats', description: 'Chat management' },
+        { name: 'messages', description: 'Message CRUD' },
+        { name: 'contacts', description: 'Contact management' },
+        { name: 'calls', description: 'Voice & video calls' },
+        { name: 'stories', description: 'Stories' },
+        { name: 'media', description: 'File upload & media' },
+        { name: 'settings', description: 'User settings' },
+        { name: 'ai', description: 'AI assistant' },
+        { name: 'stickers', description: 'Sticker packs' },
+        { name: 'nearby', description: 'Nearby users' },
+        { name: 'mls', description: 'MLS (E2EE groups)' },
+      ],
+    },
+  });
+
+  await fastify.register(swaggerUi, {
+    routePrefix: '/docs',
+    uiConfig: {
+      docExpansion: 'list',
+      deepLinking: true,
+      persistAuthorization: true,
+    },
+    staticCSP: true,
+  });
+
   // WebSocket
   await fastify.register(websocket);
 
   // ─── Маршруты ──────────────────────────────────────────────────
 
-  // Health check
-  fastify.get('/health', async () => ({
-    status: 'ok',
-    version: '1.0.0',
-    timestamp: new Date().toISOString(),
-  }));
+  // Health check (detailed)
+  fastify.get('/health', async () => {
+    let dbStatus = 'ok';
+    let redisStatus = 'ok';
+
+    try {
+      await prisma.$queryRaw`SELECT 1`;
+    } catch {
+      dbStatus = 'error';
+    }
+
+    try {
+      const pingResult = await redis.ping();
+      if (pingResult !== 'PONG') redisStatus = 'error';
+    } catch {
+      redisStatus = 'error';
+    }
+
+    const overallStatus = dbStatus === 'ok' && redisStatus === 'ok' ? 'ok' : 'degraded';
+
+    return {
+      status: overallStatus,
+      version: '1.0.0',
+      timestamp: new Date().toISOString(),
+      checks: {
+        database: dbStatus,
+        redis: redisStatus,
+      },
+    };
+  });
 
   // API v1
   fastify.register(
@@ -140,8 +226,7 @@ async function bootstrap() {
       api.register(stickersRoutes, { prefix: '/stickers' });
       api.register(nearbyRoutes, { prefix: '/nearby' });
 
-      // MLS маршруты — полные пути внутри mls.routes.ts (/api/v1/mls/...)
-      // Поскольку MLS routes уже содержат полные пути, регистрируем без prefix
+      // MLS маршруты
       api.register(mlsRoutes);
     },
     { prefix: '/api/v1' }
@@ -156,13 +241,21 @@ async function bootstrap() {
 
   fastify.setErrorHandler(errorHandler);
 
+  return fastify;
+}
+
+// ─── Main (production entry point) ─────────────────────────────────
+
+async function main() {
+  const fastify = await buildServer();
+
   // ─── Graceful shutdown ─────────────────────────────────────────
 
   const shutdown = async (signal: string) => {
     logger.info(`${signal} received, shutting down gracefully...`);
     await fastify.close();
-    await prisma.$disconnect();
-    await redis.quit();
+    await fastify.prisma.$disconnect();
+    await fastify.redis.quit();
     process.exit(0);
   };
 
@@ -177,10 +270,11 @@ async function bootstrap() {
   try {
     await fastify.listen({ port, host });
     logger.info(`🚀 charo Server running on ${host}:${port}`);
+    logger.info(`📖 API docs: http://${host}:${port}/docs`);
   } catch (err) {
     logger.error(err);
     process.exit(1);
   }
 }
 
-bootstrap();
+main();

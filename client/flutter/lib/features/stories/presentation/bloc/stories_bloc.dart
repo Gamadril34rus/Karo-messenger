@@ -51,23 +51,54 @@ class StoriesBloc extends Bloc<StoriesEvent, StoriesState> {
     emit(StoriesLoading());
     try {
       final response = await _apiClient.get('/api/v1/stories');
-      final stories = (response.asList).map<StoryItem>((json) => StoryItem(
-        userId: json['user_id'] as String? ?? '',
-        userName: json['user']?['display_name'] as String?,
-        avatarUrl: json['user']?['avatar_url'] as String?,
-        type: json['type'] as String? ?? 'image',
-        textContent: json['content'] as String?,
-        count: json['count'] as int? ?? 1,
-        isViewed: json['is_viewed'] as bool? ?? false,
-      )).toList();
+      final data = response.asList;
+
+      // Server returns grouped stories: [{userId, userName, avatarUrl, stories: [...]}]
+      final stories = data.map<StoryItem>((json) {
+        final storyItems = (json['stories'] as List<dynamic>?) ?? [];
+        final items = storyItems.map<StoryContentItem>((s) {
+          final sMap = s as Map<String, dynamic>;
+          return StoryContentItem(
+            id: sMap['id'] as String? ?? '',
+            type: _mapStoryType(sMap['type'] as String?),
+            mediaUrl: sMap['mediaUrl'] as String? ?? sMap['media_url'] as String?,
+            textContent: sMap['content'] as String?,
+            backgroundColor: sMap['backgroundColor'] as String? ?? sMap['background_color'] as String?,
+            createdAt: sMap['createdAt'] != null
+                ? DateTime.tryParse(sMap['createdAt'].toString())
+                : null,
+            isViewed: (sMap['views'] as List?)?.isNotEmpty ?? false,
+            viewCount: (sMap['views'] as List?)?.length ?? 0,
+          );
+        }).toList();
+
+        return StoryItem(
+          userId: json['userId'] as String? ?? json['user_id'] as String? ?? '',
+          userName: json['userName'] as String? ?? json['user']?['display_name'] as String?,
+          avatarUrl: json['avatarUrl'] as String? ?? json['user']?['avatar_url'] as String?,
+          type: items.isNotEmpty ? items.first.type : 'image',
+          count: items.length,
+          isViewed: items.every((i) => i.isViewed),
+          items: items,
+        );
+      }).toList();
+
       emit(StoriesLoaded(stories: stories));
     } on CharoApiException catch (e) {
       emit(StoriesError(message: e.message));
     }
   }
 
+  String _mapStoryType(String? type) {
+    if (type == null) return 'image';
+    final lower = type.toLowerCase();
+    if (lower == 'video') return 'video';
+    if (lower == 'text') return 'text';
+    return 'image';
+  }
+
   Future<void> _onPublishRequested(StoryPublishRequested event, Emitter<StoriesState> emit) async {
-    await _apiClient.post('/api/v1/stories', data: {'type': event.type});
+    await _apiClient.post('/api/v1/stories', data: {'type': event.type.toUpperCase()});
     add(StoriesLoadRequested());
   }
 
