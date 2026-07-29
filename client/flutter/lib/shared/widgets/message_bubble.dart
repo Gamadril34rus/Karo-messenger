@@ -138,7 +138,8 @@ class MessageBubble extends StatelessWidget {
   // ─── Цвет пузыря ────────────────────────────────────────────────
   Color _bubbleColor(BuildContext context) {
     if (isMe) {
-      return context.colors.primary.withOpacity(0.12);
+      // Subtle tinted background — looks premium, not like cheap plastic
+      return context.colors.primary.withOpacity(0.08);
     }
     return context.colors.outlineVariant;
   }

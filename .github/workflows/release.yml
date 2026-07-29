@@ -1,0 +1,133 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+env:
+  FLUTTER_VERSION: '3.24.5'
+  NODE_VERSION: '20'
+
+jobs:
+  # ─── Create GitHub Release ──────────────────────────────────────
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "ЧАРО v${{ steps.version.outputs.VERSION }}"
+          body: |
+            ## What's Changed
+            
+            See [CHANGELOG.md](https://github.com/charo-messenger/charo/blob/main/CHANGELOG.md) for full details.
+            
+            ### Installation
+            - **Android**: Download the APK below
+            - **iOS**: Build from source (requires Xcode)
+            - **Web**: Deployed at https://app.charo.chat
+            - **Server**: `docker pull charo-messenger/server:${{ steps.version.outputs.VERSION }}`
+          draft: false
+          prerelease: false
+
+  # ─── Build Android Release ──────────────────────────────────────
+  build-android:
+    name: Build Android Release
+    needs: create-release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Install dependencies
+        working-directory: client/flutter
+        run: flutter pub get
+
+      - name: Build APK
+        working-directory: client/flutter
+        run: flutter build apk --release
+
+      - name: Upload APK to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: client/flutter/build/app/outputs/flutter-apk/app-release.apk
+
+  # ─── Build Server Docker Image ──────────────────────────────────
+  build-server:
+    name: Build & Push Server Docker Image
+    needs: create-release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract version
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and Push
+        uses: docker/build-push-action@v6
+        with:
+          context: server
+          push: true
+          tags: |
+            charo-messenger/server:${{ steps.version.outputs.VERSION }}
+            charo-messenger/server:latest
+
+  # ─── Deploy Web ─────────────────────────────────────────────────
+  deploy-web:
+    name: Deploy Web
+    needs: create-release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+
+      - name: Install dependencies
+        working-directory: client/flutter
+        run: flutter pub get
+
+      - name: Build Web
+        working-directory: client/flutter
+        run: flutter build web --release --web-renderer canvaskit
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: client/flutter/build/web

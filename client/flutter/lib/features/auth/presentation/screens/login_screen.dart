@@ -163,6 +163,10 @@ class _LoginScreenState extends State<LoginScreen>
                     final isLoading = state is AuthLoading;
                     return FilledButton(
                       onPressed: isLoading ? null : _onLogin,
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 52),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      ),
                       child: isLoading
                           ? const SizedBox(
                               width: 20,

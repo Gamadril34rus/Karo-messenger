@@ -194,11 +194,29 @@ class _ChatListScreenState extends State<ChatListScreen> {
         label: 'Новое сообщение',
         hint: 'Нажмите для создания нового чата',
         button: true,
-        child: FloatingActionButton(
-          onPressed: () => _showNewChatSheet(context),
-          elevation: 2,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          child: const Icon(Icons.edit_outlined),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [context.colors.primary, context.colors.secondary],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: context.colors.primary.withOpacity(0.3),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: FloatingActionButton(
+            onPressed: () => _showNewChatSheet(context),
+            elevation: 0,
+            backgroundColor: Colors.transparent,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: const Icon(Icons.edit_outlined, color: Colors.white),
+          ),
         ),
       ),
     );

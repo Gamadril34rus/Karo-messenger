@@ -183,20 +183,20 @@ class CharoTile extends StatelessWidget {
         onLongPress: onLongPress,
         borderRadius: BorderRadius.circular(8),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
             children: [
               if (icon != null)
                 Padding(
                   padding: const EdgeInsets.only(right: 16),
                   child: Container(
-                    width: 40,
-                    height: 40,
+                    width: 44,
+                    height: 44,
                     decoration: BoxDecoration(
                       color: resolvedIconColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(14),
                     ),
-                    child: Icon(icon!, color: resolvedIconColor, size: 20),
+                    child: Icon(icon!, color: resolvedIconColor, size: 22),
                   ),
                 ),
               Expanded(
@@ -571,13 +571,13 @@ class CharoSwitchTile extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(right: 16),
               child: Container(
-                width: 40,
-                height: 40,
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
                   color: resolvedIconColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(14),
                 ),
-                child: Icon(icon!, color: resolvedIconColor, size: 20),
+                child: Icon(icon!, color: resolvedIconColor, size: 22),
               ),
             ),
           Expanded(

@@ -48,6 +48,9 @@ class AppTheme {
       error: const Color(0xFFF87171),
       outline: const Color(0xFF334155),
       outlineVariant: const Color(0xFF1E293B),
+      surfaceContainerHighest: const Color(0xFF1E293B),
+      surfaceContainerHigh: const Color(0xFF263548),
+      surfaceContainer: const Color(0xFF192033),
     );
 
     return _buildTheme(colorScheme, Brightness.dark);
