@@ -4,11 +4,14 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/services/responsive_layout.dart';
 import '../../../../shared/widgets/charo_widgets.dart';
 import '../bloc/chat_list/chat_bloc.dart';
 import '../../data/chat_item.dart';
+import '../screens/chat_detail_screen.dart';
 
 /// Список чатов — главный экран мессенджера с премиальным UI
+/// На десктопе: Master-Detail layout (список + деталь рядом)
 class ChatListScreen extends StatefulWidget {
   const ChatListScreen({super.key});
 
@@ -19,6 +22,7 @@ class ChatListScreen extends StatefulWidget {
 class _ChatListScreenState extends State<ChatListScreen> {
   final _searchController = TextEditingController();
   bool _isSearching = false;
+  String? _selectedChatId; // For desktop master-detail
 
   @override
   void initState() {
@@ -34,6 +38,19 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = ResponsiveLayout.isDesktop(context);
+
+    return MasterDetailLayout(
+      masterPanel: _buildChatListScaffold(),
+      detailPanel: _selectedChatId != null
+          ? ChatDetailScreen(chatId: _selectedChatId!)
+          : const _EmptyChatState(),
+      hasSelection: _selectedChatId != null,
+      emptyState: const _EmptyChatState(),
+    );
+  }
+
+  Widget _buildChatListScaffold() {
     return Scaffold(
       appBar: AppBar(
         title: _isSearching
@@ -180,6 +197,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
     );
   }
 
+  void _selectChat(String chatId) {
+    setState(() => _selectedChatId = chatId);
+  }
+
   void _showNewChatSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -301,7 +322,16 @@ class _PremiumChatTile extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
-          onTap: () => context.go('/chat/${chat.id}'),
+          onTap: () {
+            final isDesktop = ResponsiveLayout.isDesktop(context);
+            if (isDesktop) {
+              // Desktop: select chat in master-detail
+              _selectChat(chat.id);
+            } else {
+              // Mobile: navigate to detail
+              context.go('/chat/${chat.id}');
+            }
+          },
           onLongPress: () => _showChatActions(context),
           child: Container(
             margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -457,5 +487,33 @@ class _PremiumChatTile extends StatelessWidget {
       return days[dt.weekday - 1];
     }
     return '${dt.day.toString().padLeft(2, '0')}.${dt.month.toString().padLeft(2, '0')}';
+  }
+}
+
+/// Пустое состояние — показывается на десктопе, когда чат не выбран
+class _EmptyChatState extends StatelessWidget {
+  const _EmptyChatState();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.chat_bubble_outline,
+            size: 64,
+            color: Theme.of(context).colorScheme.outline,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Выберите чат',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: Theme.of(context).colorScheme.outline,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
