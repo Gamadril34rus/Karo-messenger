@@ -37,7 +37,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       appBar: AppBar(
         title: Text(isMe ? 'Мой профиль' : 'Профиль'),
         actions: isMe
-            ? [IconButton(icon: const Icon(Icons.edit_outlined), onPressed: () => _showEditProfile(context))]
+            ? [IconButton(icon: const Icon(Icons.edit_outlined), onPressed: () => context.go('/profile-edit'))]
             : [
                 IconButton(icon: const Icon(Icons.call_outlined), onPressed: () => _initCall(false)),
                 IconButton(icon: const Icon(Icons.videocam_outlined), onPressed: () => _initCall(true)),

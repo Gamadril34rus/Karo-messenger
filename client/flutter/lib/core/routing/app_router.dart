@@ -14,6 +14,9 @@ import '../../features/chat/presentation/screens/chat_detail_screen.dart';
 import '../../features/calls/presentation/screens/calls_screen.dart';
 import '../../features/calls/presentation/screens/active_call_screen.dart';
 import '../../features/calls/presentation/screens/incoming_call_screen.dart';
+import '../../features/chat/presentation/screens/create_chat_screen.dart';
+import '../../features/chat/presentation/screens/forward_message_screen.dart';
+import '../../features/profile/presentation/screens/profile_edit_screen.dart';
 import '../../features/stories/presentation/screens/stories_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/settings/presentation/screens/settings_main_screen.dart';
@@ -155,6 +158,38 @@ class AppRouter {
         path: '/search',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const GlobalSearchScreen(),
+      ),
+
+      // ── Create Chat ──────────────────────────────────────────────
+      GoRoute(
+        path: '/create-chat',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          return CreateChatScreen(
+            chatType: extra['chatType'] as String? ?? 'private',
+          );
+        },
+      ),
+
+      // ── Forward Message ──────────────────────────────────────────
+      GoRoute(
+        path: '/forward',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          return ForwardMessageScreen(
+            messageId: extra['messageId'] as String? ?? '',
+            messagePreview: extra['messagePreview'] as String?,
+          );
+        },
+      ),
+
+      // ── Profile Edit ─────────────────────────────────────────────
+      GoRoute(
+        path: '/profile-edit',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const ProfileEditScreen(),
       ),
       GoRoute(path: '/ai', parentNavigatorKey: _rootNavigatorKey, builder: (context, state) => const AiAssistantScreen()),
       GoRoute(path: '/nearby', parentNavigatorKey: _rootNavigatorKey, builder: (context, state) => const NearbyScreen()),

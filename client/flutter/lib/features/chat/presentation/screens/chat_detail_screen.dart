@@ -671,7 +671,10 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   }
 
   void _forwardMessage(MessageItem msg) {
-    context.read<ChatDetailBloc>().add(ChatDetailForwardRequested(messageId: msg.id));
+    context.go('/forward', extra: {
+      'messageId': msg.id,
+      'messagePreview': msg.text ?? 'Медиа',
+    });
   }
 
   void _copyMessage(MessageItem msg) {
