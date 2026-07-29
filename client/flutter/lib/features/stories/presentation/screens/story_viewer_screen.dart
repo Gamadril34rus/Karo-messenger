@@ -519,7 +519,9 @@ class _StoryProgressBarState extends State<_StoryProgressBar>
     _controller = AnimationController(
       vsync: this,
       duration: widget.duration,
-    )..forward();
+    )..addListener(() {
+        if (mounted) setState(() {});
+      })..forward();
   }
 
   @override

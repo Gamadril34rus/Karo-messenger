@@ -123,7 +123,7 @@ class _IncomingCallScreenState extends State<IncomingCallScreen>
             const Spacer(flex: 2),
 
             // ── Caller info ───────────────────────────────────────
-            AnimatedBuilder(
+            _PulseBuilder(
               animation: _pulseAnimation,
               builder: (context, child) {
                 return Transform.scale(
@@ -295,13 +295,12 @@ class _CallActionButton extends StatelessWidget {
   }
 }
 
-/// AnimatedBuilder — стандартный Flutter виджет для анимации
-class AnimatedBuilder extends AnimatedWidget {
+/// _PulseBuilder — виджет для анимации пульса
+class _PulseBuilder extends AnimatedWidget {
   final Widget Function(BuildContext context, Widget? child) builder;
   final Widget? child;
 
-  const AnimatedBuilder({
-    super.key,
+  const _PulseBuilder({
     required super.listenable,
     required this.builder,
     this.child,
