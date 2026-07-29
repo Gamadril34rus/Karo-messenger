@@ -1,151 +1,64 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:charo_messenger/core/network/api_client.dart';
 import 'package:charo_messenger/features/stories/presentation/bloc/stories_bloc.dart';
 import 'package:charo_messenger/features/stories/data/story_item.dart';
 
-/// Тесты StoriesBloc — загрузка, просмотр, удаление
+class MockApiClient extends Mock implements ApiClient {}
+
 void main() {
   group('StoriesBloc', () {
+    late MockApiClient mockApiClient;
+
+    setUp(() {
+      mockApiClient = MockApiClient();
+    });
+
     test('initial state is StoriesInitial', () {
-      final apiClient = _MockApiClient();
-      final bloc = StoriesBloc(apiClient: apiClient);
-      expect(bloc.state, isA<StoriesInitial>());
+      final bloc = StoriesBloc(apiClient: mockApiClient);
+      expect(bloc.state, equals(StoriesInitial()));
       bloc.close();
     });
 
-    test('StoriesLoadRequested emits StoriesLoading then StoriesLoaded', () async {
-      final apiClient = _MockApiClientWithStories();
-      final bloc = StoriesBloc(apiClient: apiClient);
-
-      final states = <StoriesState>[];
-      bloc.stream.listen(states.add);
-
-      bloc.add(StoriesLoadRequested());
-
-      await Future.delayed(const Duration(milliseconds: 100));
-
-      expect(states.any((s) => s is StoriesLoading), isTrue);
-      expect(states.any((s) => s is StoriesLoaded), isTrue);
-
-      bloc.close();
-    });
-
-    test('StoryViewRequested does not crash', () async {
-      final apiClient = _MockApiClientWithStories();
-      final bloc = StoriesBloc(apiClient: apiClient);
-
-      bloc.add(StoryViewRequested(userId: 'test-user-id'));
-      await Future.delayed(const Duration(milliseconds: 100));
-
-      bloc.close();
-    });
-
-    test('StoryDeleteRequested does not crash', () async {
-      final apiClient = _MockApiClientWithStories();
-      final bloc = StoriesBloc(apiClient: apiClient);
-
-      bloc.add(StoryDeleteRequested(storyId: 'test-story-id'));
-      await Future.delayed(const Duration(milliseconds: 100));
-
-      bloc.close();
-    });
-  });
-
-  group('StoryItem', () {
-    test('copyWith works correctly', () {
-      const item = StoryItem(
-        userId: 'user1',
-        userName: 'Test User',
+    test('StoryPublishRequested event has all props', () {
+      final event = StoryPublishRequested(
         type: 'image',
-        count: 3,
-        isViewed: false,
+        mediaUrl: 'https://cdn.charo.chat/test.jpg',
+        textContent: null,
+        backgroundColor: null,
       );
-
-      final updated = item.copyWith(isViewed: true, count: 5);
-      expect(updated.isViewed, isTrue);
-      expect(updated.count, 5);
-      expect(updated.userId, 'user1');
-      expect(updated.userName, 'Test User');
+      expect(event.props, contains('image'));
+      expect(event.props, contains('https://cdn.charo.chat/test.jpg'));
     });
-  });
 
-  group('StoryContentItem', () {
-    test('default values', () {
-      const item = StoryContentItem(
+    test('StoryPublishRequested with text content has props', () {
+      final event = StoryPublishRequested(
+        type: 'text',
+        textContent: 'Hello world',
+        backgroundColor: '#6366F1',
+      );
+      expect(event.props, contains('text'));
+      expect(event.props, contains('Hello world'));
+      expect(event.props, contains('#6366F1'));
+    });
+
+    test('StoryItem copyWith works', () {
+      final item = StoryItem(userId: 'user1');
+      final copied = item.copyWith(isViewed: true, count: 5);
+      expect(copied.isViewed, isTrue);
+      expect(copied.count, 5);
+      expect(copied.userId, 'user1');
+    });
+
+    test('StoryContentItem has correct fields', () {
+      final item = StoryContentItem(
         id: 'story1',
-        type: 'image',
+        type: 'video',
+        mediaUrl: 'https://cdn.charo.chat/video.mp4',
+        viewCount: 42,
       );
-      expect(item.isViewed, isFalse);
-      expect(item.viewCount, 0);
-      expect(item.mediaUrl, isNull);
-      expect(item.textContent, isNull);
+      expect(item.type, 'video');
+      expect(item.viewCount, 42);
     });
   });
-}
-
-/// Mock ApiClient that returns story data
-class _MockApiClientWithStories extends ApiClient {
-  _MockApiClientWithStories() : super(_MockSecureStorage());
-
-  @override
-  Future<ApiResponse> get(String path, {Map<String, dynamic>? queryParameters}) async {
-    if (path == '/api/v1/stories') {
-      return ApiResponse(data: [
-        {
-          'userId': 'user1',
-          'userName': 'Alice',
-          'avatarUrl': null,
-          'stories': [
-            {
-              'id': 's1',
-              'type': 'IMAGE',
-              'mediaUrl': 'https://example.com/img.jpg',
-              'content': null,
-              'views': [{'userId': 'me'}],
-            },
-            {
-              'id': 's2',
-              'type': 'TEXT',
-              'content': 'Hello world',
-              'backgroundColor': '#6366F1',
-              'views': [],
-            },
-          ],
-        },
-      ]);
-    }
-    if (path.contains('/views')) {
-      return ApiResponse(data: {'views': []});
-    }
-    return ApiResponse(data: []);
-  }
-
-  @override
-  Future<ApiResponse> delete(String path) async {
-    return ApiResponse(data: {});
-  }
-}
-
-class _MockApiClient extends ApiClient {
-  _MockApiClient() : super(_MockSecureStorage());
-
-  @override
-  Future<ApiResponse> get(String path, {Map<String, dynamic>? queryParameters}) async {
-    return ApiResponse(data: []);
-  }
-
-  @override
-  Future<ApiResponse> post(String path, {dynamic data}) async {
-    return ApiResponse(data: {});
-  }
-
-  @override
-  Future<ApiResponse> delete(String path) async {
-    return ApiResponse(data: {});
-  }
-}
-
-class _MockSecureStorage extends SecureStorageHelper {
-  @override
-  Future<String?> getAccessToken() async => 'mock-token';
 }

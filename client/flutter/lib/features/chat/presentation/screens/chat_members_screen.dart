@@ -172,11 +172,11 @@ class _ChatMembersScreenState extends State<ChatMembersScreen> {
   }
 
   void _addMember() {
-    // Navigate to contacts screen for member selection
-    // In a full implementation, this would open a contact picker
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Выберите контакт для добавления')),
-    );
+    // Navigate to contact picker screen
+    context.go('/contact-picker/${widget.chatId}', extra: {
+      'multiSelect': true,
+      'title': 'Добавить участников',
+    });
   }
 
   void _viewMemberProfile(ChatMemberInfo member) {

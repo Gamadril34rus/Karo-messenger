@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/network/api_client.dart';
+import '../../../../core/utils/logger.dart';
 import '../../data/story_item.dart';
 
 // Events
@@ -8,8 +9,16 @@ sealed class StoriesEvent extends Equatable { @override List<Object?> get props 
 final class StoriesLoadRequested extends StoriesEvent {}
 final class StoryPublishRequested extends StoriesEvent {
   final String type;
-  StoryPublishRequested({required this.type});
-  @override List<Object?> get props => [type];
+  final String? mediaUrl;
+  final String? textContent;
+  final String? backgroundColor;
+  StoryPublishRequested({
+    required this.type,
+    this.mediaUrl,
+    this.textContent,
+    this.backgroundColor,
+  });
+  @override List<Object?> get props => [type, mediaUrl, textContent, backgroundColor];
 }
 final class StoryViewRequested extends StoriesEvent {
   final String userId;
@@ -98,8 +107,23 @@ class StoriesBloc extends Bloc<StoriesEvent, StoriesState> {
   }
 
   Future<void> _onPublishRequested(StoryPublishRequested event, Emitter<StoriesState> emit) async {
-    await _apiClient.post('/api/v1/stories', data: {'type': event.type.toUpperCase()});
-    add(StoriesLoadRequested());
+    try {
+      final data = <String, dynamic>{
+        'type': event.type.toUpperCase(),
+      };
+
+      if (event.type == 'text') {
+        data['content'] = event.textContent ?? '';
+        data['background_color'] = event.backgroundColor ?? '#6366F1';
+      } else if (event.mediaUrl != null) {
+        data['media_url'] = event.mediaUrl;
+      }
+
+      await _apiClient.post('/api/v1/stories', data: data);
+      add(StoriesLoadRequested());
+    } catch (e) {
+      logger.e('Story publish failed: $e');
+    }
   }
 
   Future<void> _onViewRequested(StoryViewRequested event, Emitter<StoriesState> emit) async {

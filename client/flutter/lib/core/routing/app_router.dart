@@ -36,6 +36,9 @@ import '../../features/nearby/presentation/screens/nearby_screen.dart';
 import '../../features/chat/presentation/screens/sticker_import_screen.dart';
 import '../../features/chat/presentation/screens/group_management_screen.dart';
 import '../../features/chat/presentation/screens/chat_members_screen.dart';
+import '../../features/chat/presentation/screens/contact_picker_screen.dart';
+import '../../features/chat/presentation/screens/chat_wallpaper_screen.dart';
+import '../../features/stories/presentation/screens/story_create_screen.dart';
 import '../../features/settings/presentation/screens/block_list_screen.dart';
 import '../../features/search/presentation/screens/global_search_screen.dart';
 import '../../core/services/media_viewer_service.dart';
@@ -142,6 +145,43 @@ class AppRouter {
           return ChatMembersScreen(
             chatId: state.pathParameters['id']!,
             chatTitle: extra['chatTitle'] as String? ?? 'Чат',
+          );
+        },
+      ),
+
+      // ── Contact Picker ────────────────────────────────────────────
+      GoRoute(
+        path: '/contact-picker/:id',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          return ContactPickerScreen(
+            chatId: state.pathParameters['id']!,
+            multiSelect: extra['multiSelect'] as bool? ?? true,
+            title: extra['title'] as String? ?? 'Добавить участников',
+          );
+        },
+      ),
+
+      // ── Chat Wallpaper ────────────────────────────────────────────
+      GoRoute(
+        path: '/chat-wallpaper/:id',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          return ChatWallpaperScreen(
+            chatId: state.pathParameters['id']!,
+          );
+        },
+      ),
+
+      // ── Story Create ──────────────────────────────────────────────
+      GoRoute(
+        path: '/story-create',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          return StoryCreateScreen(
+            storyType: extra['storyType'] as String? ?? 'image',
           );
         },
       ),

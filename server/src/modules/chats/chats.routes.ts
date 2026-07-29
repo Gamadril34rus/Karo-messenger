@@ -400,11 +400,15 @@ export async function chatsRoutes(fastify: FastifyInstance) {
     });
     if (!membership) return reply.code(403).send({ message: 'Нет доступа' });
 
+    // Search messages — content is JSON, search in text field or string_contains on raw content
     const messages = await prisma.message.findMany({
       where: {
         chatId: id,
         isDeleted: false,
-        content: { path: ['text'], string_contains: q },
+        OR: [
+          { content: { path: ['text'], string_contains: q } },
+          { content: { string_contains: q } },
+        ],
       },
       take: 50,
       orderBy: { createdAt: 'desc' },

@@ -109,17 +109,17 @@ class _StoriesScreenState extends State<StoriesScreen> {
           CharoTile(icon: Icons.photo_camera, title: 'Фото', onTap: () {
             HapticService.light();
             Navigator.pop(ctx);
-            context.read<StoriesBloc>().add(StoryPublishRequested(type: 'image'));
+            context.go('/story-create', extra: {'storyType': 'image'});
           }),
           CharoTile(icon: Icons.videocam, title: 'Видео', onTap: () {
             HapticService.light();
             Navigator.pop(ctx);
-            context.read<StoriesBloc>().add(StoryPublishRequested(type: 'video'));
+            context.go('/story-create', extra: {'storyType': 'video'});
           }),
           CharoTile(icon: Icons.text_fields, title: 'Текст', onTap: () {
             HapticService.light();
             Navigator.pop(ctx);
-            context.read<StoriesBloc>().add(StoryPublishRequested(type: 'text'));
+            context.go('/story-create', extra: {'storyType': 'text'});
           }),
         ]),
       ),

@@ -781,7 +781,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       case 'search': _showSearchInChat(); break;
       case 'mute': context.read<ChatDetailBloc>().add(ChatDetailMuteToggled(chatId: widget.chatId)); break;
       case 'disappearing': _showDisappearingTimerPicker(); break;
-      case 'wallpaper': break;
+      case 'wallpaper': context.go('/chat-wallpaper/${widget.chatId}'); break;
       case 'export': context.read<ChatDetailBloc>().add(ChatDetailExportRequested(chatId: widget.chatId)); break;
       case 'clear': context.read<ChatDetailBloc>().add(ChatDetailHistoryCleared(chatId: widget.chatId)); break;
     }
