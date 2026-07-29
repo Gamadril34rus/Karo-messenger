@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:drift/drift.dart' show Value;
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -8,6 +9,7 @@ import '../../../../../core/haptic/haptic_service.dart';
 import '../../../../../core/network/api_client.dart';
 import '../../../../../core/network/ws_client.dart';
 import '../../../../../core/storage/local_db.dart';
+import '../../../../../core/storage/local_db.g.dart';
 import '../../../../../core/utils/logger.dart';
 import '../../../data/message_item.dart';
 
@@ -306,6 +308,20 @@ class ChatDetailBloc extends Bloc<ChatDetailEvent, ChatDetailState> {
   Future<void> _onLoadRequested(ChatDetailLoadRequested event, Emitter<ChatDetailState> emit) async {
     emit(ChatDetailLoading());
     try {
+      // Сначала пытаемся загрузить из локального кэша
+      final localMessages = await _localDb.getMessages(event.chatId);
+      final localChat = await _getLocalChat(event.chatId);
+
+      if (localMessages.isNotEmpty && localChat != null) {
+        emit(ChatDetailLoaded(
+          chatId: event.chatId,
+          chatTitle: localChat.title ?? 'Чат',
+          isOnline: localChat.isMuted,
+          messages: localMessages.map(_localMessageToItem).toList(),
+        ));
+      }
+
+      // Загружаем данные чата с сервера
       final response = await _apiClient.get('/api/v1/chats/${event.chatId}');
       final chatData = response.asMap;
 
@@ -316,15 +332,42 @@ class ChatDetailBloc extends Bloc<ChatDetailEvent, ChatDetailState> {
 
       final messages = (messagesResponse.asList).map<MessageItem>(_parseMessage).toList();
 
+      // Кэшируем сообщения в локальную БД
+      await _cacheMessages(event.chatId, messages);
+
+      // Кэшируем чат
+      await _localDb.insertChat(LocalChatsCompanion.insert(
+        id: event.chatId,
+        type: Value(chatData['type'] as String? ?? 'private'),
+        title: Value(chatData['title'] as String?),
+        avatarUrl: Value(chatData['avatar_url'] as String?),
+        updatedAt: DateTime.now(),
+        createdAt: DateTime.now(),
+      ));
+
       emit(ChatDetailLoaded(
         chatId: event.chatId,
         chatTitle: chatData['title'] as String? ?? 'Чат',
         isOnline: chatData['is_online'] as bool? ?? false,
-        memberCount: chatData['member_count'] as int?,
+        memberCount: chatData['members'] != null
+            ? (chatData['members'] as List).length
+            : null,
         messages: messages,
+        disappearingTimer: chatData['disappear_timer'] as int?,
       ));
     } on CharoApiException catch (e) {
-      emit(ChatDetailError(message: e.message));
+      // Если сервер недоступен — показываем кэш
+      final localMessages = await _localDb.getMessages(event.chatId);
+      final localChat = await _getLocalChat(event.chatId);
+      if (localMessages.isNotEmpty) {
+        emit(ChatDetailLoaded(
+          chatId: event.chatId,
+          chatTitle: localChat?.title ?? 'Чат',
+          messages: localMessages.map(_localMessageToItem).toList(),
+        ));
+      } else {
+        emit(ChatDetailError(message: e.message));
+      }
     } catch (e) {
       logger.e('ChatDetail load error: $e');
       emit(ChatDetailError(message: 'Не удалось загрузить чат'));
@@ -741,5 +784,53 @@ class ChatDetailBloc extends Bloc<ChatDetailEvent, ChatDetailState> {
     } catch (e) {
       logger.e('🚨 E2EE decryption error: $e');
     }
+  }
+
+  // ─── Local DB helpers ──────────────────────────────────────────
+
+  /// Кэширование сообщений в локальную БД
+  Future<void> _cacheMessages(String chatId, List<MessageItem> messages) async {
+    try {
+      final companions = messages.map((m) => LocalMessagesCompanion.insert(
+        id: m.id,
+        chatId: chatId,
+        senderId: m.senderId,
+        type: m.type,
+        content: Value(m.text),
+        isEdited: Value(m.isEdited),
+        isRead: Value(m.isDeleted ? false : m.status == MessageStatus.read),
+        status: Value(m.status.name),
+        createdAt: m.sentAt,
+      )).toList();
+      await _localDb.insertMessages(companions);
+    } catch (e) {
+      logger.e('Cache messages error: $e');
+    }
+  }
+
+  /// Получить локальный чат из Drift
+  Future<LocalChat?> _getLocalChat(String chatId) async {
+    try {
+      final chats = await _localDb.getAllChats();
+      return chats.where((c) => c.id == chatId).firstOrNull;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Маппинг LocalMessage (Drift) -> MessageItem
+  MessageItem _localMessageToItem(LocalMessage m) {
+    return MessageItem(
+      id: m.id,
+      chatId: m.chatId,
+      senderId: m.senderId,
+      isMe: m.senderId == 'me',
+      type: m.type,
+      text: m.content,
+      isEdited: m.isEdited,
+      isDeleted: false,
+      status: _parseStatus(m.status),
+      sentAt: m.createdAt,
+    );
   }
 }

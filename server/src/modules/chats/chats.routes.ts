@@ -15,9 +15,15 @@ export async function chatsRoutes(fastify: FastifyInstance) {
   // GET /chats — Список чатов пользователя
   fastify.get('/', async (request, reply) => {
     const userId = request.userId!;
+    const query = request.query as { q?: string; include_archived?: string };
+
+    const whereClause: Record<string, unknown> = { userId };
+    if (query.include_archived !== 'true') {
+      whereClause.isArchived = false;
+    }
 
     const memberships = await prisma.chatMember.findMany({
-      where: { userId },
+      where: whereClause,
       include: {
         chat: {
           include: {
@@ -31,7 +37,10 @@ export async function chatsRoutes(fastify: FastifyInstance) {
           },
         },
       },
-      orderBy: { chat: { updatedAt: 'desc' } },
+      orderBy: [
+        { isPinned: 'desc' },
+        { chat: { updatedAt: 'desc' } },
+      ],
     });
 
     const chats = await Promise.all(memberships.map(async (m) => {
@@ -44,6 +53,8 @@ export async function chatsRoutes(fastify: FastifyInstance) {
         },
       });
 
+      const lastMessage = m.chat.messages[0];
+
       return {
         id: m.chat.id,
         type: m.chat.type,
@@ -51,13 +62,28 @@ export async function chatsRoutes(fastify: FastifyInstance) {
           ? m.chat.members.find(mem => mem.userId !== userId)?.user.displayName ?? 'Чат'
           : m.chat.title,
         avatar_url: m.chat.avatarUrl,
-        last_message: m.chat.messages[0]?.content ?? null,
-        last_message_at: m.chat.messages[0]?.createdAt ?? null,
+        last_message: lastMessage?.content ?? null,
+        last_message_sender: lastMessage?.senderId ?? null,
+        last_message_at: lastMessage?.createdAt ?? null,
         unread_count: unreadCount,
         is_muted: m.isMuted,
+        is_pinned: m.isPinned,
+        is_archived: m.isArchived,
         member_count: m.chat.members.length,
+        is_online: m.chat.type === 'PRIVATE'
+          ? m.chat.members.find(mem => mem.userId !== userId)?.user?.displayName != null
+          : false,
       };
     }));
+
+    // Client-side search filter
+    if (query.q) {
+      const q = query.q.toLowerCase();
+      const filtered = chats.filter((c) =>
+        (c.title ?? '').toLowerCase().includes(q)
+      );
+      return reply.send({ data: filtered });
+    }
 
     return reply.send({ data: chats });
   });
@@ -108,29 +134,109 @@ export async function chatsRoutes(fastify: FastifyInstance) {
     return reply.send(chat);
   });
 
-  // PATCH /chats/:id — Обновить чат
+  // PATCH /chats/:id — Обновить чат (title, avatar, disappear_timer, is_muted, is_pinned, is_archived)
   fastify.patch('/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
     const userId = request.userId!;
     const body = request.body as Record<string, unknown>;
 
-    const member = await prisma.chatMember.findUnique({
-      where: { chatId_userId: { chatId: id, userId } },
-    });
-    if (!member || (member.role !== 'OWNER' && member.role !== 'ADMIN')) {
-      return reply.code(403).send({ message: 'Недостаточно прав' });
+    // Chat-level updates (title, avatar, disappear_timer) — require OWNER/ADMIN
+    const chatUpdates: Record<string, unknown> = {};
+    const memberUpdates: Record<string, unknown> = {};
+
+    if (body.title !== undefined) chatUpdates.title = body.title as string;
+    if (body.avatar_url !== undefined) chatUpdates.avatarUrl = body.avatar_url as string;
+    if (body.disappear_timer !== undefined) chatUpdates.disappearTimer = body.disappear_timer as number;
+    if (body.is_muted !== undefined) memberUpdates.isMuted = body.is_muted as boolean;
+    if (body.is_pinned !== undefined) memberUpdates.isPinned = body.is_pinned as boolean;
+    if (body.is_archived !== undefined) memberUpdates.isArchived = body.is_archived as boolean;
+
+    // For chat-level updates, check OWNER/ADMIN
+    if (Object.keys(chatUpdates).length > 0) {
+      const member = await prisma.chatMember.findUnique({
+        where: { chatId_userId: { chatId: id, userId } },
+      });
+      if (!member || (member.role !== 'OWNER' && member.role !== 'ADMIN')) {
+        return reply.code(403).send({ message: 'Недостаточно прав' });
+      }
+      await prisma.chat.update({ where: { id }, data: chatUpdates });
     }
 
-    const chat = await prisma.chat.update({
+    // For member-level updates (mute, pin, archive) — just need to be a member
+    if (Object.keys(memberUpdates).length > 0) {
+      await prisma.chatMember.update({
+        where: { chatId_userId: { chatId: id, userId } },
+        data: memberUpdates,
+      });
+    }
+
+    const chat = await prisma.chat.findUnique({
       where: { id },
-      data: {
-        ...(body.title ? { title: body.title as string } : {}),
-        ...(body.avatar_url ? { avatarUrl: body.avatar_url as string } : {}),
-        ...(body.disappear_timer !== undefined ? { disappearTimer: body.disappear_timer as number } : {}),
+      include: {
+        members: {
+          include: { user: { select: { id: true, username: true, displayName: true, avatarUrl: true } } },
+        },
       },
     });
 
     return reply.send(chat);
+  });
+
+  // PATCH /chats/:id/pin — Закрепить/открепить чат
+  fastify.patch('/:id/pin', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const userId = request.userId!;
+    const body = request.body as { pinned?: boolean };
+
+    const membership = await prisma.chatMember.findUnique({
+      where: { chatId_userId: { chatId: id, userId } },
+    });
+    if (!membership) return reply.code(403).send({ message: 'Вы не участник этого чата' });
+
+    const updated = await prisma.chatMember.update({
+      where: { chatId_userId: { chatId: id, userId } },
+      data: { isPinned: body.pinned ?? !membership.isPinned },
+    });
+
+    return reply.send({ is_pinned: updated.isPinned });
+  });
+
+  // PATCH /chats/:id/mute — Отключить/включить уведомления
+  fastify.patch('/:id/mute', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const userId = request.userId!;
+    const body = request.body as { muted?: boolean };
+
+    const membership = await prisma.chatMember.findUnique({
+      where: { chatId_userId: { chatId: id, userId } },
+    });
+    if (!membership) return reply.code(403).send({ message: 'Вы не участник этого чата' });
+
+    const updated = await prisma.chatMember.update({
+      where: { chatId_userId: { chatId: id, userId } },
+      data: { isMuted: body.muted ?? !membership.isMuted },
+    });
+
+    return reply.send({ is_muted: updated.isMuted });
+  });
+
+  // PATCH /chats/:id/archive — Архивировать/разархивировать чат
+  fastify.patch('/:id/archive', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const userId = request.userId!;
+    const body = request.body as { archived?: boolean };
+
+    const membership = await prisma.chatMember.findUnique({
+      where: { chatId_userId: { chatId: id, userId } },
+    });
+    if (!membership) return reply.code(403).send({ message: 'Вы не участник этого чата' });
+
+    const updated = await prisma.chatMember.update({
+      where: { chatId_userId: { chatId: id, userId } },
+      data: { isArchived: body.archived ?? !membership.isArchived },
+    });
+
+    return reply.send({ is_archived: updated.isArchived });
   });
 
   // DELETE /chats/:id — Удалить чат для себя

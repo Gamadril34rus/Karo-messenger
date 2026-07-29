@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:video_player/video_player.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/haptic/haptic_service.dart';
@@ -366,30 +367,19 @@ class _StoryViewerScreenState extends State<StoryViewerScreen> {
   }
 
   Widget _buildVideoStory(StoryContentItem story) {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        if (story.mediaUrl != null && story.mediaUrl!.isNotEmpty)
-          Container(
-            color: Colors.black87,
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.play_circle_outline, color: Colors.white, size: 64),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Видео',
-                    style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 16),
-                  ),
-                ],
-              ),
-            ),
-          )
-        else
-          _buildPlaceholderStory(story),
-      ],
-    );
+    if (story.mediaUrl != null && story.mediaUrl!.isNotEmpty) {
+      return _StoryVideoPlayer(
+        videoUrl: story.mediaUrl!,
+        isPaused: _isPaused,
+        onInitialized: (duration) {
+          // Auto-advance matches video duration
+        },
+        onEnded: () {
+          _goToNextStory();
+        },
+      );
+    }
+    return _buildPlaceholderStory(story);
   }
 
   Widget _buildTextStory(StoryContentItem story) {
@@ -550,6 +540,114 @@ class _StoryProgressBarState extends State<_StoryProgressBar>
           color: Colors.white,
           borderRadius: BorderRadius.circular(2),
         ),
+      ),
+    );
+  }
+}
+
+/// Видеоплеер для видео-историй
+class _StoryVideoPlayer extends StatefulWidget {
+  final String videoUrl;
+  final bool isPaused;
+  final ValueChanged<Duration>? onInitialized;
+  final VoidCallback? onEnded;
+
+  const _StoryVideoPlayer({
+    required this.videoUrl,
+    this.isPaused = false,
+    this.onInitialized,
+    this.onEnded,
+  });
+
+  @override
+  State<_StoryVideoPlayer> createState() => _StoryVideoPlayerState();
+}
+
+class _StoryVideoPlayerState extends State<_StoryVideoPlayer> {
+  VideoPlayerController? _controller;
+  bool _isInitialized = false;
+  bool _hasError = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initVideo();
+  }
+
+  Future<void> _initVideo() async {
+    try {
+      _controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl));
+      await _controller!.initialize();
+      if (!mounted) return;
+
+      setState(() => _isInitialized = true);
+      widget.onInitialized?.call(_controller!.value.duration);
+
+      _controller!.setLooping(false);
+      _controller!.play();
+
+      _controller!.addListener(() {
+        if (!mounted) return;
+        if (_controller!.value.hasError) {
+          setState(() => _hasError = true);
+        }
+        if (_controller!.value.position >= _controller!.value.duration) {
+          widget.onEnded?.call();
+        }
+      });
+    } catch (e) {
+      if (mounted) {
+        setState(() => _hasError = true);
+      }
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _StoryVideoPlayer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (_controller != null && _isInitialized) {
+      if (widget.isPaused) {
+        _controller!.pause();
+      } else {
+        _controller!.play();
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_hasError) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.play_circle_outline, color: Colors.white, size: 64),
+            const SizedBox(height: 8),
+            Text(
+              'Видео недоступно',
+              style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 16),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (!_isInitialized) {
+      return const Center(
+        child: CircularProgressIndicator(color: Colors.white),
+      );
+    }
+
+    return Center(
+      child: AspectRatio(
+        aspectRatio: _controller!.value.aspectRatio,
+        child: VideoPlayer(_controller!),
       ),
     );
   }

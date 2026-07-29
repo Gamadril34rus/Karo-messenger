@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/theme/app_theme.dart';
@@ -216,20 +218,26 @@ class _DataExportScreenState extends State<DataExportScreen> {
           children: [
             Expanded(
               child: FilledButton.icon(
-                onPressed: _shareData,
-                icon: const Icon(Icons.share),
-                label: const Text('Поделиться JSON'),
+                onPressed: _downloadToFile,
+                icon: const Icon(Icons.download),
+                label: const Text('Сохранить файл'),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: OutlinedButton.icon(
-                onPressed: _startExport,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Экспортировать ещё раз'),
+                onPressed: _shareData,
+                icon: const Icon(Icons.share),
+                label: const Text('Поделиться'),
               ),
             ),
           ],
+        ),
+        const SizedBox(height: 12),
+        OutlinedButton.icon(
+          onPressed: _startExport,
+          icon: const Icon(Icons.refresh),
+          label: const Text('Экспортировать ещё раз'),
         ),
       ],
     );
@@ -265,5 +273,39 @@ class _DataExportScreenState extends State<DataExportScreen> {
     if (_exportData == null) return;
     final jsonStr = const JsonEncoder.withIndent('  ').convert(_exportData!);
     SharePlus.instance.share(ShareParams(text: jsonStr));
+  }
+
+  Future<void> _downloadToFile() async {
+    if (_exportData == null) return;
+    try {
+      final jsonStr = const JsonEncoder.withIndent('  ').convert(_exportData!);
+      final directory = await getApplicationDocumentsDirectory();
+      final timestamp = DateTime.now().toIso8601String().replaceAll(':', '-').substring(0, 19);
+      final file = File('${directory.path}/charo_data_export_$timestamp.json');
+      await file.writeAsString(jsonStr);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Данные сохранены: ${file.path}'),
+            duration: const Duration(seconds: 4),
+            action: SnackBarAction(
+              label: 'Поделиться',
+              onPressed: () {
+                SharePlus.instance.share(ShareParams(text: jsonStr));
+              },
+            ),
+          ),
+        );
+      }
+      logger.i('Data export saved to ${file.path}');
+    } catch (e) {
+      logger.e('Data export file save failed: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Ошибка сохранения: $e')),
+        );
+      }
+    }
   }
 }

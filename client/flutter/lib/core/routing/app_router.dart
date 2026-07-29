@@ -35,6 +35,7 @@ import '../../features/ai_assistant/presentation/screens/ai_assistant_screen.dar
 import '../../features/nearby/presentation/screens/nearby_screen.dart';
 import '../../features/chat/presentation/screens/sticker_import_screen.dart';
 import '../../features/chat/presentation/screens/group_management_screen.dart';
+import '../../features/chat/presentation/screens/chat_members_screen.dart';
 import '../../features/settings/presentation/screens/block_list_screen.dart';
 import '../../features/search/presentation/screens/global_search_screen.dart';
 import '../../core/services/media_viewer_service.dart';
@@ -128,6 +129,19 @@ class AppRouter {
             chatId: state.pathParameters['id']!,
             chatTitle: extra['chatTitle'] as String? ?? 'Группа',
             avatarUrl: extra['avatarUrl'] as String?,
+          );
+        },
+      ),
+
+      // ── Chat Members ──────────────────────────────────────────────
+      GoRoute(
+        path: '/chat-members/:id',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          return ChatMembersScreen(
+            chatId: state.pathParameters['id']!,
+            chatTitle: extra['chatTitle'] as String? ?? 'Чат',
           );
         },
       ),

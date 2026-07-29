@@ -56,13 +56,39 @@ class AppDatabase extends _$AppDatabase {
     return query.watch();
   }
 
+  Future<List<LocalMessage>> getMessages(String chatId) {
+    final query = select(localMessages)
+      ..where((t) => t.chatId.equals(chatId))
+      ..orderBy([
+        (t) => OrderingTerm.asc(t.createdAt),
+      ]);
+    return query.get();
+  }
+
   Future<void> insertMessage(LocalMessagesCompanion message) =>
       into(localMessages).insertOnConflictUpdate(message);
+
+  Future<void> insertMessages(List<LocalMessagesCompanion> messages) =>
+      batch((b) => b.insertAllOnConflictUpdate(localMessages, messages));
 
   Future<void> markMessageRead(String id) =>
       (update(localMessages)..where((t) => t.id.equals(id))).write(
         const LocalMessagesCompanion(isRead: Value(true)),
       );
+
+  Future<void> deleteMessage(String id) =>
+      (delete(localMessages)..where((t) => t.id.equals(id))).go();
+
+  Future<void> deleteMessagesForChat(String chatId) =>
+      (delete(localMessages)..where((t) => t.chatId.equals(chatId))).go();
+
+  Future<LocalMessage?> getLastMessage(String chatId) {
+    final query = select(localMessages)
+      ..where((t) => t.chatId.equals(chatId))
+      ..orderBy([(t) => OrderingTerm.desc(t.createdAt)])
+      ..limit(1);
+    return query.getSingleOrNull();
+  }
 
   // ─── Users ──────────────────────────────────────────────────────
 
@@ -93,6 +119,7 @@ class LocalChats extends Table {
   IntColumn get unreadCount => integer().withDefault(const Constant(0))();
   BoolColumn get isMuted => boolean().withDefault(const Constant(false))();
   BoolColumn get isPinned => boolean().withDefault(const Constant(false))();
+  BoolColumn get isArchived => boolean().withDefault(const Constant(false))();
   DateTimeColumn get updatedAt => dateTime()();
   DateTimeColumn get createdAt => dateTime()();
 

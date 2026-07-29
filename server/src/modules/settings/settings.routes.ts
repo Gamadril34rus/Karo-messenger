@@ -19,6 +19,9 @@ const notificationSchema = z.object({
   vibrationEnabled: z.boolean().optional(),
   previewEnabled: z.boolean().optional(),
   groupMentions: z.boolean().optional(),
+  quietHoursEnabled: z.boolean().optional(),
+  quietHoursStart: z.string().optional(),
+  quietHoursEnd: z.string().optional(),
 });
 
 export async function settingsRoutes(fastify: FastifyInstance) {

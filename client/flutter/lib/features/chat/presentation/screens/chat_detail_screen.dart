@@ -116,6 +116,14 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         title: _buildAppBarTitle(),
         actions: [
           IconButton(
+            icon: const Icon(Icons.people_outline),
+            onPressed: () {
+              final state = context.read<ChatDetailBloc>().state;
+              final chatTitle = state is ChatDetailLoaded ? state.chatTitle : 'Чат';
+              context.go('/chat-members/${widget.chatId}', extra: {'chatTitle': chatTitle});
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.call_outlined),
             onPressed: () => _initCall(isVideo: false),
           ),

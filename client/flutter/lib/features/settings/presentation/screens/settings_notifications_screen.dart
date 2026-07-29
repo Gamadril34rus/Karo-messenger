@@ -61,6 +61,9 @@ class _SettingsNotificationsScreenState extends State<SettingsNotificationsScree
         'vibrationEnabled': _vibrationEnabled,
         'previewEnabled': _previewEnabled,
         'groupMentions': _groupMentions,
+        'quietHoursEnabled': _quietHoursEnabled,
+        'quietHoursStart': _quietHoursStart,
+        'quietHoursEnd': _quietHoursEnd,
       });
     } catch (e) {
       logger.e('Failed to save push settings: $e');

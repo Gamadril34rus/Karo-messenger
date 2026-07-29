@@ -89,26 +89,9 @@ export async function usersRoutes(fastify: FastifyInstance) {
     });
   });
 
-  // GET /users/search?q= — Поиск пользователей
-  fastify.get('/search', async (request, reply) => {
-    const { q } = request.query as { q: string };
-    if (!q || q.length < 2) return reply.send({ data: [] });
-
-    const users = await prisma.user.findMany({
-      where: {
-        status: 'ACTIVE',
-        OR: [
-          { username: { contains: q, mode: 'insensitive' } },
-          { displayName: { contains: q, mode: 'insensitive' } },
-          { phone: { contains: q } },
-        ],
-      },
-      take: 20,
-      select: { id: true, username: true, displayName: true, avatarUrl: true },
-    });
-
-    return reply.send({ data: users });
-  });
+  // GET /users/search?q= — Поиск пользователей (simple, used by CreateChatScreen)
+  // NOTE: The full global search (chats + messages + contacts) is also at /users/search
+  // Both are handled by the unified search handler below
 
   // PATCH /users/me/avatar — Upload avatar to MinIO
   fastify.patch('/me/avatar', async (request, reply) => {

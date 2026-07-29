@@ -446,30 +446,64 @@ class _PremiumChatTile extends StatelessWidget {
                 icon: chat.isPinned ? Icons.push_pin : Icons.push_pin_outlined,
                 iconColor: context.colors.primary,
                 title: chat.isPinned ? 'Открепить' : 'Закрепить',
-                onTap: () { Navigator.pop(ctx); },
+                onTap: () {
+                  Navigator.pop(ctx);
+                  context.read<ChatListBloc>().add(ChatListPinToggled(chatId: chat.id));
+                },
               ),
               CharoTile(
                 icon: chat.isMuted ? Icons.notifications_outlined : Icons.notifications_off_outlined,
                 iconColor: const Color(0xFFF59E0B),
                 title: chat.isMuted ? 'Включить уведомления' : 'Отключить уведомления',
-                onTap: () { Navigator.pop(ctx); },
+                onTap: () {
+                  Navigator.pop(ctx);
+                  context.read<ChatListBloc>().add(ChatListMuteToggled(chatId: chat.id));
+                },
               ),
               CharoTile(
                 icon: Icons.archive_outlined,
                 iconColor: const Color(0xFF06B6D4),
                 title: 'Архивировать',
-                onTap: () { Navigator.pop(ctx); },
+                onTap: () {
+                  Navigator.pop(ctx);
+                  context.read<ChatListBloc>().add(ChatListArchiveToggled(chatId: chat.id));
+                },
               ),
               CharoTile(
                 icon: Icons.delete_outline,
                 iconColor: Colors.red,
                 title: 'Удалить',
                 isDestructive: true,
-                onTap: () { Navigator.pop(ctx); },
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _confirmDeleteChat(context, chat.id);
+                },
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  void _confirmDeleteChat(BuildContext context, String chatId) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Удалить чат?'),
+        content: const Text('Чат будет удалён из вашего списка. Это действие можно отменить.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Отмена')),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              context.read<ChatListBloc>().add(ChatListChatDeleted(chatId: chatId));
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Удалить'),
+          ),
+        ],
       ),
     );
   }

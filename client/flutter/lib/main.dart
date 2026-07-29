@@ -25,6 +25,7 @@ import 'core/services/presence_service.dart';
 import 'core/services/block_list_service.dart';
 import 'core/services/group_management_service.dart';
 import 'core/services/email_verification_service.dart';
+import 'core/services/crash_reporting_service.dart';
 
 import 'features/calls/presentation/screens/incoming_call_screen.dart';
 
@@ -113,6 +114,9 @@ Future<void> _setupDependencies(
   // Верификация email
   sl.registerLazySingleton<EmailVerificationService>(() => EmailVerificationService(apiClient: sl()));
 
+  // Crash reporting (Sentry)
+  sl.registerLazySingleton<CrashReportingService>(() => CrashReportingService.instance);
+
   // ─── Инициализация сервисов ──────────────────────────────────────
 
   // Disappearing messages — привязка к локальной БД
@@ -123,6 +127,9 @@ Future<void> _setupDependencies(
 
   // Push-уведомления — инициализация
   await sl<PushNotificationService>().initialize();
+
+  // Crash reporting — Sentry
+  await sl<CrashReportingService>().initialize();
 
   // ─── Bridge: WsClient → OfflineSyncService ────────────────────────
   // При восстановлении WS-соединения — помечаем онлайн и flush queue

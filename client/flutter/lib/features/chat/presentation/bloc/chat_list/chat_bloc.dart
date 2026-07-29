@@ -16,7 +16,12 @@ sealed class ChatListEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-final class ChatListLoadRequested extends ChatListEvent {}
+final class ChatListLoadRequested extends ChatListEvent {
+  final bool includeArchived;
+  ChatListLoadRequested({this.includeArchived = false});
+  @override
+  List<Object?> get props => [includeArchived];
+}
 
 final class ChatListSearchRequested extends ChatListEvent {
   final String query;
@@ -47,6 +52,27 @@ final class ChatListChatDeleted extends ChatListEvent {
   List<Object?> get props => [chatId];
 }
 
+final class ChatListPinToggled extends ChatListEvent {
+  final String chatId;
+  ChatListPinToggled({required this.chatId});
+  @override
+  List<Object?> get props => [chatId];
+}
+
+final class ChatListMuteToggled extends ChatListEvent {
+  final String chatId;
+  ChatListMuteToggled({required this.chatId});
+  @override
+  List<Object?> get props => [chatId];
+}
+
+final class ChatListArchiveToggled extends ChatListEvent {
+  final String chatId;
+  ChatListArchiveToggled({required this.chatId});
+  @override
+  List<Object?> get props => [chatId];
+}
+
 // ─── States ────────────────────────────────────────────────────────
 
 sealed class ChatListState extends Equatable {
@@ -61,9 +87,10 @@ final class ChatListLoading extends ChatListState {}
 final class ChatListLoaded extends ChatListState {
   final List<ChatItem> chats;
   final String? searchQuery;
-  ChatListLoaded({required this.chats, this.searchQuery});
+  final bool showArchived;
+  ChatListLoaded({required this.chats, this.searchQuery, this.showArchived = false});
   @override
-  List<Object?> get props => [chats, searchQuery];
+  List<Object?> get props => [chats, searchQuery, showArchived];
 }
 
 final class ChatListError extends ChatListState {
@@ -93,6 +120,9 @@ class ChatListBloc extends Bloc<ChatListEvent, ChatListState> {
     on<ChatListCreateRequested>(_onCreateRequested);
     on<ChatListChatUpdated>(_onChatUpdated);
     on<ChatListChatDeleted>(_onChatDeleted);
+    on<ChatListPinToggled>(_onPinToggled);
+    on<ChatListMuteToggled>(_onMuteToggled);
+    on<ChatListArchiveToggled>(_onArchiveToggled);
 
     // Подписка на WebSocket-события
     _wsClient.messages.listen(_onWsEvent);
@@ -110,11 +140,14 @@ class ChatListBloc extends Bloc<ChatListEvent, ChatListState> {
       if (localChats.isNotEmpty) {
         emit(ChatListLoaded(
           chats: localChats.map(_localChatToItem).toList(),
+          showArchived: event.includeArchived,
         ));
       }
 
       // Затем загружаем с сервера
-      final response = await _apiClient.get('/api/v1/chats');
+      final response = await _apiClient.get('/api/v1/chats',
+        queryParameters: event.includeArchived ? {'include_archived': 'true'} : null,
+      );
       final serverChats = (response.asList)
           .map<ChatItem>((json) => ChatItem(
                 id: json['id'] as String,
@@ -129,6 +162,7 @@ class ChatListBloc extends Bloc<ChatListEvent, ChatListState> {
                 unreadCount: json['unread_count'] as int? ?? 0,
                 isMuted: json['is_muted'] as bool? ?? false,
                 isPinned: json['is_pinned'] as bool? ?? false,
+                isArchived: json['is_archived'] as bool? ?? false,
                 isOnline: json['is_online'] as bool? ?? false,
               ))
           .toList();
@@ -138,13 +172,14 @@ class ChatListBloc extends Bloc<ChatListEvent, ChatListState> {
         await _localDb.insertChat(_chatItemToCompanion(chat));
       }
 
-      emit(ChatListLoaded(chats: serverChats));
+      emit(ChatListLoaded(chats: serverChats, showArchived: event.includeArchived));
     } on CharoApiException catch (e) {
       // Если сервер недоступен — показываем кэш
       final localChats = await _localDb.getAllChats();
       if (localChats.isNotEmpty) {
         emit(ChatListLoaded(
           chats: localChats.map(_localChatToItem).toList(),
+          showArchived: event.includeArchived,
         ));
       } else {
         emit(ChatListError(message: e.message));
@@ -180,10 +215,13 @@ class ChatListBloc extends Bloc<ChatListEvent, ChatListState> {
                 avatarUrl: json['avatar_url'] as String?,
                 lastMessage: json['last_message'] as String?,
                 unreadCount: json['unread_count'] as int? ?? 0,
+                isMuted: json['is_muted'] as bool? ?? false,
+                isPinned: json['is_pinned'] as bool? ?? false,
+                isArchived: json['is_archived'] as bool? ?? false,
               ))
           .toList();
 
-      emit(ChatListLoaded(chats: filtered, searchQuery: event.query));
+      emit(ChatListLoaded(chats: filtered, searchQuery: event.query, showArchived: currentState.showArchived));
     } catch (e) {
       // Локальный поиск по кэшу
       final localChats = await _localDb.getAllChats();
@@ -192,7 +230,7 @@ class ChatListBloc extends Bloc<ChatListEvent, ChatListState> {
               (c.title?.toLowerCase().contains(event.query.toLowerCase()) ?? false))
           .map(_localChatToItem)
           .toList();
-      emit(ChatListLoaded(chats: filtered, searchQuery: event.query));
+      emit(ChatListLoaded(chats: filtered, searchQuery: event.query, showArchived: currentState.showArchived));
     }
   }
 
@@ -214,7 +252,7 @@ class ChatListBloc extends Bloc<ChatListEvent, ChatListState> {
 
       final currentState = state;
       if (currentState is ChatListLoaded) {
-        emit(ChatListLoaded(chats: [newChat, ...currentState.chats]));
+        emit(ChatListLoaded(chats: [newChat, ...currentState.chats], showArchived: currentState.showArchived));
       }
     } on CharoApiException catch (e) {
       logger.e('Create chat error: ${e.message}');
@@ -233,7 +271,7 @@ class ChatListBloc extends Bloc<ChatListEvent, ChatListState> {
           .compareTo(a.lastMessageAt ?? DateTime(1970));
     });
 
-    emit(ChatListLoaded(chats: chats, searchQuery: currentState.searchQuery));
+    emit(ChatListLoaded(chats: chats, searchQuery: currentState.searchQuery, showArchived: currentState.showArchived));
   }
 
   void _onChatDeleted(ChatListChatDeleted event, Emitter<ChatListState> emit) {
@@ -242,7 +280,61 @@ class ChatListBloc extends Bloc<ChatListEvent, ChatListState> {
     emit(ChatListLoaded(
       chats: currentState.chats.where((c) => c.id != event.chatId).toList(),
       searchQuery: currentState.searchQuery,
+      showArchived: currentState.showArchived,
     ));
+  }
+
+  Future<void> _onPinToggled(ChatListPinToggled event, Emitter<ChatListState> emit) async {
+    final currentState = state;
+    if (currentState is! ChatListLoaded) return;
+
+    final chat = currentState.chats.firstWhere((c) => c.id == event.chatId);
+    try {
+      await _apiClient.patch('/api/v1/chats/${event.chatId}/pin', data: {
+        'pinned': !chat.isPinned,
+      });
+      final updated = chat.copyWith(isPinned: !chat.isPinned);
+      add(ChatListChatUpdated(chat: updated));
+    } on CharoApiException catch (e) {
+      logger.e('Pin toggle error: ${e.message}');
+    }
+  }
+
+  Future<void> _onMuteToggled(ChatListMuteToggled event, Emitter<ChatListState> emit) async {
+    final currentState = state;
+    if (currentState is! ChatListLoaded) return;
+
+    final chat = currentState.chats.firstWhere((c) => c.id == event.chatId);
+    try {
+      await _apiClient.patch('/api/v1/chats/${event.chatId}/mute', data: {
+        'muted': !chat.isMuted,
+      });
+      final updated = chat.copyWith(isMuted: !chat.isMuted);
+      add(ChatListChatUpdated(chat: updated));
+    } on CharoApiException catch (e) {
+      logger.e('Mute toggle error: ${e.message}');
+    }
+  }
+
+  Future<void> _onArchiveToggled(ChatListArchiveToggled event, Emitter<ChatListState> emit) async {
+    final currentState = state;
+    if (currentState is! ChatListLoaded) return;
+
+    final chat = currentState.chats.firstWhere((c) => c.id == event.chatId);
+    try {
+      await _apiClient.patch('/api/v1/chats/${event.chatId}/archive', data: {
+        'archived': !chat.isArchived,
+      });
+      final updated = chat.copyWith(isArchived: !chat.isArchived);
+      if (updated.isArchived) {
+        // Remove from list when archived
+        add(ChatListChatDeleted(chatId: event.chatId));
+      } else {
+        add(ChatListChatUpdated(chat: updated));
+      }
+    } on CharoApiException catch (e) {
+      logger.e('Archive toggle error: ${e.message}');
+    }
   }
 
   void _onWsEvent(WsEvent event) {
@@ -266,6 +358,7 @@ class ChatListBloc extends Bloc<ChatListEvent, ChatListState> {
               unreadCount: chat.unreadCount + 1,
               isMuted: chat.isMuted,
               isPinned: chat.isPinned,
+              isArchived: chat.isArchived,
             );
             add(ChatListChatUpdated(chat: updated));
           }
@@ -293,6 +386,7 @@ class ChatListBloc extends Bloc<ChatListEvent, ChatListState> {
       unreadCount: c.unreadCount,
       isMuted: c.isMuted,
       isPinned: c.isPinned,
+      isArchived: c.isArchived,
     );
   }
 
@@ -309,6 +403,7 @@ class ChatListBloc extends Bloc<ChatListEvent, ChatListState> {
       unreadCount: Value(chat.unreadCount),
       isMuted: Value(chat.isMuted),
       isPinned: Value(chat.isPinned),
+      isArchived: Value(chat.isArchived),
       updatedAt: DateTime.now(),
       createdAt: DateTime.now(),
     );
