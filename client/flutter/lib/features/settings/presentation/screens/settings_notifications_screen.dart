@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/network/api_client.dart';
+import '../../../../core/utils/logger.dart';
 import '../../../../shared/widgets/charo_widgets.dart';
 
-/// Настройки уведомлений — премиальный grouped layout
+/// Настройки уведомлений — премиальный grouped layout с серверной синхронизацией
 class SettingsNotificationsScreen extends StatefulWidget {
   const SettingsNotificationsScreen({super.key});
 
@@ -21,9 +24,62 @@ class _SettingsNotificationsScreenState extends State<SettingsNotificationsScree
   String _quietHoursStart = '23:00';
   String _quietHoursEnd = '07:00';
   bool _quietHoursEnabled = false;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSettings();
+  }
+
+  Future<void> _loadSettings() async {
+    try {
+      final apiClient = GetIt.instance<ApiClient>();
+      final response = await apiClient.get('/api/v1/settings/push');
+      final data = response.asMap;
+      setState(() {
+        _pushEnabled = data['push_enabled'] as bool? ?? true;
+        _soundEnabled = data['sound_enabled'] as bool? ?? true;
+        _vibrationEnabled = data['vibration_enabled'] as bool? ?? true;
+        _previewEnabled = data['preview_enabled'] as bool? ?? true;
+        _groupMentions = data['group_mentions'] as bool? ?? true;
+        _isLoading = false;
+      });
+    } catch (e) {
+      logger.w('Failed to load push settings: $e');
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _saveSettings() async {
+    try {
+      final apiClient = GetIt.instance<ApiClient>();
+      await apiClient.patch('/api/v1/settings/push', data: {
+        'push_enabled': _pushEnabled,
+        'sound_enabled': _soundEnabled,
+        'vibration_enabled': _vibrationEnabled,
+        'preview_enabled': _previewEnabled,
+        'group_mentions': _groupMentions,
+      });
+    } catch (e) {
+      logger.e('Failed to save push settings: $e');
+    }
+  }
+
+  void _onChanged(VoidCallback change) {
+    setState(change);
+    _saveSettings();
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Уведомления')),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(title: const Text('Уведомления')),
       body: ListView(
@@ -38,7 +94,7 @@ class _SettingsNotificationsScreenState extends State<SettingsNotificationsScree
                 title: 'Push-уведомления',
                 subtitle: 'Получать уведомления о новых сообщениях',
                 value: _pushEnabled,
-                onChanged: (v) => setState(() => _pushEnabled = v),
+                onChanged: (v) => _onChanged(() => _pushEnabled = v),
               ),
             ],
           ),
@@ -51,18 +107,18 @@ class _SettingsNotificationsScreenState extends State<SettingsNotificationsScree
                 iconColor: const Color(0xFF10B981),
                 title: 'Звук',
                 value: _soundEnabled,
-                onChanged: (v) => setState(() => _soundEnabled = v),
+                onChanged: (v) => _onChanged(() => _soundEnabled = v),
               ),
               CharoSwitchTile(
                 icon: Icons.vibration_outlined,
                 iconColor: const Color(0xFF8B5CF6),
                 title: 'Вибрация',
                 value: _vibrationEnabled,
-                onChanged: (v) => setState(() => _vibrationEnabled = v),
+                onChanged: (v) => _onChanged(() => _vibrationEnabled = v),
               ),
               CharoTile(
                 icon: Icons.music_note_outlined,
-                iconColor: const Color(0xF59E0B),
+                iconColor: const Color(0xFFF59E0B),
                 title: 'Мелодия звонка',
                 subtitle: _ringtone,
                 onTap: () => _pickRingtone(),
@@ -79,7 +135,7 @@ class _SettingsNotificationsScreenState extends State<SettingsNotificationsScree
                 title: 'Предпросмотр',
                 subtitle: 'Показывать текст сообщения в уведомлении',
                 value: _previewEnabled,
-                onChanged: (v) => setState(() => _previewEnabled = v),
+                onChanged: (v) => _onChanged(() => _previewEnabled = v),
               ),
             ],
           ),
@@ -93,7 +149,7 @@ class _SettingsNotificationsScreenState extends State<SettingsNotificationsScree
                 title: 'Упоминания в группах',
                 subtitle: 'Уведомлять при @упоминании',
                 value: _groupMentions,
-                onChanged: (v) => setState(() => _groupMentions = v),
+                onChanged: (v) => _onChanged(() => _groupMentions = v),
               ),
             ],
           ),
@@ -107,12 +163,12 @@ class _SettingsNotificationsScreenState extends State<SettingsNotificationsScree
                 title: 'Включить тихие часы',
                 subtitle: '$_quietHoursStart — $_quietHoursEnd',
                 value: _quietHoursEnabled,
-                onChanged: (v) => setState(() => _quietHoursEnabled = v),
+                onChanged: (v) => _onChanged(() => _quietHoursEnabled = v),
               ),
               if (_quietHoursEnabled)
                 CharoTile(
                   icon: Icons.schedule_outlined,
-                  iconColor: const Color(0xF59E0B),
+                  iconColor: const Color(0xFFF59E0B),
                   title: 'Начало',
                   subtitle: _quietHoursStart,
                   onTap: () => _pickTime(true),
@@ -120,7 +176,7 @@ class _SettingsNotificationsScreenState extends State<SettingsNotificationsScree
               if (_quietHoursEnabled)
                 CharoTile(
                   icon: Icons.schedule_outlined,
-                  iconColor: const Color(0xF59E0B),
+                  iconColor: const Color(0xFFF59E0B),
                   title: 'Конец',
                   subtitle: _quietHoursEnd,
                   onTap: () => _pickTime(false),
@@ -148,7 +204,7 @@ class _SettingsNotificationsScreenState extends State<SettingsNotificationsScree
               ...ringtones.map((r) => CharoTile(
                 title: r,
                 trailing: _ringtone == r ? Icon(Icons.check_circle, color: context.colors.primary) : null,
-                onTap: () { setState(() => _ringtone = r); Navigator.pop(ctx); },
+                onTap: () { _onChanged(() => _ringtone = r); Navigator.pop(ctx); },
               )),
             ],
           ),
@@ -160,7 +216,7 @@ class _SettingsNotificationsScreenState extends State<SettingsNotificationsScree
   void _pickTime(bool isStart) async {
     final picked = await showTimePicker(context: context, initialTime: TimeOfDay.now());
     if (picked != null) {
-      setState(() {
+      _onChanged(() {
         final str = '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
         if (isStart) _quietHoursStart = str; else _quietHoursEnd = str;
       });

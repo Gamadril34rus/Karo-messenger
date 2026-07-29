@@ -174,10 +174,10 @@ export async function chatsRoutes(fastify: FastifyInstance) {
     return reply.code(204).send();
   });
 
-  // GET /chats/:id/messages — Сообщения чата
+  // GET /chats/:id/messages — Сообщения чата (with gap-filling after_id support)
   fastify.get('/:id/messages', async (request, reply) => {
     const { id } = request.params as { id: string };
-    const { before, limit = '50' } = request.query as { before?: string; limit?: string };
+    const { before, after_id, limit = '50' } = request.query as { before?: string; after_id?: string; limit?: string };
     const userId = request.userId!;
 
     const membership = await prisma.chatMember.findUnique({
@@ -185,11 +185,24 @@ export async function chatsRoutes(fastify: FastifyInstance) {
     });
     if (!membership) return reply.code(403).send({ message: 'Нет доступа' });
 
+    // Gap-filling: after_id — загрузить сообщения после указанного ID
+    let afterDate: Date | undefined;
+    if (after_id) {
+      const afterMessage = await prisma.message.findUnique({
+        where: { id: after_id },
+        select: { createdAt: true },
+      });
+      if (afterMessage) {
+        afterDate = afterMessage.createdAt;
+      }
+    }
+
     const messages = await prisma.message.findMany({
       where: {
         chatId: id,
         isDeleted: false,
         ...(before ? { createdAt: { lt: new Date(before) } } : {}),
+        ...(afterDate ? { createdAt: { gt: afterDate } } : {}),
       },
       take: parseInt(limit),
       orderBy: { createdAt: 'desc' },

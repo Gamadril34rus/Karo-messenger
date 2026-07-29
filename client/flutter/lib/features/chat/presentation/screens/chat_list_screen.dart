@@ -80,7 +80,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
             : [
                 IconButton(
                   icon: const Icon(Icons.search),
-                  onPressed: () => setState(() => _isSearching = true),
+                  onPressed: () => context.go('/search'),
                 ),
               ],
       ),

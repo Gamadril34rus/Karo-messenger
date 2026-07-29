@@ -248,9 +248,8 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   Future<void> _onBlocked(ProfileBlocked event, Emitter<ProfileState> emit) async {
     final current = state;
     if (current is! ProfileLoaded) return;
-    await _apiClient.post('/api/v1/contacts', data: {
-      'contactUserId': current.userId,
-      'isBlocked': true,
+    await _apiClient.post('/api/v1/contacts/block', data: {
+      'userId': current.userId,
     });
   }
 }

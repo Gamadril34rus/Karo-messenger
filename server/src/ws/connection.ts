@@ -192,6 +192,14 @@ export function wsHandler(prisma: PrismaClient, redis: Redis) {
             await handleMessageForward(manager, prisma, userId, msg);
             break;
 
+          case 'message.react':
+            await handleMessageReact(manager, prisma, userId, msg);
+            break;
+
+          case 'message.update':
+            await handleMessageUpdate(manager, prisma, userId, msg);
+            break;
+
           case 'typing.start':
             await handleTyping(manager, prisma, userId, msg.data.chatId as string, true);
             break;
@@ -262,6 +270,17 @@ async function handleMessageSend(
     return; // Неавторизованная отправка
   }
 
+  // Проверяем disappearing timer чата
+  const chat = await prisma.chat.findUnique({
+    where: { id: chatId as string },
+    select: { isDisappearing: true, disappearTimer: true },
+  });
+
+  // Вычисляем disappearAt если чат — исчезающий
+  const disappearAt = (chat?.isDisappearing && chat.disappearTimer > 0)
+    ? new Date(Date.now() + chat.disappearTimer * 1000)
+    : undefined;
+
   // Создаём сообщение
   const message = await prisma.message.create({
     data: {
@@ -270,6 +289,7 @@ async function handleMessageSend(
       type: type as any,
       content: content as any,
       replyToId: replyTo as string | undefined,
+      ...(disappearAt ? { disappearAt } : {}),
     },
     include: {
       sender: {
@@ -488,6 +508,99 @@ async function handleMessageForward(
   }
 }
 
+async function handleMessageReact(
+  manager: ConnectionManager,
+  prisma: PrismaClient,
+  userId: string,
+  msg: WsMessage,
+): Promise<void> {
+  const { chatId, messageId, emoji } = msg.data;
+  if (!messageId || !emoji) return;
+
+  try {
+    const messageIdStr = messageId as string;
+    const emojiStr = emoji as string;
+
+    // Verify user is member of the chat
+    const message = await prisma.message.findUnique({
+      where: { id: messageIdStr },
+    });
+    if (!message) return;
+
+    const membership = await prisma.chatMember.findUnique({
+      where: { chatId_userId: { chatId: message.chatId, userId } },
+    });
+    if (!membership) return;
+
+    // Toggle reaction (remove if exists, create if not)
+    const existing = await prisma.reaction.findUnique({
+      where: { messageId_userId_emoji: { messageId: messageIdStr, userId, emoji: emojiStr } },
+    });
+
+    if (existing) {
+      await prisma.reaction.delete({ where: { id: existing.id } });
+    } else {
+      await prisma.reaction.create({
+        data: { messageId: messageIdStr, userId, emoji: emojiStr },
+      });
+    }
+
+    // Notify chat members
+    const reactions = await prisma.reaction.findMany({
+      where: { messageId: messageIdStr },
+      select: { emoji: true, userId: true },
+    });
+
+    const reactionCounts = reactions.reduce((acc: Record<string, number>, r) => {
+      acc[r.emoji] = (acc[r.emoji] || 0) + 1;
+      return acc;
+    }, {});
+
+    await manager.sendToChat(message.chatId, {
+      type: 'message.updated',
+      data: { messageId: messageIdStr, reactions: reactionCounts },
+    });
+
+    logger.info(`Reaction ${emojiStr} ${existing ? 'removed' : 'added'} on ${messageIdStr} by ${userId}`);
+  } catch (err) {
+    logger.error(`Message react error: ${err}`);
+  }
+}
+
+async function handleMessageUpdate(
+  manager: ConnectionManager,
+  prisma: PrismaClient,
+  userId: string,
+  msg: WsMessage,
+): Promise<void> {
+  const { messageId, content } = msg.data;
+  if (!messageId || !content) return;
+
+  try {
+    const messageIdStr = messageId as string;
+
+    const message = await prisma.message.findUnique({
+      where: { id: messageIdStr },
+    });
+    if (!message) return;
+    if (message.senderId !== userId) return;
+
+    const updated = await prisma.message.update({
+      where: { id: messageIdStr },
+      data: { content: content as any, isEdited: true },
+    });
+
+    await manager.sendToChat(message.chatId, {
+      type: 'message.updated',
+      data: { messageId: messageIdStr, content: updated.content, isEdited: true },
+    });
+
+    logger.info(`Message ${messageIdStr} updated by ${userId}`);
+  } catch (err) {
+    logger.error(`Message update error: ${err}`);
+  }
+}
+
 async function handleCallInitiate(
   manager: ConnectionManager,
   prisma: PrismaClient,
@@ -588,4 +701,45 @@ async function handleCallSignal(
   } catch (err) {
     logger.error(`Call signal relay failed: ${err}`);
   }
+}
+
+// ─── Periodic Cleanup: Disappearing Messages ────────────────────────
+// Запускается каждые 30 секунд, удаляет сообщения с истёкшим disappearAt
+
+export function startDisappearingMessagesCleanup(prisma: PrismaClient, manager: ConnectionManager): NodeJS.Timeout {
+  return setInterval(async () => {
+    try {
+      const expired = await prisma.message.findMany({
+        where: {
+          disappearAt: { not: null, lte: new Date() },
+          isDeleted: false,
+        },
+        select: { id: true, chatId: true },
+      });
+
+      if (expired.length === 0) return;
+
+      const ids = expired.map(m => m.id);
+
+      // Mark as deleted instead of removing (for consistency)
+      await prisma.message.updateMany({
+        where: { id: { in: ids } },
+        data: { isDeleted: true, content: { isSet: false } },
+      });
+
+      // Notify chats about expired messages
+      const chatIds = [...new Set(expired.map(m => m.chatId))];
+      for (const chatId of chatIds) {
+        const chatExpired = expired.filter(m => m.chatId === chatId);
+        await manager.sendToChat(chatId, {
+          type: 'message.disappeared',
+          data: { messageIds: chatExpired.map(m => m.id) },
+        });
+      }
+
+      logger.info(`Disappearing messages cleanup: ${ids.length} messages expired`);
+    } catch (err) {
+      logger.error(`Disappearing messages cleanup error: ${err}`);
+    }
+  }, 30_000); // every 30 seconds
 }

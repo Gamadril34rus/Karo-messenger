@@ -1059,6 +1059,46 @@ export async function authRoutes(fastify: FastifyInstance) {
 
     return reply.send({ message: 'Email подтверждён', verified: true });
   });
+
+  // ─── POST /auth/devices/register — Регистрация push-токена устройства ──
+  fastify.post('/devices/register', async (request, reply) => {
+    const userId = request.userId!;
+    const { platform, push_token, device_name, device_type } = request.body as {
+      platform: string;
+      push_token: string;
+      device_name?: string;
+      device_type?: string;
+    };
+
+    if (!platform || !push_token) {
+      return reply.code(400).send({ message: 'Укажите platform и push_token' });
+    }
+
+    // Upsert device with push token
+    const device = await prisma.device.upsert({
+      where: {
+        id: `${userId}_${platform}_${push_token.substring(0, 32)}`,
+      },
+      create: {
+        id: `${userId}_${platform}_${push_token.substring(0, 32)}`,
+        userId,
+        deviceType: device_type || platform,
+        deviceName: device_name || `${platform} device`,
+        platform,
+        pushToken: push_token,
+        lastActive: new Date(),
+      },
+      update: {
+        pushToken: push_token,
+        lastActive: new Date(),
+        deviceName: device_name || `${platform} device`,
+      },
+    });
+
+    logger.info(`Push token registered for user ${userId}: ${platform}`);
+
+    return reply.send({ message: 'Устройство зарегистрировано', device_id: device.id });
+  });
 }
 
 // ─── Helper functions ──────────────────────────────────────────────
