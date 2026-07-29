@@ -33,6 +33,7 @@ import '../../features/chat/presentation/screens/sticker_import_screen.dart';
 import '../../features/chat/presentation/screens/group_management_screen.dart';
 import '../../features/settings/presentation/screens/block_list_screen.dart';
 import '../../core/services/media_viewer_service.dart';
+import '../../core/services/responsive_layout.dart';
 import '../../core/haptic/haptic_service.dart';
 
 /// Навигация ЧАРО — GoRouter с вложенными маршрутами
@@ -170,6 +171,7 @@ class AppRouter {
 }
 
 /// Главный каркас приложения с премиальной нижней навигацией
+/// На десктопе — адаптивный layout без bottom nav
 class MainScaffold extends StatelessWidget {
   final Widget child;
 
@@ -177,10 +179,83 @@ class MainScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = ResponsiveLayout.isDesktop(context);
+
+    if (isDesktop) {
+      // Desktop: side navigation rail instead of bottom nav
+      return Scaffold(
+        body: Row(
+          children: [
+            NavigationRail(
+              selectedIndex: _currentIndex(context),
+              onDestinationSelected: (i) {
+                HapticService.selection();
+                final routes = ['/chats', '/calls', '/stories', '/contacts', '/settings'];
+                context.go(routes[i]);
+              },
+              labelType: NavigationRailLabelType.all,
+              leading: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.bolt, color: Colors.white, size: 18),
+                ),
+              ),
+              destinations: const [
+                NavigationRailDestination(
+                  icon: Icon(Icons.chat_bubble_outline),
+                  selectedIcon: Icon(Icons.chat_bubble),
+                  label: Text('Чаты'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.call_outlined),
+                  selectedIcon: Icon(Icons.call),
+                  label: Text('Звонки'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.auto_awesome_outlined),
+                  selectedIcon: Icon(Icons.auto_awesome),
+                  label: Text('Истории'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.people_outline),
+                  selectedIcon: Icon(Icons.people),
+                  label: Text('Контакты'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.settings_outlined),
+                  selectedIcon: Icon(Icons.settings),
+                  label: Text('Настройки'),
+                ),
+              ],
+            ),
+            const VerticalDivider(width: 1),
+            Expanded(child: child),
+          ],
+        ),
+      );
+    }
+
+    // Mobile: bottom navigation bar
     return Scaffold(
       body: child,
       bottomNavigationBar: const CharoBottomNav(),
     );
+  }
+
+  int _currentIndex(BuildContext context) {
+    final location = GoRouterState.of(context).uri.path;
+    if (location.startsWith('/chats')) return 0;
+    if (location.startsWith('/calls')) return 1;
+    if (location.startsWith('/stories')) return 2;
+    if (location.startsWith('/contacts')) return 3;
+    if (location.startsWith('/settings')) return 4;
+    return 0;
   }
 }
 

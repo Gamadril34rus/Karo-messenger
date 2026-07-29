@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -410,12 +411,24 @@ class ChatDetailBloc extends Bloc<ChatDetailEvent, ChatDetailState> {
     }
 
     // Отправляем через WebSocket (с E2EE-шифрованием при наличии сессии)
+    Map<String, dynamic> wsContent;
+    if (isE2ee) {
+      wsContent = {'e2ee_text': encryptedContent, 'is_encrypted': true};
+    } else if (event.type == 'voice' || event.type == 'location' || event.type == 'contact' || event.type == 'poll' || event.type == 'gif') {
+      // Для нетекстовых типов — парсим JSON-контент если возможно
+      try {
+        wsContent = jsonDecode(event.content ?? '{}') as Map<String, dynamic>;
+      } catch (_) {
+        wsContent = {'text': event.content};
+      }
+    } else {
+      wsContent = {'text': event.content};
+    }
+
     _wsClient.sendMessage(
       chatId: event.chatId,
       type: event.type,
-      content: isE2ee
-          ? {'e2ee_text': encryptedContent, 'is_encrypted': true}
-          : {'text': event.content},
+      content: wsContent,
       tempId: tempId,
       replyTo: current.replyToId,
     );

@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -462,15 +464,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
         ),
         const SizedBox(width: 16),
-        // Waveform placeholder
+        // Waveform animation during recording
         Expanded(
-          child: Container(
-            height: 28,
-            decoration: BoxDecoration(
-              color: context.colors.outlineVariant.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(14),
-            ),
-          ),
+          child: _RecordingWaveform(),
         ),
         const SizedBox(width: 8),
         // Send
@@ -505,8 +501,17 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     setState(() => _isRecordingVoice = false);
 
     if (result != null) {
-      context.read<ChatDetailBloc>().add(ChatDetailVoiceRecorded(chatId: widget.chatId));
-      // In real implementation: upload file via FileUploadService then send
+      // Отправляем голосовое сообщение через WS с метаданными
+      context.read<ChatDetailBloc>().add(ChatDetailMessageSent(
+        chatId: widget.chatId,
+        type: 'voice',
+        content: jsonEncode({
+          'url': result.filePath,
+          'duration': result.duration.inSeconds,
+          'waveform': result.waveformData,
+          'file_size': result.fileSize,
+        }),
+      ));
     }
   }
 
@@ -648,7 +653,16 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   }
 
   void _copyMessage(MessageItem msg) {
-    // Clipboard.setData(ClipboardData(text: msg.text ?? ''));
+    final text = msg.text ?? '';
+    if (text.isNotEmpty) {
+      Clipboard.setData(ClipboardData(text: text));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Скопировано'),
+          duration: Duration(seconds: 1),
+        ),
+      );
+    }
   }
 
   void _editMessage(MessageItem msg) {
@@ -784,6 +798,61 @@ class _AttachOption extends StatelessWidget {
           const SizedBox(height: 4),
           Text(label, style: context.typography.bodySmall?.copyWith(fontWeight: FontWeight.w500)),
         ],
+      ),
+    );
+  }
+}
+
+/// Animated waveform bars during voice recording
+class _RecordingWaveform extends StatefulWidget {
+  const _RecordingWaveform();
+
+  @override
+  State<_RecordingWaveform> createState() => _RecordingWaveformState();
+}
+
+class _RecordingWaveformState extends State<_RecordingWaveform> {
+  final List<double> _barHeights = List.generate(24, (_) => 0.3);
+
+  @override
+  void initState() {
+    super.initState();
+    _animateBars();
+  }
+
+  void _animateBars() {
+    Future.delayed(const Duration(milliseconds: 150), () {
+      if (!mounted) return;
+      setState(() {
+        for (int i = 0; i < _barHeights.length; i++) {
+          _barHeights[i] = 0.15 + (DateTime.now().millisecondsSinceEpoch * (i + 1) % 100) / 100 * 0.75;
+        }
+      });
+      _animateBars();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 28,
+      decoration: BoxDecoration(
+        color: context.colors.outlineVariant.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: _barHeights.map((h) {
+          return Container(
+            width: 3,
+            height: (h * 20).clamp(4.0, 20.0),
+            decoration: BoxDecoration(
+              color: context.colors.primary.withOpacity(0.6),
+              borderRadius: BorderRadius.circular(1.5),
+            ),
+          );
+        }).toList(),
       ),
     );
   }

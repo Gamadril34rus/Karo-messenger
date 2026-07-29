@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
-import '../../core/utils/logger.dart';
+import '../utils/logger.dart';
 
 /// ─── Media Viewer Service ────────────────────────────────────────
 /// Полноэкранный просмотр фото и видео в чате.
