@@ -35,14 +35,15 @@ class _SettingsNotificationsScreenState extends State<SettingsNotificationsScree
   Future<void> _loadSettings() async {
     try {
       final apiClient = GetIt.instance<ApiClient>();
-      final response = await apiClient.get('/api/v1/settings/push');
+      final response = await apiClient.get('/api/v1/settings');
       final data = response.asMap;
+      final push = data['notifications'] as Map<String, dynamic>? ?? {};
       setState(() {
-        _pushEnabled = data['push_enabled'] as bool? ?? true;
-        _soundEnabled = data['sound_enabled'] as bool? ?? true;
-        _vibrationEnabled = data['vibration_enabled'] as bool? ?? true;
-        _previewEnabled = data['preview_enabled'] as bool? ?? true;
-        _groupMentions = data['group_mentions'] as bool? ?? true;
+        _pushEnabled = push['pushEnabled'] as bool? ?? push['push_enabled'] as bool? ?? true;
+        _soundEnabled = push['soundEnabled'] as bool? ?? push['sound_enabled'] as bool? ?? true;
+        _vibrationEnabled = push['vibrationEnabled'] as bool? ?? push['vibration_enabled'] as bool? ?? true;
+        _previewEnabled = push['previewEnabled'] as bool? ?? push['preview_enabled'] as bool? ?? true;
+        _groupMentions = push['groupMentions'] as bool? ?? push['group_mentions'] as bool? ?? true;
         _isLoading = false;
       });
     } catch (e) {
@@ -54,12 +55,12 @@ class _SettingsNotificationsScreenState extends State<SettingsNotificationsScree
   Future<void> _saveSettings() async {
     try {
       final apiClient = GetIt.instance<ApiClient>();
-      await apiClient.patch('/api/v1/settings/push', data: {
-        'push_enabled': _pushEnabled,
-        'sound_enabled': _soundEnabled,
-        'vibration_enabled': _vibrationEnabled,
-        'preview_enabled': _previewEnabled,
-        'group_mentions': _groupMentions,
+      await apiClient.patch('/api/v1/settings/notifications', data: {
+        'pushEnabled': _pushEnabled,
+        'soundEnabled': _soundEnabled,
+        'vibrationEnabled': _vibrationEnabled,
+        'previewEnabled': _previewEnabled,
+        'groupMentions': _groupMentions,
       });
     } catch (e) {
       logger.e('Failed to save push settings: $e');

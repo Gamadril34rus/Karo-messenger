@@ -164,6 +164,9 @@ export function wsHandler(prisma: PrismaClient, redis: Redis) {
     // Обновляем статус онлайн
     await manager.updatePresence(userId, 'online');
 
+    // Broadcast presence to contacts
+    await broadcastPresenceToContacts(manager, prisma, userId, 'online');
+
     // Pong handler
     ws.on('pong', () => {
       const conn = manager.connections.get(userId)?.get(deviceId);
@@ -238,6 +241,10 @@ export function wsHandler(prisma: PrismaClient, redis: Redis) {
     ws.on('close', async () => {
       manager.removeConnection(userId, deviceId);
       await manager.updatePresence(userId, 'offline');
+
+      // Broadcast presence to contacts
+      await broadcastPresenceToContacts(manager, prisma, userId, 'offline');
+
       logger.info(`WS: ${userId} disconnected`);
     });
 
@@ -333,6 +340,16 @@ async function handleMessageSend(
     data: {
       ...message,
       tempId, // Клиент заменит временное ID
+    },
+  });
+
+  // Отправляем отправителю статус доставки
+  manager.sendToUser(senderId, {
+    type: 'message.status',
+    data: {
+      messageId: message.id,
+      tempId,
+      status: 'sent',
     },
   });
 }
@@ -742,4 +759,35 @@ export function startDisappearingMessagesCleanup(prisma: PrismaClient, manager: 
       logger.error(`Disappearing messages cleanup error: ${err}`);
     }
   }, 30_000); // every 30 seconds
+}
+
+// ─── Presence Broadcast to Contacts ────────────────────────────────
+async function broadcastPresenceToContacts(
+  manager: ConnectionManager,
+  prisma: PrismaClient,
+  userId: string,
+  status: string,
+): Promise<void> {
+  try {
+    // Get user's contacts
+    const contacts = await prisma.contact.findMany({
+      where: { contactUserId: userId, isBlocked: false },
+      select: { userId: true },
+    });
+
+    const presenceData = {
+      type: 'presence',
+      data: {
+        userId,
+        status,
+        last_seen: new Date().toISOString(),
+      },
+    };
+
+    for (const contact of contacts) {
+      manager.sendToUser(contact.userId, presenceData);
+    }
+  } catch (err) {
+    logger.error(`Presence broadcast failed: ${err}`);
+  }
 }

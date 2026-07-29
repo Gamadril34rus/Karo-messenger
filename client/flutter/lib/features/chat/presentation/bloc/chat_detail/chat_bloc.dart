@@ -359,6 +359,31 @@ class ChatDetailBloc extends Bloc<ChatDetailEvent, ChatDetailState> {
     final current = state;
     if (current is! ChatDetailLoaded) return;
 
+    // Если редактируем сообщение — отправляем message.update вместо message.send
+    if (current.editingId != null) {
+      _wsClient.send('message.update', {
+        'messageId': current.editingId,
+        'content': event.content,
+      });
+      // Обновляем локально
+      final updated = current.messages.map((m) {
+        if (m.id == current.editingId) {
+          return MessageItem(
+            id: m.id, chatId: m.chatId, senderId: m.senderId,
+            senderName: m.senderName, isMe: m.isMe, type: m.type,
+            text: event.content, mediaUrl: m.mediaUrl, mediaThumbnail: m.mediaThumbnail,
+            replyToText: m.replyToText, replyToSender: m.replyToSender,
+            isEdited: true, isDeleted: m.isDeleted,
+            status: m.status, sentAt: m.sentAt, readAt: m.readAt,
+            reactions: m.reactions,
+          );
+        }
+        return m;
+      }).toList();
+      emit(current.copyWith(messages: updated, clearEditing: true));
+      return;
+    }
+
     final tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
 
     // Оптимистичное обновление — сразу показываем сообщение
@@ -610,24 +635,6 @@ class ChatDetailBloc extends Bloc<ChatDetailEvent, ChatDetailState> {
           _haptic.onReceiveMessage();
         }
         break;
-      case 'message.status':
-        final updated = current.messages.map((m) {
-          if (m.id == event.data['messageId']) {
-            final statusStr = event.data['status'] as String? ?? 'sent';
-            return MessageItem(
-              id: m.id, chatId: m.chatId, senderId: m.senderId,
-              senderName: m.senderName, isMe: m.isMe, type: m.type,
-              text: m.text, mediaUrl: m.mediaUrl,
-              isEdited: m.isEdited, isDeleted: m.isDeleted,
-              status: _parseStatus(statusStr),
-              sentAt: m.sentAt, readAt: statusStr == 'read' ? DateTime.now() : m.readAt,
-              reactions: m.reactions,
-            );
-          }
-          return m;
-        }).toList();
-        emit(current.copyWith(messages: updated));
-        break;
       case 'typing':
         final chatId = event.data['chatId'] as String?;
         final userId = event.data['userId'] as String?;
@@ -637,6 +644,37 @@ class ChatDetailBloc extends Bloc<ChatDetailEvent, ChatDetailState> {
         break;
       case 'message.updated':
         add(ChatDetailLoadRequested(chatId: current.chatId));
+        break;
+      case 'message.disappeared':
+        // Удалить исчезнувшие сообщения из локального состояния
+        final messageIds = (event.data['messageIds'] as List?)?.cast<String>() ?? [];
+        if (messageIds.isNotEmpty) {
+          final updated = current.messages.where((m) => !messageIds.contains(m.id)).toList();
+          emit(current.copyWith(messages: updated));
+        }
+        break;
+      case 'message.status':
+        // Обработка статуса доставки (sent, delivered, read)
+        final statusMessageId = event.data['messageId'] as String?;
+        final statusStr = event.data['status'] as String? ?? 'sent';
+        if (statusMessageId != null) {
+          final updated = current.messages.map((m) {
+            if (m.id == statusMessageId) {
+              return MessageItem(
+                id: m.id, chatId: m.chatId, senderId: m.senderId,
+                senderName: m.senderName, isMe: m.isMe, type: m.type,
+                text: m.text, mediaUrl: m.mediaUrl, mediaThumbnail: m.mediaThumbnail,
+                replyToText: m.replyToText, replyToSender: m.replyToSender,
+                isEdited: m.isEdited, isDeleted: m.isDeleted,
+                status: _parseStatus(statusStr),
+                sentAt: m.sentAt, readAt: statusStr == 'read' ? DateTime.now() : m.readAt,
+                reactions: m.reactions,
+              );
+            }
+            return m;
+          }).toList();
+          emit(current.copyWith(messages: updated));
+        }
         break;
     }
   }

@@ -1,18 +1,13 @@
 import 'dart:io';
 
+import 'package:get_it/get_it.dart';
+
+import '../network/api_client.dart';
 import '../utils/logger.dart';
 
 /// ─── Push Notification Service ───────────────────────────────────
 /// FCM (Android/Web) + APNS (iOS) push-уведомления.
-///
-/// Для реального запуска необходимы:
-/// - google-services.json (Android)
-/// - GoogleService-Info.plist (iOS)
-/// - Firebase проект с FCM enabled
-/// - APNS сертификат (iOS)
-///
-/// Сейчас реализована полная логика обработки уведомлений,
-/// но регистрация FCM токена требует Firebase настройки.
+/// При получении токена — автоматически отправляет на сервер.
 
 class PushNotificationService {
   static PushNotificationService? _instance;
@@ -36,13 +31,10 @@ class PushNotificationService {
 
     try {
       // Firebase инициализация — требует google-services.json / plist
-      // В реальном проекте: Firebase.initializeApp() + FirebaseMessaging.instance
-      //
       // Для запуска:
-      // 1. Добавить firebase_core, firebase_messaging в pubspec.yaml
-      // 2. Добавить google-services.json в android/app/
-      // 3. Добавить GoogleService-Info.plist в ios/Runner/
-      // 4. Раскомментировать код ниже
+      // 1. Добавить google-services.json в android/app/
+      // 2. Добавить GoogleService-Info.plist в ios/Runner/
+      // 3. Раскомментировать код ниже
 
       logger.i('🔔 PushNotificationService initialized (token pending Firebase config)');
 
@@ -51,32 +43,27 @@ class PushNotificationService {
       // await Firebase.initializeApp();
       // final messaging = FirebaseMessaging.instance;
       //
-      // // Запрос разрешений (iOS)
       // if (Platform.isIOS) {
-      //   await messaging.requestPermission(
-      //     alert: true, badge: true, sound: true,
-      //   );
+      //   await messaging.requestPermission(alert: true, badge: true, sound: true);
       //   _apnsToken = await messaging.getAPNSToken();
       // }
       //
-      // // Получить FCM токен
       // _fcmToken = await messaging.getToken();
       // logger.i('🔔 FCM token: ${_fcmToken?.substring(0, 20)}...');
       //
-      // // Слушать обновления токена
+      // if (_fcmToken != null) {
+      //   await sendTokenToServer(_fcmToken!);
+      // }
+      //
       // messaging.onTokenRefresh.listen((token) {
       //   _fcmToken = token;
       //   logger.i('🔔 FCM token refreshed');
-      //   _sendTokenToServer(token);
+      //   sendTokenToServer(token);
       // });
       //
-      // // Foreground messages
       // FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
-      //
-      // // Background messages (app opened from notification)
       // FirebaseMessaging.onMessageOpenedApp.listen(_handleMessageOpenedApp);
       //
-      // // Terminated state
       // final initialMessage = await messaging.getInitialMessage();
       // if (initialMessage != null) {
       //   _handleMessageOpenedApp(initialMessage);
@@ -88,11 +75,22 @@ class PushNotificationService {
     }
   }
 
-  /// Отправить FCM токен на сервер
-  Future<void> _sendTokenToServer(String token) async {
-    // Вызывается через ApiClient — отправка POST /api/v1/devices/register
-    // { "platform": "android"|"ios"|"web", "push_token": token }
-    logger.i('🔔 Push token should be sent to server: ${token.substring(0, 20)}...');
+  /// Отправить FCM токен на сервер POST /api/v1/auth/devices/register
+  Future<void> sendTokenToServer(String token) async {
+    try {
+      final apiClient = GetIt.instance<ApiClient>();
+      final platform = Platform.isIOS ? 'ios' : Platform.isAndroid ? 'android' : 'web';
+
+      await apiClient.post('/api/v1/auth/devices/register', data: {
+        'platform': platform,
+        'push_token': token,
+        'device_type': 'smartphone',
+      });
+
+      logger.i('🔔 Push token registered on server: $platform');
+    } catch (e) {
+      logger.e('🔔 Failed to register push token: $e');
+    }
   }
 
   /// Обработка уведомления в foreground
@@ -110,9 +108,8 @@ class PushNotificationService {
   void _handleMessageOpenedApp(RemoteMessage message) {
     final data = message.data;
     final chatId = data['chatId'] as String?;
-    final type = data['type'] as String? ?? 'message';
 
-    logger.i('🔔 Push opened: type=$type, chatId=$chatId');
+    logger.i('🔔 Push opened: chatId=$chatId');
 
     // Навигация: GoRouter → /chat/:chatId
   }

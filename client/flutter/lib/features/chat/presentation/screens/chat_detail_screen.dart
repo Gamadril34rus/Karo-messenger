@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:file_picker/file_picker.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/app_constants.dart';
@@ -11,6 +12,7 @@ import '../../../../core/services/reactions_service.dart';
 import '../../../../core/services/media_viewer_service.dart';
 import '../../../../core/services/voice_message_service.dart';
 import '../../../../core/services/offline_sync_service.dart';
+import '../../../../core/services/file_upload_service.dart';
 import '../../../../shared/widgets/charo_widgets.dart';
 import '../bloc/chat_detail/chat_bloc.dart';
 import '../../../../shared/widgets/message_bubble.dart';
@@ -501,17 +503,37 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     setState(() => _isRecordingVoice = false);
 
     if (result != null) {
-      // Отправляем голосовое сообщение через WS с метаданными
-      context.read<ChatDetailBloc>().add(ChatDetailMessageSent(
+      // Upload voice file first
+      final upload = await FileUploadService.instance.uploadFile(
+        filePath: result.filePath,
         chatId: widget.chatId,
-        type: 'voice',
-        content: jsonEncode({
-          'url': result.filePath,
-          'duration': result.duration.inSeconds,
-          'waveform': result.waveformData,
-          'file_size': result.fileSize,
-        }),
-      ));
+        mimeType: 'audio/m4a',
+      );
+
+      if (upload != null) {
+        context.read<ChatDetailBloc>().add(ChatDetailMessageSent(
+          chatId: widget.chatId,
+          type: 'voice',
+          content: jsonEncode({
+            'url': upload.url,
+            'duration': result.duration.inSeconds,
+            'waveform': result.waveformData,
+            'file_size': result.fileSize,
+          }),
+        ));
+      } else {
+        // Fallback: send without upload (local path)
+        context.read<ChatDetailBloc>().add(ChatDetailMessageSent(
+          chatId: widget.chatId,
+          type: 'voice',
+          content: jsonEncode({
+            'url': result.filePath,
+            'duration': result.duration.inSeconds,
+            'waveform': result.waveformData,
+            'file_size': result.fileSize,
+          }),
+        ));
+      }
     }
   }
 
@@ -669,20 +691,63 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     _messageController.text = msg.text ?? '';
     _inputFocusNode.requestFocus();
     context.read<ChatDetailBloc>().add(ChatDetailEditSet(messageId: msg.id));
+    // When user sends edited message, the BLoC will check if editingId is set
+    // and send message.update instead of message.send
   }
 
   void _deleteMessage(MessageItem msg) {
     context.read<ChatDetailBloc>().add(ChatDetailMessageDeleted(messageId: msg.id));
   }
 
-  void _pickImage() {
-    context.read<ChatDetailBloc>().add(ChatDetailMediaPicked(chatId: widget.chatId, type: 'image'));
+  Future<void> _pickImage() async {
+    final result = await FilePicker.platform.pickFiles(type: FileType.image, allowMultiple: false);
+    if (result != null && result.files.single.path != null) {
+      final upload = await FileUploadService.instance.uploadFile(
+        filePath: result.files.single.path!,
+        chatId: widget.chatId,
+      );
+      if (upload != null) {
+        context.read<ChatDetailBloc>().add(ChatDetailMessageSent(
+          chatId: widget.chatId,
+          type: 'image',
+          content: jsonEncode({'url': upload.url, 'thumbnail_url': upload.thumbnailUrl, 'file_name': upload.fileName, 'file_size': upload.fileSize}),
+        ));
+      }
+    }
   }
-  void _pickVideo() {
-    context.read<ChatDetailBloc>().add(ChatDetailMediaPicked(chatId: widget.chatId, type: 'video'));
+
+  Future<void> _pickVideo() async {
+    final result = await FilePicker.platform.pickFiles(type: FileType.video, allowMultiple: false);
+    if (result != null && result.files.single.path != null) {
+      final upload = await FileUploadService.instance.uploadFile(
+        filePath: result.files.single.path!,
+        chatId: widget.chatId,
+      );
+      if (upload != null) {
+        context.read<ChatDetailBloc>().add(ChatDetailMessageSent(
+          chatId: widget.chatId,
+          type: 'video',
+          content: jsonEncode({'url': upload.url, 'thumbnail_url': upload.thumbnailUrl, 'file_name': upload.fileName, 'file_size': upload.fileSize}),
+        ));
+      }
+    }
   }
-  void _pickFile() {
-    context.read<ChatDetailBloc>().add(ChatDetailMediaPicked(chatId: widget.chatId, type: 'file'));
+
+  Future<void> _pickFile() async {
+    final result = await FilePicker.platform.pickFiles(allowMultiple: false);
+    if (result != null && result.files.single.path != null) {
+      final upload = await FileUploadService.instance.uploadFile(
+        filePath: result.files.single.path!,
+        chatId: widget.chatId,
+      );
+      if (upload != null) {
+        context.read<ChatDetailBloc>().add(ChatDetailMessageSent(
+          chatId: widget.chatId,
+          type: 'file',
+          content: jsonEncode({'url': upload.url, 'file_name': upload.fileName, 'file_size': upload.fileSize}),
+        ));
+      }
+    }
   }
   void _sendLocation() {
     context.read<ChatDetailBloc>().add(ChatDetailLocationSent(chatId: widget.chatId));
