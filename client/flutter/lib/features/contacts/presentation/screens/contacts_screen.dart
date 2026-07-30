@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/accessibility/charo_accessibility.dart';
 import '../../../../core/haptic/haptic_service.dart';
 import '../../../../shared/widgets/charo_empty_state.dart';
 import '../../../../shared/widgets/charo_widgets.dart';
@@ -175,16 +176,22 @@ class _ContactTile extends StatelessWidget {
         color: Theme.of(context).colorScheme.error,
         child: const Icon(Icons.person_remove, color: Colors.white),
       ),
-      child: CharoTile(
-        icon: Icons.person,
-        iconColor: contact.isOnline ? context.colors.success : context.colors.onSurface.withOpacity(0.5),
-        title: contact.displayName,
-        subtitle: '@${contact.username}',
-        onTap: () {
+      child: CharoAccessibility.contactItem(
+        displayName: contact.displayName,
+        username: contact.username,
+        isOnline: contact.isOnline,
+        isBlocked: false,
+        child: CharoTile(
+          icon: Icons.person,
+          iconColor: contact.isOnline ? context.colors.success : context.colors.onSurface.withOpacity(0.5),
+          title: contact.displayName,
+          subtitle: '@${contact.username}',
+          onTap: () {
           HapticService.light();
           _showContactSheet(context, contact);
         },
         onLongPress: () => _showContactSheet(context, contact),
+      ),
       ),
     );
   }

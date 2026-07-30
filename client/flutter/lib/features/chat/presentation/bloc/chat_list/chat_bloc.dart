@@ -2,7 +2,7 @@ import 'package:drift/drift.dart' show Value;
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../../core/network/api_client.dart';
+import '../../../../../core/domain/charo_repository.dart';
 import '../../../../../core/network/ws_client.dart';
 import '../../../../../core/storage/local_db.dart';
 import '../../../../../core/storage/local_db.g.dart';
@@ -103,15 +103,15 @@ final class ChatListError extends ChatListState {
 // ─── BLoC ──────────────────────────────────────────────────────────
 
 class ChatListBloc extends Bloc<ChatListEvent, ChatListState> {
-  final ApiClient _apiClient;
+  final CharoRepository _repository;
   final WsClient _wsClient;
   final AppDatabase _localDb;
 
   ChatListBloc({
-    required ApiClient apiClient,
+    required CharoRepository repository,
     required WsClient wsClient,
     required AppDatabase localDb,
-  })  : _apiClient = apiClient,
+  })  : _repository = repository,
         _wsClient = wsClient,
         _localDb = localDb,
         super(ChatListInitial()) {
@@ -144,28 +144,8 @@ class ChatListBloc extends Bloc<ChatListEvent, ChatListState> {
         ));
       }
 
-      // Затем загружаем с сервера
-      final response = await _apiClient.get('/api/v1/chats',
-        queryParameters: event.includeArchived ? {'include_archived': 'true'} : null,
-      );
-      final serverChats = (response.asList)
-          .map<ChatItem>((json) => ChatItem(
-                id: json['id'] as String,
-                type: json['type'] as String? ?? 'private',
-                title: json['title'] as String?,
-                avatarUrl: json['avatar_url'] as String?,
-                lastMessage: json['last_message'] as String?,
-                lastMessageSender: json['last_message_sender'] as String?,
-                lastMessageAt: json['last_message_at'] != null
-                    ? DateTime.parse(json['last_message_at'] as String)
-                    : null,
-                unreadCount: json['unread_count'] as int? ?? 0,
-                isMuted: json['is_muted'] as bool? ?? false,
-                isPinned: json['is_pinned'] as bool? ?? false,
-                isArchived: json['is_archived'] as bool? ?? false,
-                isOnline: json['is_online'] as bool? ?? false,
-              ))
-          .toList();
+      // Затем загружаем с сервера через repository
+      final serverChats = await _repository.getChats(includeArchived: event.includeArchived);
 
       // Кэшируем в локальную БД
       for (final chat in serverChats) {
@@ -203,25 +183,9 @@ class ChatListBloc extends Bloc<ChatListEvent, ChatListState> {
     }
 
     try {
-      final response = await _apiClient.get(
-        '/api/v1/chats',
-        queryParameters: {'q': event.query},
-      );
-      final filtered = (response.asList)
-          .map<ChatItem>((json) => ChatItem(
-                id: json['id'] as String,
-                type: json['type'] as String? ?? 'private',
-                title: json['title'] as String?,
-                avatarUrl: json['avatar_url'] as String?,
-                lastMessage: json['last_message'] as String?,
-                unreadCount: json['unread_count'] as int? ?? 0,
-                isMuted: json['is_muted'] as bool? ?? false,
-                isPinned: json['is_pinned'] as bool? ?? false,
-                isArchived: json['is_archived'] as bool? ?? false,
-              ))
-          .toList();
-
-      emit(ChatListLoaded(chats: filtered, searchQuery: event.query, showArchived: currentState.showArchived));
+      final result = await _repository.search(event.query);
+      // Из результатов поиска чаты — показываем в списке
+      emit(ChatListLoaded(chats: result.chats, searchQuery: event.query, showArchived: currentState.showArchived));
     } catch (e) {
       // Локальный поиск по кэшу
       final localChats = await _localDb.getAllChats();
@@ -239,16 +203,7 @@ class ChatListBloc extends Bloc<ChatListEvent, ChatListState> {
     Emitter<ChatListState> emit,
   ) async {
     try {
-      final response = await _apiClient.post('/api/v1/chats', data: {
-        'type': event.type,
-        'title': event.title,
-      });
-      final chatData = response.asMap;
-      final newChat = ChatItem(
-        id: chatData['id'] as String,
-        type: event.type,
-        title: event.title,
-      );
+      final newChat = await _repository.createChat(event.type, event.title, null);
 
       final currentState = state;
       if (currentState is ChatListLoaded) {
@@ -290,9 +245,7 @@ class ChatListBloc extends Bloc<ChatListEvent, ChatListState> {
 
     final chat = currentState.chats.firstWhere((c) => c.id == event.chatId);
     try {
-      await _apiClient.patch('/api/v1/chats/${event.chatId}/pin', data: {
-        'pinned': !chat.isPinned,
-      });
+      await _repository.pinChat(event.chatId, !chat.isPinned);
       final updated = chat.copyWith(isPinned: !chat.isPinned);
       add(ChatListChatUpdated(chat: updated));
     } on CharoApiException catch (e) {
@@ -306,9 +259,7 @@ class ChatListBloc extends Bloc<ChatListEvent, ChatListState> {
 
     final chat = currentState.chats.firstWhere((c) => c.id == event.chatId);
     try {
-      await _apiClient.patch('/api/v1/chats/${event.chatId}/mute', data: {
-        'muted': !chat.isMuted,
-      });
+      await _repository.muteChat(event.chatId, !chat.isMuted);
       final updated = chat.copyWith(isMuted: !chat.isMuted);
       add(ChatListChatUpdated(chat: updated));
     } on CharoApiException catch (e) {
@@ -322,9 +273,7 @@ class ChatListBloc extends Bloc<ChatListEvent, ChatListState> {
 
     final chat = currentState.chats.firstWhere((c) => c.id == event.chatId);
     try {
-      await _apiClient.patch('/api/v1/chats/${event.chatId}/archive', data: {
-        'archived': !chat.isArchived,
-      });
+      await _repository.archiveChat(event.chatId, !chat.isArchived);
       final updated = chat.copyWith(isArchived: !chat.isArchived);
       if (updated.isArchived) {
         // Remove from list when archived

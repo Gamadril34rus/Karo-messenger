@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../core/network/api_client.dart';
+import '../../../../core/domain/charo_repository.dart';
 import '../../data/ai_message.dart';
 
 // Events
@@ -41,8 +41,8 @@ final class AiAssistantError extends AiAssistantState {
 
 // BLoC
 class AiAssistantBloc extends Bloc<AiAssistantEvent, AiAssistantState> {
-  final ApiClient _apiClient;
-  AiAssistantBloc({required ApiClient apiClient}) : _apiClient = apiClient, super(AiAssistantInitial()) {
+  final CharoRepository _repository;
+  AiAssistantBloc({required CharoRepository repository}) : _repository = repository, super(AiAssistantInitial()) {
     on<AiConversationsLoadRequested>(_onConversationsLoadRequested);
     on<AiConversationCreated>(_onConversationCreated);
     on<AiMessageSent>(_onMessageSent);
@@ -56,12 +56,12 @@ class AiAssistantBloc extends Bloc<AiAssistantEvent, AiAssistantState> {
   ) async {
     emit(AiAssistantLoading());
     try {
-      final response = await _apiClient.get('/api/v1/ai/conversations');
-      final messages = (response.asList).map<AiMessage>((json) => AiMessage(
-        id: json['id'] as String,
-        role: json['role'] as String,
-        content: json['content'] as String,
-        createdAt: DateTime.parse(json['created_at'] as String),
+      final conversations = await _repository.getAiConversations();
+      final messages = conversations.map((c) => AiMessage(
+        id: c.id,
+        role: c.role,
+        content: c.content,
+        createdAt: c.createdAt,
       )).toList();
       emit(AiAssistantLoaded(messages: messages));
     } on CharoApiException catch (e) {
@@ -72,7 +72,7 @@ class AiAssistantBloc extends Bloc<AiAssistantEvent, AiAssistantState> {
   Future<void> _onConversationCreated(
     AiConversationCreated event, Emitter<AiAssistantState> emit,
   ) async {
-    await _apiClient.post('/api/v1/ai/conversations');
+    await _repository.createAiConversation();
     add(AiConversationsLoadRequested());
   }
 
@@ -90,13 +90,11 @@ class AiAssistantBloc extends Bloc<AiAssistantEvent, AiAssistantState> {
       emit(AiAssistantLoaded(messages: [...current.messages, userMsg]));
 
       try {
-        final response = await _apiClient.post('/api/v1/ai/chat', data: {
-          'message': event.text,
-        });
+        final result = await _repository.sendAiMessage(event.text);
         final assistantMsg = AiMessage(
-          id: response.asMap['id'] as String? ?? DateTime.now().millisecondsSinceEpoch.toString(),
+          id: result.conversationId,
           role: 'assistant',
-          content: response.asMap['content'] as String? ?? 'Не удалось получить ответ',
+          content: result.content,
           createdAt: DateTime.now(),
         );
         emit(AiAssistantLoaded(messages: [...current.messages, userMsg, assistantMsg]));
@@ -116,10 +114,7 @@ class AiAssistantBloc extends Bloc<AiAssistantEvent, AiAssistantState> {
     AiSummarizeRequested event, Emitter<AiAssistantState> emit,
   ) async {
     try {
-      final response = await _apiClient.post('/api/v1/ai/summarize', data: {
-        'chatId': event.chatId,
-      });
-      final summary = response.asMap['summary'] as String? ?? 'Саммаризация unavailable';
+      final summary = await _repository.summarizeChat(event.chatId);
       final current = state;
       if (current is AiAssistantLoaded) {
         final msg = AiMessage(
@@ -139,9 +134,7 @@ class AiAssistantBloc extends Bloc<AiAssistantEvent, AiAssistantState> {
     AiStickerGenerateRequested event, Emitter<AiAssistantState> emit,
   ) async {
     try {
-      await _apiClient.post('/api/v1/ai/sticker', data: {
-        'prompt': event.prompt,
-      });
+      await _repository.generateAiSticker(event.prompt);
     } on CharoApiException catch (e) {
       emit(AiAssistantError(message: e.message));
     }

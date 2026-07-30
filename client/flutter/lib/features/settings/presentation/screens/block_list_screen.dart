@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 
 import '../../../../core/services/block_list_service.dart';
-import '../../../../core/network/api_client.dart';
+import '../../../../core/domain/charo_repository.dart';
 import '../../../../core/utils/logger.dart';
 import '../../../../shared/widgets/charo_widgets.dart';
 
@@ -24,7 +24,8 @@ class _BlockListScreenState extends State<BlockListScreen> {
   @override
   void initState() {
     super.initState();
-    _blockService = BlockListService(apiClient: GetIt.instance<ApiClient>());
+    _blockService = BlockListService(repository: GetIt.instance<CharoRepository>());
+    _loadBlockedUsers();
     _loadBlockedUsers();
   }
 

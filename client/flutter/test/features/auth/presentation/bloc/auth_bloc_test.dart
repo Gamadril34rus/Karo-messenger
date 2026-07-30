@@ -1,11 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:charo_messenger/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:charo_messenger/core/network/api_client.dart';
+import 'package:charo_messenger/core/domain/charo_repository.dart';
 import 'package:charo_messenger/core/storage/secure_storage.dart';
 import 'package:charo_messenger/core/network/ws_client.dart';
 
-/// Mock implementations for testing
-class _MockApiClient extends ApiClient {
+/// Mock CharoRepository for testing
+class _MockRepository implements CharoRepository {
   bool loginCalled = false;
   bool verifyCalled = false;
   bool registerCalled = false;
@@ -15,104 +15,143 @@ class _MockApiClient extends ApiClient {
   bool oauthCalled = false;
   bool recoverCalled = false;
   bool twoFaVerifyCalled = false;
-  bool getMeCalled = false;
+  bool getMyProfileCalled = false;
 
-  Map<String, dynamic>? verifyResponse;
-  Map<String, dynamic>? registerResponse;
-  Map<String, dynamic>? getMeResponse;
-  Map<String, dynamic>? deleteAccountResponse;
-  Map<String, dynamic>? recoverResponse;
-  Map<String, dynamic>? twoFaVerifyResponse;
-  Map<String, dynamic>? refreshResponse;
-
-  _MockApiClient() : super(baseUrl: 'http://test');
+  AuthResult? verifyResult;
+  AuthResult? registerResult;
+  ProfileResult? getMyProfileResult;
+  AccountDeletionResult? deleteAccountResult;
+  AccountRecoveryResult? recoverResult;
+  AuthResult? twoFaVerifyResult;
+  AuthResult? refreshResult;
+  OAuthResult? oauthResult;
 
   @override
-  Future<ApiResponse> post(String path, {Map<String, dynamic>? data}) async {
-    if (path == '/api/v1/auth/login') {
-      loginCalled = true;
-      return ApiResponse(body: '{}');
-    }
-    if (path == '/api/v1/auth/verify') {
-      verifyCalled = true;
-      if (verifyResponse != null) {
-        return ApiResponse(body: verifyResponse!);
-      }
-      return ApiResponse(body: {
-        'access_token': 'test-access-token',
-        'refresh_token': 'test-refresh-token',
-        'user': {'id': 'user-1', 'username': 'testuser', 'display_name': 'Test User', 'avatar_url': null},
-      });
-    }
-    if (path == '/api/v1/auth/register') {
-      registerCalled = true;
-      return ApiResponse(body: registerResponse ?? {});
-    }
-    if (path == '/api/v1/auth/logout') {
-      logoutCalled = true;
-      return ApiResponse(body: {});
-    }
-    if (path == '/api/v1/auth/account') {
-      deleteAccountCalled = true;
-      return ApiResponse(body: deleteAccountResponse ?? {
-        'account_id': 'acc-1',
-        'recovery_code': 'rc-12345678',
-      });
-    }
-    if (path == '/api/v1/auth/refresh') {
-      refreshCalled = true;
-      return ApiResponse(body: refreshResponse ?? {
-        'access_token': 'new-access-token',
-        'refresh_token': 'new-refresh-token',
-      });
-    }
-    if (path == '/api/v1/auth/2fa/verify') {
-      twoFaVerifyCalled = true;
-      return ApiResponse(body: twoFaVerifyResponse ?? {
-        'access_token': '2fa-access-token',
-        'refresh_token': '2fa-refresh-token',
-        'user': {'id': 'user-1', 'username': 'testuser', 'display_name': 'Test User', 'avatar_url': null},
-      });
-    }
-    if (path == '/api/v1/auth/recover') {
-      recoverCalled = true;
-      return ApiResponse(body: recoverResponse ?? {
-        'access_token': 'recovered-access-token',
-        'refresh_token': 'recovered-refresh-token',
-      });
-    }
-    return ApiResponse(body: {});
+  Future<AuthResult> login(String identifier, String method) async {
+    loginCalled = true;
+    return const AuthResult(accessToken: '', refreshToken: '', userId: '', username: '');
   }
 
   @override
-  Future<ApiResponse> get(String path) async {
-    if (path == '/api/v1/users/me') {
-      getMeCalled = true;
-      return ApiResponse(body: getMeResponse ?? {
-        'id': 'user-1',
-        'username': 'testuser',
-        'display_name': 'Test User',
-        'avatar_url': null,
-      });
-    }
-    if (path.startsWith('/api/v1/auth/oauth/')) {
-      oauthCalled = true;
-      return ApiResponse(body: {'state': 'oauth-state-123'});
-    }
-    return ApiResponse(body: {});
+  Future<AuthResult> verifyOtp(String identifier, String code, String method) async {
+    verifyCalled = true;
+    return verifyResult ?? const AuthResult(
+      accessToken: 'test-access-token',
+      refreshToken: 'test-refresh-token',
+      userId: 'user-1',
+      username: 'testuser',
+      displayName: 'Test User',
+    );
   }
 
   @override
-  Future<ApiResponse> delete(String path, {Map<String, dynamic>? data}) async {
-    if (path == '/api/v1/auth/account') {
-      deleteAccountCalled = true;
-      return ApiResponse(body: deleteAccountResponse ?? {
-        'account_id': 'acc-1',
-        'recovery_code': 'rc-12345678',
-      });
-    }
-    return ApiResponse(body: {});
+  Future<AuthResult> register({required String username, required String displayName, String? phone, String? email, required bool consentGiven, required bool ageConfirmed, required bool termsAccepted}) async {
+    registerCalled = true;
+    return registerResult ?? const AuthResult(accessToken: '', refreshToken: '', userId: '', username: 'testuser');
   }
+
+  @override
+  Future<void> logout() async {
+    logoutCalled = true;
+  }
+
+  @override
+  Future<AccountDeletionResult> deleteAccount(String confirmation) async {
+    deleteAccountCalled = true;
+    return deleteAccountResult ?? const AccountDeletionResult(accountId: 'acc-1', recoveryCode: 'rc-12345678');
+  }
+
+  @override
+  Future<AccountRecoveryResult> recoverAccount(String accountId, String recoveryCode) async {
+    recoverCalled = true;
+    return recoverResult ?? const AccountRecoveryResult(accessToken: 'recovered-access', refreshToken: 'recovered-refresh', userId: 'user-1');
+  }
+
+  @override
+  Future<AuthResult> verify2fa(String tempToken, String code) async {
+    twoFaVerifyCalled = true;
+    return twoFaVerifyResult ?? const AuthResult(
+      accessToken: '2fa-access-token',
+      refreshToken: '2fa-refresh-token',
+      userId: 'user-1',
+      username: 'testuser',
+      displayName: 'Test User',
+    );
+  }
+
+  @override
+  Future<AuthResult> refreshTokens() async {
+    refreshCalled = true;
+    return refreshResult ?? const AuthResult(accessToken: 'new-access', refreshToken: 'new-refresh', userId: '', username: '');
+  }
+
+  @override
+  Future<ProfileResult> getMyProfile() async {
+    getMyProfileCalled = true;
+    return getMyProfileResult ?? const ProfileResult(userId: 'user-1', username: 'testuser', displayName: 'Test User');
+  }
+
+  @override
+  Future<OAuthResult> getOAuthUrl(String provider) async {
+    oauthCalled = true;
+    return oauthResult ?? const OAuthResult(redirectUrl: 'https://oauth.example.com', state: 'oauth-state-123');
+  }
+
+  // Stub methods not used in auth tests
+  @override Future<List<ChatItem>> getChats({bool includeArchived = false}) async => [];
+  @override Future<ChatItem> createChat(String type, String? title, List<String>? memberIds) async => ChatItem(id: 'c1', type: 'private');
+  @override Future<void> pinChat(String chatId, bool pinned) async {}
+  @override Future<void> muteChat(String chatId, bool muted) async {}
+  @override Future<void> archiveChat(String chatId, bool archived) async {}
+  @override Future<void> deleteChat(String chatId) async {}
+  @override Future<List<MessageItem>> getMessages(String chatId, {int limit = 50, String? afterId}) async => [];
+  @override Future<MessageItem> sendMessage(String chatId, String type, dynamic content) async => MessageItem(id: 'm1', chatId: chatId, senderId: '', type: 'text', content: '', createdAt: DateTime.now());
+  @override Future<MessageItem> editMessage(String messageId, dynamic content) async => MessageItem(id: messageId, chatId: '', senderId: '', type: 'text', content: '', createdAt: DateTime.now());
+  @override Future<void> deleteMessage(String messageId) async {}
+  @override Future<void> reactToMessage(String messageId, String emoji) async {}
+  @override Future<List<ContactItem>> getContacts() async => [];
+  @override Future<void> addContact(String identifier) async {}
+  @override Future<void> deleteContact(String userId) async {}
+  @override Future<void> syncContacts(List<String> phones) async {}
+  @override Future<void> blockUser(String userId) async {}
+  @override Future<void> unblockUser(String userId) async {}
+  @override Future<List<CallItem>> getCallsHistory() async => [];
+  @override Future<List<StoryItem>> getStories() async => [];
+  @override Future<void> publishStory(String type, {String? mediaUrl, String? textContent, String? backgroundColor}) async {}
+  @override Future<void> viewStory(String storyId) async {}
+  @override Future<void> deleteStory(String storyId) async {}
+  @override Future<ProfileResult> getUserProfile(String userId) async => const ProfileResult(userId: 'u1', username: 'user');
+  @override Future<void> updateProfile({String? displayName, String? bio}) async {}
+  @override Future<String?> changeAvatar(String source) async => null;
+  @override Future<SettingsResult> getSettings() async => const SettingsResult();
+  @override Future<void> updatePrivacy(Map<String, dynamic> data) async {}
+  @override Future<void> updateNotifications(Map<String, dynamic> data) async {}
+  @override Future<void> updateAppearance(Map<String, dynamic> data) async {}
+  @override Future<SearchResult> search(String query) async => const SearchResult();
+  @override Future<List<NearbyUser>> getNearbyUsers(double lat, double lng, {int radius = 1000}) async => [];
+  @override Future<AiChatResult> sendAiMessage(String message, {String? conversationId}) async => const AiChatResult(conversationId: '', content: '');
+  @override Future<String> summarizeChat(String chatId) async => '';
+  @override Future<Map<String, dynamic>> exportData() async => {};
+  @override Future<List<ChatMemberResult>> getChatMembers(String chatId) async => [];
+  @override Future<void> addChatMembers(String chatId, List<String> userIds) async {}
+  @override Future<void> leaveGroup(String chatId) async {}
+  @override Future<void> deleteGroup(String chatId) async {}
+  @override Future<void> updateGroupInfo(String chatId, {String? title, String? avatarUrl}) async {}
+  @override Future<void> updateMemberRole(String chatId, String userId, String role) async {}
+  @override Future<void> removeMember(String chatId, String userId) async {}
+  @override Future<Map<String, dynamic>> exportChat(String chatId) async => {};
+  @override Future<void> clearChatHistory(String chatId) async {}
+  @override Future<List<MessageItem>> searchMessagesInChat(String chatId, String query) async => [];
+  @override Future<List<UserSearchResult>> searchUsers(String query) async => [];
+  @override Future<List<AiConversationResult>> getAiConversations() async => [];
+  @override Future<String> createAiConversation() async => '';
+  @override Future<void> generateAiSticker(String prompt) async {}
+  @override Future<void> updateNetwork(Map<String, dynamic> data) async {}
+  @override Future<void> updateStorage(Map<String, dynamic> data) async {}
+  @override Future<List<BlockedUserResult>> getBlockedUsers() async => [];
+  @override Future<List<SessionResult>> getSessions() async => [];
+  @override Future<void> deleteSession(String sessionId) async {}
+  @override Future<void> deleteAllSessions() async {}
 }
 
 class _MockSecureStorage extends SecureStorageHelper {
@@ -169,16 +208,16 @@ class _MockWsClient extends WsClient {
 void main() {
   group('AuthBloc', () {
     late AuthBloc authBloc;
-    late _MockApiClient mockApiClient;
+    late _MockRepository mockRepository;
     late _MockSecureStorage mockSecureStorage;
     late _MockWsClient mockWsClient;
 
     setUp(() {
-      mockApiClient = _MockApiClient();
+      mockRepository = _MockRepository();
       mockSecureStorage = _MockSecureStorage();
       mockWsClient = _MockWsClient();
       authBloc = AuthBloc(
-        apiClient: mockApiClient,
+        repository: mockRepository,
         secureStorage: mockSecureStorage,
         wsClient: mockWsClient,
       );
@@ -193,7 +232,6 @@ void main() {
     });
 
     test('AuthCheckRequested with no token yields AuthUnauthenticated', () async {
-      // No access token stored
       authBloc.add(AuthCheckRequested());
       await expectLater(
         authBloc.stream,
@@ -207,7 +245,7 @@ void main() {
         authBloc.stream,
         emitsInOrder([isA<AuthLoading>(), isA<AuthOtpSent>()]),
       );
-      expect(mockApiClient.loginCalled, isTrue);
+      expect(mockRepository.loginCalled, isTrue);
     });
 
     test('AuthOtpSubmitted yields AuthAuthenticated', () async {
@@ -220,14 +258,14 @@ void main() {
         authBloc.stream,
         emitsInOrder([isA<AuthLoading>(), isA<AuthAuthenticated>()]),
       );
-      expect(mockApiClient.verifyCalled, isTrue);
+      expect(mockRepository.verifyCalled, isTrue);
     });
 
     test('AuthOtpSubmitted with 2FA required yields Auth2faRequired', () async {
-      mockApiClient.verifyResponse = {
-        'requires_2fa': true,
-        'temp_token': 'temp-token-123',
-      };
+      mockRepository.verifyResult = const AuthResult(
+        accessToken: '', refreshToken: '', userId: '', username: '',
+        requires2fa: true, tempToken: 'temp-token-123',
+      );
 
       authBloc.add(AuthOtpSubmitted(
         identifier: '+79991234567',
@@ -253,7 +291,7 @@ void main() {
         authBloc.stream,
         emitsInOrder([isA<AuthLoading>(), isA<AuthOtpSent>()]),
       );
-      expect(mockApiClient.registerCalled, isTrue);
+      expect(mockRepository.registerCalled, isTrue);
     });
 
     test('AuthLogoutRequested yields AuthUnauthenticated', () async {
@@ -262,7 +300,7 @@ void main() {
         authBloc.stream,
         [isA<AuthUnauthenticated>()],
       );
-      expect(mockApiClient.logoutCalled, isTrue);
+      expect(mockRepository.logoutCalled, isTrue);
     });
 
     test('AuthDeleteAccountRequested with wrong confirmation yields AuthError', () async {
@@ -279,7 +317,7 @@ void main() {
         authBloc.stream,
         emitsInOrder([isA<AuthLoading>(), isA<AuthAccountDeleted>()]),
       );
-      expect(mockApiClient.deleteAccountCalled, isTrue);
+      expect(mockRepository.deleteAccountCalled, isTrue);
     });
   });
 }

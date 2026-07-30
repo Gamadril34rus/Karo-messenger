@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/accessibility/charo_accessibility.dart';
 import '../../../../core/haptic/haptic_service.dart';
 import '../../../../shared/widgets/charo_widgets.dart';
 import '../../../../shared/widgets/charo_empty_state.dart';
@@ -136,7 +137,13 @@ class _CallTile extends StatelessWidget {
     final isIncoming = call.direction == 'incoming';
     final colors = context.colors;
 
-    return CharoCard(
+    return CharoAccessibility.callItem(
+      callerName: call.name ?? 'Неизвестный',
+      callType: call.type == 'video' ? 'Видеозвонок' : 'Голосовой',
+      direction: call.direction,
+      time: call.time.toIso8601String(),
+      isMissed: isMissed,
+      child: CharoCard(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       padding: const EdgeInsets.all(12),
       radius: 14,
@@ -211,10 +218,17 @@ class _CallTile extends StatelessWidget {
           ),
         ],
       ),
+    ),
     );
   }
 
   String _formatTime(DateTime dt) {
+    final now = DateTime.now();
+    final diff = now.difference(dt);
+    if (diff.inDays == 0) return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+    if (diff.inDays == 1) return 'Вчера';
+    return '${dt.day}.${dt.month}';
+  }
     final now = DateTime.now();
     final diff = now.difference(dt);
     if (diff.inDays == 0) return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';

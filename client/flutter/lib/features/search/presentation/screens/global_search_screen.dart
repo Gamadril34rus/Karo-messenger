@@ -3,7 +3,7 @@ import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
-import '../../../core/network/api_client.dart';
+import '../../../core/domain/charo_repository.dart';
 import '../../../core/utils/logger.dart';
 import '../../../shared/widgets/charo_widgets.dart';
 
@@ -48,48 +48,40 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
     setState(() => _isSearching = true);
 
     try {
-      final apiClient = GetIt.instance<ApiClient>();
-      final response = await apiClient.get(
-        '/api/v1/search',
-        queryParameters: {'q': query.trim()},
-      );
-
-      final data = response.asMap;
-      final chats = (data['chats'] as List? ?? []).cast<Map<String, dynamic>>();
-      final messages = (data['messages'] as List? ?? []).cast<Map<String, dynamic>>();
-      final contacts = (data['contacts'] as List? ?? []).cast<Map<String, dynamic>>();
+      final repository = GetIt.instance<CharoRepository>();
+      final result = await repository.search(query.trim());
 
       final results = <_SearchResult>[];
 
-      for (final chat in chats) {
+      for (final chat in result.chats) {
         results.add(_SearchResult(
           type: 'chat',
-          id: chat['id'] as String? ?? '',
-          title: chat['title'] as String? ?? 'Чат',
-          subtitle: chat['last_message'] as String? ?? '',
+          id: chat.id,
+          title: chat.title ?? 'Чат',
+          subtitle: chat.lastMessage ?? '',
           icon: Icons.chat_bubble_outline,
           color: const Color(0xFF2563EB),
         ));
       }
 
-      for (final msg in messages) {
+      for (final msg in result.messages) {
         results.add(_SearchResult(
           type: 'message',
-          id: msg['id'] as String? ?? '',
-          title: msg['sender_name'] as String? ?? msg['sender_id'] as String? ?? '',
-          subtitle: msg['content']?.toString() ?? '',
+          id: msg.id,
+          title: msg.senderName ?? msg.senderId,
+          subtitle: msg.text ?? '',
           icon: Icons.message_outlined,
           color: const Color(0xFF10B981),
-          chatId: msg['chat_id'] as String?,
+          chatId: msg.chatId,
         ));
       }
 
-      for (final contact in contacts) {
+      for (final contact in result.contacts) {
         results.add(_SearchResult(
           type: 'contact',
-          id: contact['id'] as String? ?? '',
-          title: contact['display_name'] as String? ?? contact['username'] as String? ?? '',
-          subtitle: '@${contact['username'] as String? ?? ''}',
+          id: contact.userId,
+          title: contact.displayName ?? contact.username,
+          subtitle: '@${contact.username}',
           icon: Icons.person_outline,
           color: const Color(0xFF8B5CF6),
         ));

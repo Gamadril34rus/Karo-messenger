@@ -547,4 +547,208 @@ class CharoApiRepository implements CharoRepository {
     final response = await _apiClient.get('/api/v1/auth/export-data');
     return response.asMap;
   }
+
+  // ─── Chat Advanced ─────────────────────────────────────────────
+
+  @override
+  Future<List<ChatMemberResult>> getChatMembers(String chatId) async {
+    final response = await _apiClient.get('/api/v1/chats/$chatId');
+    final data = response.asMap;
+    final membersList = (data['members'] as List<dynamic>?) ?? [];
+    return membersList.map((json) {
+      final j = json as Map<String, dynamic>;
+      final user = j['user'] as Map<String, dynamic>? ?? j;
+      return ChatMemberResult(
+        userId: (user['id'] ?? j['userId'] ?? '') as String,
+        username: (user['username'] ?? '') as String,
+        displayName: user['display_name'] as String? ?? user['displayName'] as String?,
+        avatarUrl: user['avatar_url'] as String? ?? user['avatarUrl'] as String?,
+        role: (j['role'] ?? 'MEMBER') as String,
+        isOnline: (user['is_online'] ?? user['isOnline'] ?? false) as bool,
+      );
+    }).toList();
+  }
+
+  @override
+  Future<void> addChatMembers(String chatId, List<String> userIds) async {
+    for (final userId in userIds) {
+      await _apiClient.post('/api/v1/chats/$chatId/members', data: {'userId': userId});
+    }
+  }
+
+  @override
+  Future<void> leaveGroup(String chatId) async {
+    await _apiClient.post('/api/v1/chats/$chatId/leave');
+  }
+
+  @override
+  Future<void> deleteGroup(String chatId) async {
+    await _apiClient.delete('/api/v1/chats/$chatId');
+  }
+
+  @override
+  Future<void> updateGroupInfo(String chatId, {String? title, String? avatarUrl}) async {
+    final data = <String, dynamic>{};
+    if (title != null) data['title'] = title;
+    if (avatarUrl != null) data['avatar_url'] = avatarUrl;
+    await _apiClient.patch('/api/v1/chats/$chatId', data: data);
+  }
+
+  @override
+  Future<void> updateMemberRole(String chatId, String userId, String role) async {
+    await _apiClient.patch('/api/v1/chats/$chatId/members/$userId', data: {'role': role});
+  }
+
+  @override
+  Future<void> removeMember(String chatId, String userId) async {
+    await _apiClient.delete('/api/v1/chats/$chatId/members/$userId');
+  }
+
+  @override
+  Future<Map<String, dynamic>> exportChat(String chatId) async {
+    final response = await _apiClient.get('/api/v1/chats/$chatId/export');
+    return response.asMap;
+  }
+
+  @override
+  Future<void> clearChatHistory(String chatId) async {
+    await _apiClient.delete('/api/v1/chats/$chatId/messages');
+  }
+
+  @override
+  Future<List<MessageItem>> searchMessagesInChat(String chatId, String query) async {
+    final response = await _apiClient.get(
+      '/api/v1/chats/$chatId/search',
+      queryParameters: {'q': query},
+    );
+    return (response.asList).map(_mapMessageItem).toList();
+  }
+
+  // ─── OAuth ─────────────────────────────────────────────────────
+
+  @override
+  Future<OAuthResult> getOAuthUrl(String provider) async {
+    final response = await _apiClient.get('/api/v1/auth/oauth/$provider');
+    final data = response.asMap;
+    return OAuthResult(
+      redirectUrl: data['redirect_url'] as String? ?? data['url'] as String? ?? '',
+      state: data['state'] as String? ?? '',
+    );
+  }
+
+  // ─── Search Users ──────────────────────────────────────────────
+
+  @override
+  Future<List<UserSearchResult>> searchUsers(String query) async {
+    final response = await _apiClient.get(
+      '/api/v1/users/search',
+      queryParameters: {'q': query},
+    );
+    final data = response.asMap;
+    final usersList = (data['data'] as List<dynamic>?) ?? [];
+    return usersList.map((json) {
+      final j = json as Map<String, dynamic>;
+      return UserSearchResult(
+        userId: j['id'] as String? ?? '',
+        username: j['username'] as String? ?? '',
+        displayName: j['display_name'] as String?,
+        avatarUrl: j['avatar_url'] as String?,
+      );
+    }).toList();
+  }
+
+  // ─── AI Advanced ───────────────────────────────────────────────
+
+  @override
+  Future<List<AiConversationResult>> getAiConversations() async {
+    final response = await _apiClient.get('/api/v1/ai/conversations');
+    return (response.asList).map((json) {
+      final j = json as Map<String, dynamic>;
+      return AiConversationResult(
+        id: j['id'] as String? ?? '',
+        role: j['role'] as String? ?? 'assistant',
+        content: j['content'] as String? ?? '',
+        createdAt: j['created_at'] != null
+            ? DateTime.parse(j['created_at'] as String)
+            : DateTime.now(),
+      );
+    }).toList();
+  }
+
+  @override
+  Future<String> createAiConversation() async {
+    final response = await _apiClient.post('/api/v1/ai/conversations');
+    return response.asMap['id'] as String? ?? '';
+  }
+
+  @override
+  Future<void> generateAiSticker(String prompt) async {
+    await _apiClient.post('/api/v1/ai/sticker', data: {'prompt': prompt});
+  }
+
+  // ─── Network / Storage Settings ────────────────────────────────
+
+  @override
+  Future<void> updateNetwork(Map<String, dynamic> data) async {
+    await _apiClient.patch('/api/v1/settings/network', data: data);
+  }
+
+  @override
+  Future<void> updateStorage(Map<String, dynamic> data) async {
+    await _apiClient.patch('/api/v1/settings/storage', data: data);
+  }
+
+  // ─── Block List ────────────────────────────────────────────────
+
+  @override
+  Future<List<BlockedUserResult>> getBlockedUsers() async {
+    final response = await _apiClient.get('/api/v1/contacts/blocked');
+    final data = response.asMap;
+    final blockedList = (data['data'] as List<dynamic>?) ?? [];
+    return blockedList.map((json) {
+      final j = json as Map<String, dynamic>;
+      final user = j['blocked_user'] as Map<String, dynamic>? ?? j['user'] as Map<String, dynamic>? ?? j;
+      return BlockedUserResult(
+        userId: user['id'] as String? ?? j['user_id'] as String? ?? '',
+        displayName: user['display_name'] as String?,
+        username: user['username'] as String?,
+        avatarUrl: user['avatar_url'] as String?,
+        blockedAt: j['created_at'] != null
+            ? DateTime.tryParse(j['created_at'].toString()) ?? DateTime.now()
+            : DateTime.now(),
+      );
+    }).toList();
+  }
+
+  // ─── Sessions ──────────────────────────────────────────────────
+
+  @override
+  Future<List<SessionResult>> getSessions() async {
+    final response = await _apiClient.get('/api/v1/auth/sessions');
+    final data = response.asMap;
+    final sessionsList = (data['data'] as List<dynamic>?) ?? [];
+    return sessionsList.map((json) {
+      final j = json as Map<String, dynamic>;
+      return SessionResult(
+        id: j['id'] as String? ?? '',
+        deviceName: j['device_name'] as String? ?? j['deviceName'] as String? ?? 'Неизвестное устройство',
+        ip: j['ip'] as String?,
+        location: j['location'] as String?,
+        lastActive: j['last_active'] != null
+            ? DateTime.tryParse(j['last_active'].toString()) ?? DateTime.now()
+            : DateTime.now(),
+        isCurrent: j['is_current'] as bool? ?? false,
+      );
+    }).toList();
+  }
+
+  @override
+  Future<void> deleteSession(String sessionId) async {
+    await _apiClient.delete('/api/v1/auth/sessions/$sessionId');
+  }
+
+  @override
+  Future<void> deleteAllSessions() async {
+    await _apiClient.delete('/api/v1/auth/sessions', data: {'keep_current': true});
+  }
 }

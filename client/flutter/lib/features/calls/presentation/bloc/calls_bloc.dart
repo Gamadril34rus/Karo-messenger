@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../core/network/api_client.dart';
+import '../../../../core/domain/charo_repository.dart';
 import '../../../../core/network/ws_client.dart';
 import '../../data/call_item.dart';
 
@@ -31,11 +31,11 @@ final class CallsError extends CallsState {
 
 // BLoC
 class CallsBloc extends Bloc<CallsEvent, CallsState> {
-  final ApiClient _apiClient;
+  final CharoRepository _repository;
   final WsClient _wsClient;
 
-  CallsBloc({required ApiClient apiClient, required WsClient wsClient})
-      : _apiClient = apiClient, _wsClient = wsClient, super(CallsInitial()) {
+  CallsBloc({required CharoRepository repository, required WsClient wsClient})
+      : _repository = repository, _wsClient = wsClient, super(CallsInitial()) {
     on<CallsLoadRequested>(_onLoadRequested);
     on<CallsCallInitiated>(_onCallInitiated);
   }
@@ -43,17 +43,7 @@ class CallsBloc extends Bloc<CallsEvent, CallsState> {
   Future<void> _onLoadRequested(CallsLoadRequested event, Emitter<CallsState> emit) async {
     emit(CallsLoading());
     try {
-      final response = await _apiClient.get('/api/v1/calls/history');
-      final calls = (response.asList).map<CallItem>((json) => CallItem(
-        id: json['id'] as String,
-        name: json['caller']?['display_name'] as String?,
-        avatarUrl: json['caller']?['avatar_url'] as String?,
-        type: json['type'] as String? ?? 'voice',
-        direction: json['direction'] as String? ?? 'outgoing',
-        status: json['status'] as String? ?? 'ended',
-        time: json['started_at'] != null ? DateTime.parse(json['started_at'] as String) : DateTime.now(),
-        duration: json['duration_sec'] as int?,
-      )).toList();
+      final calls = await _repository.getCallsHistory();
       emit(CallsLoaded(calls: calls));
     } on CharoApiException catch (e) {
       emit(CallsError(message: e.message));

@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../core/network/api_client.dart';
+import '../../../../core/domain/charo_repository.dart';
 import '../../data/nearby_user.dart';
 
 // Events
@@ -24,21 +24,15 @@ final class NearbyError extends NearbyState {
 
 // BLoC
 class NearbyBloc extends Bloc<NearbyEvent, NearbyState> {
-  final ApiClient _apiClient;
-  NearbyBloc({required ApiClient apiClient}) : _apiClient = apiClient, super(NearbyInitial()) {
+  final CharoRepository _repository;
+  NearbyBloc({required CharoRepository repository}) : _repository = repository, super(NearbyInitial()) {
     on<NearbyLoadRequested>(_onLoadRequested);
   }
 
   Future<void> _onLoadRequested(NearbyLoadRequested event, Emitter<NearbyState> emit) async {
     emit(NearbyLoading());
     try {
-      final response = await _apiClient.get('/api/v1/nearby');
-      final users = (response.asList).map<NearbyUser>((json) => NearbyUser(
-        userId: json['user_id'] as String,
-        displayName: json['display_name'] as String,
-        distance: json['distance'] as String? ?? '? м',
-        status: json['status'] as String?,
-      )).toList();
+      final users = await _repository.getNearbyUsers(0, 0);
       emit(NearbyLoaded(users: users));
     } on CharoApiException catch (e) {
       emit(NearbyError(message: e.message));

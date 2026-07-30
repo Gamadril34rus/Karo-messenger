@@ -132,6 +132,62 @@ abstract class CharoRepository {
   // ─── Data Export ───────────────────────────────────────────────
 
   Future<Map<String, dynamic>> exportData();
+
+  // ─── Chat Advanced ─────────────────────────────────────────────
+
+  Future<List<ChatMemberResult>> getChatMembers(String chatId);
+
+  Future<void> addChatMembers(String chatId, List<String> userIds);
+
+  Future<void> leaveGroup(String chatId);
+
+  Future<void> deleteGroup(String chatId);
+
+  Future<void> updateGroupInfo(String chatId, {String? title, String? avatarUrl});
+
+  Future<void> updateMemberRole(String chatId, String userId, String role);
+
+  Future<void> removeMember(String chatId, String userId);
+
+  Future<Map<String, dynamic>> exportChat(String chatId);
+
+  Future<void> clearChatHistory(String chatId);
+
+  Future<List<MessageItem>> searchMessagesInChat(String chatId, String query);
+
+  // ─── OAuth ─────────────────────────────────────────────────────
+
+  Future<OAuthResult> getOAuthUrl(String provider);
+
+  // ─── Search Users ──────────────────────────────────────────────
+
+  Future<List<UserSearchResult>> searchUsers(String query);
+
+  // ─── AI Advanced ───────────────────────────────────────────────
+
+  Future<List<AiConversationResult>> getAiConversations();
+
+  Future<String> createAiConversation();
+
+  Future<void> generateAiSticker(String prompt);
+
+  // ─── Network / Storage Settings ────────────────────────────────
+
+  Future<void> updateNetwork(Map<String, dynamic> data);
+
+  Future<void> updateStorage(Map<String, dynamic> data);
+
+  // ─── Block List ────────────────────────────────────────────────
+
+  Future<List<BlockedUserResult>> getBlockedUsers();
+
+  // ─── Sessions ──────────────────────────────────────────────────
+
+  Future<List<SessionResult>> getSessions();
+
+  Future<void> deleteSession(String sessionId);
+
+  Future<void> deleteAllSessions();
 }
 
 // ─── Result Models ──────────────────────────────────────────────────
@@ -230,4 +286,91 @@ class AiChatResult {
   final String content;
 
   const AiChatResult({required this.conversationId, required this.content});
+}
+
+class ChatMemberResult {
+  final String userId;
+  final String username;
+  final String? displayName;
+  final String? avatarUrl;
+  final String role;
+  final bool isOnline;
+
+  const ChatMemberResult({
+    required this.userId,
+    required this.username,
+    this.displayName,
+    this.avatarUrl,
+    this.role = 'MEMBER',
+    this.isOnline = false,
+  });
+}
+
+class OAuthResult {
+  final String redirectUrl;
+  final String state;
+
+  const OAuthResult({required this.redirectUrl, required this.state});
+}
+
+class UserSearchResult {
+  final String userId;
+  final String username;
+  final String? displayName;
+  final String? avatarUrl;
+
+  const UserSearchResult({
+    required this.userId,
+    required this.username,
+    this.displayName,
+    this.avatarUrl,
+  });
+}
+
+class AiConversationResult {
+  final String id;
+  final String role;
+  final String content;
+  final DateTime createdAt;
+
+  const AiConversationResult({
+    required this.id,
+    required this.role,
+    required this.content,
+    required this.createdAt,
+  });
+}
+
+class BlockedUserResult {
+  final String userId;
+  final String? displayName;
+  final String? username;
+  final String? avatarUrl;
+  final DateTime blockedAt;
+
+  const BlockedUserResult({
+    required this.userId,
+    this.displayName,
+    this.username,
+    this.avatarUrl,
+    required this.blockedAt,
+  });
+}
+
+class SessionResult {
+  final String id;
+  final String deviceName;
+  final String? ip;
+  final String? location;
+  final DateTime lastActive;
+  final bool isCurrent;
+
+  const SessionResult({
+    required this.id,
+    required this.deviceName,
+    this.ip,
+    this.location,
+    required this.lastActive,
+    this.isCurrent = false,
+  });
 }

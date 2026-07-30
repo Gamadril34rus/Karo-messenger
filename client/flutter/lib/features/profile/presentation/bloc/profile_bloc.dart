@@ -1,8 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../core/network/api_client.dart';
-import '../../../../core/storage/secure_storage.dart';
+import '../../../../core/domain/charo_repository.dart';
 import '../../../../core/network/ws_client.dart';
 
 // ─── Events ────────────────────────────────────────────────────────
@@ -101,16 +100,13 @@ final class ProfileError extends ProfileState {
 // ─── BLoC ──────────────────────────────────────────────────────────
 
 class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
-  final ApiClient _apiClient;
-  final SecureStorageHelper _secureStorage;
+  final CharoRepository _repository;
   final WsClient _wsClient;
 
   ProfileBloc({
-    required ApiClient apiClient,
-    required SecureStorageHelper secureStorage,
+    required CharoRepository repository,
     required WsClient wsClient,
-  })  : _apiClient = apiClient,
-        _secureStorage = secureStorage,
+  })  : _repository = repository,
         _wsClient = wsClient,
         super(ProfileInitial()) {
     on<ProfileMeRequested>(_onMeRequested);
@@ -126,19 +122,18 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   Future<void> _onMeRequested(ProfileMeRequested event, Emitter<ProfileState> emit) async {
     emit(ProfileLoading());
     try {
-      final response = await _apiClient.get('/api/v1/users/me');
-      final data = response.asMap;
+      final profile = await _repository.getMyProfile();
       emit(ProfileLoaded(
-        userId: data['id'] as String,
-        username: data['username'] as String,
-        displayName: data['display_name'] as String?,
-        bio: data['bio'] as String?,
-        avatarUrl: data['avatar_url'] as String?,
-        phone: data['phone'] as String?,
-        email: data['email'] as String?,
-        isOnline: data['is_online'] as bool? ?? true,
-        lastSeen: data['last_seen'] != null ? DateTime.parse(data['last_seen'] as String) : null,
-        phoneVisible: data['phone_visible'] as bool? ?? true,
+        userId: profile.userId,
+        username: profile.username,
+        displayName: profile.displayName,
+        bio: profile.bio,
+        avatarUrl: profile.avatarUrl,
+        phone: profile.phone,
+        email: profile.email,
+        isOnline: profile.isOnline,
+        lastSeen: profile.lastSeen,
+        phoneVisible: profile.phoneVisible,
       ));
     } on CharoApiException catch (e) {
       emit(ProfileError(message: e.message));
@@ -148,19 +143,19 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   Future<void> _onLoadRequested(ProfileLoadRequested event, Emitter<ProfileState> emit) async {
     emit(ProfileLoading());
     try {
-      final response = await _apiClient.get('/api/v1/users/${event.userId}');
-      final data = response.asMap;
+      final profile = await _repository.getUserProfile(event.userId);
       emit(ProfileLoaded(
-        userId: data['id'] as String,
-        username: data['username'] as String,
-        displayName: data['display_name'] as String?,
-        bio: data['bio'] as String?,
-        avatarUrl: data['avatar_url'] as String?,
-        phone: data['phone'] as String?,
-        email: data['email'] as String?,
-        isOnline: data['is_online'] as bool? ?? false,
-        lastSeen: data['last_seen'] != null ? DateTime.parse(data['last_seen'] as String) : null,
-        phoneVisible: data['phone_visible'] as bool? ?? false,
+        userId: profile.userId,
+        username: profile.username,
+        displayName: profile.displayName,
+        bio: profile.bio,
+        avatarUrl: profile.avatarUrl,
+        phone: profile.phone,
+        email: profile.email,
+        isOnline: profile.isOnline,
+        lastSeen: profile.lastSeen,
+        phoneVisible: profile.phoneVisible,
+        isBlocked: profile.isBlocked,
       ));
     } on CharoApiException catch (e) {
       emit(ProfileError(message: e.message));
@@ -171,11 +166,10 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     final current = state;
     if (current is! ProfileLoaded) return;
 
-    final data = <String, dynamic>{};
-    if (event.displayName != null) data['display_name'] = event.displayName;
-    if (event.bio != null) data['bio'] = event.bio;
-
-    await _apiClient.patch('/api/v1/users/me', data: data);
+    await _repository.updateProfile(
+      displayName: event.displayName,
+      bio: event.bio,
+    );
 
     emit(ProfileLoaded(
       userId: current.userId,
@@ -193,34 +187,17 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     final current = state;
     if (current is! ProfileLoaded) return;
 
-    if (event.source == 'remove') {
-      await _apiClient.patch('/api/v1/users/me', data: {'avatar_url': null});
-      emit(ProfileLoaded(
-        userId: current.userId, username: current.username,
-        displayName: current.displayName, bio: current.bio,
-        phone: current.phone, email: current.email,
-        isOnline: current.isOnline,
-      ));
-    } else if (event.source == 'ai') {
-      final response = await _apiClient.post('/api/v1/ai/generate-avatar', data: {'prompt': 'avatar'});
-      final url = response.asMap['url'] as String?;
-      emit(ProfileLoaded(
-        userId: current.userId, username: current.username,
-        displayName: current.displayName, bio: current.bio,
-        avatarUrl: url, phone: current.phone, email: current.email,
-        isOnline: current.isOnline,
-      ));
-    } else {
-      // camera / gallery — отправляем multipart
-      final response = await _apiClient.patch('/api/v1/users/me/avatar', data: {'source': event.source});
-      final url = response.asMap['avatar_url'] as String?;
-      emit(ProfileLoaded(
-        userId: current.userId, username: current.username,
-        displayName: current.displayName, bio: current.bio,
-        avatarUrl: url, phone: current.phone, email: current.email,
-        isOnline: current.isOnline,
-      ));
-    }
+    final newUrl = await _repository.changeAvatar(event.source);
+    emit(ProfileLoaded(
+      userId: current.userId,
+      username: current.username,
+      displayName: current.displayName,
+      bio: current.bio,
+      avatarUrl: newUrl ?? current.avatarUrl,
+      phone: current.phone,
+      email: current.email,
+      isOnline: current.isOnline,
+    ));
   }
 
   void _onCallInitiated(ProfileCallInitiated event, Emitter<ProfileState> emit) {
@@ -239,17 +216,23 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   Future<void> _onSecretChatRequested(ProfileSecretChatRequested event, Emitter<ProfileState> emit) async {
     final current = state;
     if (current is! ProfileLoaded) return;
-    await _apiClient.post('/api/v1/chats', data: {
-      'type': 'secret',
-      'targetUserId': current.userId,
-    });
+    await _repository.createChat('secret', null, [current.userId]);
   }
 
   Future<void> _onBlocked(ProfileBlocked event, Emitter<ProfileState> emit) async {
     final current = state;
     if (current is! ProfileLoaded) return;
-    await _apiClient.post('/api/v1/contacts/block', data: {
-      'userId': current.userId,
-    });
+    await _repository.blockUser(current.userId);
+    emit(ProfileLoaded(
+      userId: current.userId,
+      username: current.username,
+      displayName: current.displayName,
+      bio: current.bio,
+      avatarUrl: current.avatarUrl,
+      phone: current.phone,
+      email: current.email,
+      isOnline: current.isOnline,
+      isBlocked: true,
+    ));
   }
 }

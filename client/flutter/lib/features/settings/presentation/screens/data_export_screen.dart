@@ -7,7 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/network/api_client.dart';
+import '../../../../core/domain/charo_repository.dart';
 import '../../../../core/utils/logger.dart';
 import '../../../../shared/widgets/charo_widgets.dart';
 import '../../auth/presentation/bloc/auth_bloc.dart';
@@ -251,11 +251,11 @@ class _DataExportScreenState extends State<DataExportScreen> {
 
     try {
       final sl = GetIt.instance;
-      final apiClient = sl<ApiClient>();
-      final response = await apiClient.get('/api/v1/auth/export-data');
+      final repository = sl<CharoRepository>();
+      final exportResult = await repository.exportData();
 
       setState(() {
-        _exportData = response.asMap;
+        _exportData = exportResult;
         _isExporting = false;
       });
 

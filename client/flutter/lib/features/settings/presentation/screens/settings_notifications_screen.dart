@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/network/api_client.dart';
+import '../../../../core/domain/charo_repository.dart';
 import '../../../../core/utils/logger.dart';
 import '../../../../shared/widgets/charo_widgets.dart';
 
@@ -34,10 +34,9 @@ class _SettingsNotificationsScreenState extends State<SettingsNotificationsScree
 
   Future<void> _loadSettings() async {
     try {
-      final apiClient = GetIt.instance<ApiClient>();
-      final response = await apiClient.get('/api/v1/settings');
-      final data = response.asMap;
-      final push = data['notifications'] as Map<String, dynamic>? ?? {};
+      final repository = GetIt.instance<CharoRepository>();
+      final result = await repository.getSettings();
+      final push = result.notifications;
       setState(() {
         _pushEnabled = push['pushEnabled'] as bool? ?? push['push_enabled'] as bool? ?? true;
         _soundEnabled = push['soundEnabled'] as bool? ?? push['sound_enabled'] as bool? ?? true;
@@ -54,8 +53,8 @@ class _SettingsNotificationsScreenState extends State<SettingsNotificationsScree
 
   Future<void> _saveSettings() async {
     try {
-      final apiClient = GetIt.instance<ApiClient>();
-      await apiClient.patch('/api/v1/settings/notifications', data: {
+      final repository = GetIt.instance<CharoRepository>();
+      await repository.updateNotifications({
         'pushEnabled': _pushEnabled,
         'soundEnabled': _soundEnabled,
         'vibrationEnabled': _vibrationEnabled,

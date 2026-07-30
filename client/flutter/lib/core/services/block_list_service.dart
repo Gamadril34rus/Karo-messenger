@@ -1,4 +1,4 @@
-import '../network/api_client.dart';
+import '../domain/charo_repository.dart';
 import '../utils/logger.dart';
 
 /// ─── Block List Service ─────────────────────────────────────────
@@ -6,22 +6,22 @@ import '../utils/logger.dart';
 /// Проверка: заблокирован ли пользователь.
 
 class BlockListService {
-  final ApiClient _apiClient;
+  final CharoRepository _repository;
 
-  BlockListService({required ApiClient apiClient}) : _apiClient = apiClient;
+  BlockListService({required CharoRepository repository}) : _repository = repository;
 
   final Set<String> _blockedUsers = {};
 
   /// Заблокировать пользователя
   Future<void> blockUser(String userId) async {
-    await _apiClient.post('/api/v1/contacts/block', data: {'userId': userId});
+    await _repository.blockUser(userId);
     _blockedUsers.add(userId);
     logger.i('🚫 User blocked: $userId');
   }
 
   /// Разблокировать пользователя
   Future<void> unblockUser(String userId) async {
-    await _apiClient.delete('/api/v1/contacts/block/$userId');
+    await _repository.unblockUser(userId);
     _blockedUsers.remove(userId);
     logger.i('🚫 User unblocked: $userId');
   }
@@ -32,12 +32,10 @@ class BlockListService {
   /// Загрузить список заблокированных
   Future<void> loadBlockList() async {
     try {
-      final response = await _apiClient.get('/api/v1/contacts/blocked');
-      final list = (response.asList).cast<Map<String, dynamic>>();
+      final blockedUsers = await _repository.getBlockedUsers();
       _blockedUsers.clear();
-      for (final item in list) {
-        final userId = item['contact_user_id'] as String? ?? item['userId'] as String? ?? '';
-        if (userId.isNotEmpty) _blockedUsers.add(userId);
+      for (final user in blockedUsers) {
+        if (user.userId.isNotEmpty) _blockedUsers.add(user.userId);
       }
       logger.i('🚫 Block list loaded: ${_blockedUsers.length} users');
     } catch (e) {

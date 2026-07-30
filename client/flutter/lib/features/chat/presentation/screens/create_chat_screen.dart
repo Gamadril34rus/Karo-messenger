@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/domain/charo_repository.dart';
 import '../../../../core/haptic/haptic_service.dart';
-import '../../../../core/network/api_client.dart';
 import '../../../../core/utils/logger.dart';
 import '../../../../shared/widgets/charo_widgets.dart';
 
@@ -19,8 +20,8 @@ class CreateChatScreen extends StatefulWidget {
 
 class _CreateChatScreenState extends State<CreateChatScreen> {
   final _searchController = TextEditingController();
-  List<Map<String, dynamic>> _users = [];
-  List<Map<String, dynamic>> _selectedUsers = [];
+  List<UserSearchResult> _users = [];
+  List<UserSearchResult> _selectedUsers = [];
   bool _isLoading = false;
   bool _isCreating = false;
 
@@ -38,15 +39,10 @@ class _CreateChatScreenState extends State<CreateChatScreen> {
 
     setState(() => _isLoading = true);
     try {
-      final apiClient = ApiClient.instance;
-      final response = await apiClient.get(
-        '/api/v1/users/search',
-        queryParameters: {'q': query.trim()},
-      );
-      final data = response.asMap;
-      final users = (data['data'] as List?) ?? [];
+      final repository = GetIt.instance<CharoRepository>();
+      final users = await repository.searchUsers(query.trim());
       setState(() {
-        _users = users.map<Map<String, dynamic>>((u) => u as Map<String, dynamic>).toList();
+        _users = users;
         _isLoading = false;
       });
     } catch (e) {
@@ -55,12 +51,11 @@ class _CreateChatScreenState extends State<CreateChatScreen> {
     }
   }
 
-  void _toggleUser(Map<String, dynamic> user) {
+  void _toggleUser(UserSearchResult user) {
     HapticService.light();
-    final userId = user['id'] as String;
     setState(() {
-      if (_selectedUsers.any((u) => u['id'] == userId)) {
-        _selectedUsers.removeWhere((u) => u['id'] == userId);
+      if (_selectedUsers.any((u) => u.userId == user.userId)) {
+        _selectedUsers.removeWhere((u) => u.userId == user.userId);
       } else {
         if (widget.chatType == 'private' && _selectedUsers.length >= 1) {
           _selectedUsers.clear();
@@ -77,28 +72,11 @@ class _CreateChatScreenState extends State<CreateChatScreen> {
     HapticService.medium();
 
     try {
-      final apiClient = ApiClient.instance;
-      final targetUserId = _selectedUsers.first['id'] as String;
+      final repository = GetIt.instance<CharoRepository>();
 
-      if (widget.chatType == 'private') {
-        final response = await apiClient.post('/api/v1/chats', data: {
-          'type': 'private',
-          'targetUserId': targetUserId,
-        });
-        final chatData = response.asMap;
-        final chatId = chatData['id'] as String;
-        if (mounted) context.go('/chat/$chatId');
-      } else {
-        // Group/Channel/Secret
-        final memberIds = _selectedUsers.map((u) => u['id'] as String).toList();
-        final response = await apiClient.post('/api/v1/chats', data: {
-          'type': widget.chatType,
-          'memberIds': memberIds,
-        });
-        final chatData = response.asMap;
-        final chatId = chatData['id'] as String;
-        if (mounted) context.go('/chat/$chatId');
-      }
+      final memberIds = _selectedUsers.map((u) => u.userId).toList();
+      final chat = await repository.createChat(widget.chatType, null, memberIds);
+      if (mounted) context.go('/chat/${chat.id}');
     } catch (e) {
       logger.e('Create chat failed: $e');
       if (mounted) {
@@ -139,10 +117,10 @@ class _CreateChatScreenState extends State<CreateChatScreen> {
                   return Chip(
                     avatar: CharoAvatar(
                       radius: 14,
-                      imageUrl: u['avatar_url'] as String?,
-                      fallbackText: (u['display_name'] as String?) ?? (u['username'] as String?) ?? '?',
+                      imageUrl: u.avatarUrl,
+                      fallbackText: u.displayName ?? u.username,
                     ),
-                    label: Text(u['display_name'] as String? ?? u['username'] as String? ?? ''),
+                    label: Text(u.displayName ?? u.username),
                     onDeleted: () => _toggleUser(u),
                   );
                 }).toList(),
@@ -189,12 +167,12 @@ class _CreateChatScreenState extends State<CreateChatScreen> {
                         itemCount: _users.length,
                         itemBuilder: (context, index) {
                           final user = _users[index];
-                          final isSelected = _selectedUsers.any((u) => u['id'] == user['id']);
+                          final isSelected = _selectedUsers.any((u) => u.userId == user.userId);
                           return CharoTile(
                             icon: isSelected ? Icons.check_circle : Icons.person_outline,
                             iconColor: isSelected ? context.colors.primary : context.colors.onSurface.withOpacity(0.5),
-                            title: user['display_name'] as String? ?? user['username'] as String? ?? 'Без имени',
-                            subtitle: '@${user['username'] ?? ''}',
+                            title: user.displayName ?? user.username,
+                            subtitle: '@${user.username}',
                             onTap: () => _toggleUser(user),
                           );
                         },

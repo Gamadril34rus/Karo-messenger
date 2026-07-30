@@ -3,10 +3,9 @@ import 'package:drift/drift.dart' show Value;
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../../core/domain/charo_repository.dart';
 import '../../../../../core/e2ee/e2ee_manager.dart';
-import '../../../../../core/errors/app_error.dart';
 import '../../../../../core/haptic/haptic_service.dart';
-import '../../../../../core/network/api_client.dart';
 import '../../../../../core/network/ws_client.dart';
 import '../../../../../core/storage/local_db.dart';
 import '../../../../../core/storage/local_db.g.dart';
@@ -261,19 +260,19 @@ final class ChatDetailError extends ChatDetailState {
 // ─── BLoC ──────────────────────────────────────────────────────────
 
 class ChatDetailBloc extends Bloc<ChatDetailEvent, ChatDetailState> {
-  final ApiClient _apiClient;
+  final CharoRepository _repository;
   final WsClient _wsClient;
   final AppDatabase _localDb;
   final E2EEKeyManager _e2ee;
   final HapticService _haptic;
 
   ChatDetailBloc({
-    required ApiClient apiClient,
+    required CharoRepository repository,
     required WsClient wsClient,
     required AppDatabase localDb,
     E2EEKeyManager? e2ee,
     HapticService? haptic,
-  })  : _apiClient = apiClient,
+  })  : _repository = repository,
         _wsClient = wsClient,
         _localDb = localDb,
         _e2ee = e2ee ?? E2EEKeyManager.instance,
@@ -321,117 +320,62 @@ class ChatDetailBloc extends Bloc<ChatDetailEvent, ChatDetailState> {
         ));
       }
 
-      // Загружаем данные чата с сервера
-      final response = await _apiClient.get('/api/v1/chats/${event.chatId}');
-      final chatData = response.asMap;
+      // Затем загружаем с сервера через repository
+      final serverMessages = await _repository.getMessages(event.chatId);
 
-      final messagesResponse = await _apiClient.get(
-        '/api/v1/chats/${event.chatId}/messages',
-        queryParameters: {'limit': 50},
-      );
-
-      final messages = (messagesResponse.asList).map<MessageItem>(_parseMessage).toList();
-
-      // Кэшируем сообщения в локальную БД
-      await _cacheMessages(event.chatId, messages);
-
-      // Кэшируем чат
-      await _localDb.insertChat(LocalChatsCompanion.insert(
-        id: event.chatId,
-        type: Value(chatData['type'] as String? ?? 'private'),
-        title: Value(chatData['title'] as String?),
-        avatarUrl: Value(chatData['avatar_url'] as String?),
-        updatedAt: DateTime.now(),
-        createdAt: DateTime.now(),
-      ));
+      // Кэшируем в локальную БД
+      await _cacheMessages(event.chatId, serverMessages);
 
       emit(ChatDetailLoaded(
         chatId: event.chatId,
-        chatTitle: chatData['title'] as String? ?? 'Чат',
-        isOnline: chatData['is_online'] as bool? ?? false,
-        memberCount: chatData['members'] != null
-            ? (chatData['members'] as List).length
-            : null,
-        messages: messages,
-        disappearingTimer: chatData['disappear_timer'] as int?,
+        chatTitle: localChat?.title ?? 'Чат',
+        messages: serverMessages,
       ));
     } on CharoApiException catch (e) {
-      // Если сервер недоступен — показываем кэш
-      final localMessages = await _localDb.getMessages(event.chatId);
-      final localChat = await _getLocalChat(event.chatId);
-      if (localMessages.isNotEmpty) {
-        emit(ChatDetailLoaded(
-          chatId: event.chatId,
-          chatTitle: localChat?.title ?? 'Чат',
-          messages: localMessages.map(_localMessageToItem).toList(),
-        ));
-      } else {
-        emit(ChatDetailError(message: e.message));
-      }
-    } catch (e) {
-      logger.e('ChatDetail load error: $e');
-      emit(ChatDetailError(message: 'Не удалось загрузить чат'));
+      emit(ChatDetailError(message: e.message));
     }
   }
 
   Future<void> _onLoadMore(ChatDetailLoadMoreRequested event, Emitter<ChatDetailState> emit) async {
     final current = state;
-    if (current is! ChatDetailLoaded || !current.hasMore) return;
+    if (current is! ChatDetailLoaded) return;
 
     try {
-      final oldestMsg = current.messages.firstOrNull;
-      final before = oldestMsg?.sentAt.toIso8601String();
+      final lastId = current.messages.isNotEmpty ? current.messages.last.id : null;
+      final moreMessages = await _repository.getMessages(event.chatId, afterId: lastId);
 
-      final response = await _apiClient.get(
-        '/api/v1/chats/${event.chatId}/messages',
-        queryParameters: {'before': before, 'limit': 50},
-      );
+      if (moreMessages.isEmpty) {
+        emit(current.copyWith(hasMore: false));
+        return;
+      }
 
-      final olderMessages = (response.asList).map<MessageItem>(_parseMessage).toList();
-
-      emit(current.copyWith(
-        messages: [...olderMessages, ...current.messages],
-        hasMore: olderMessages.length >= 50,
-      ));
+      await _cacheMessages(event.chatId, moreMessages);
+      emit(current.copyWith(messages: [...current.messages, ...moreMessages]));
     } catch (e) {
       logger.e('Load more error: $e');
     }
   }
 
-  Future<void> _onMessageSent(ChatDetailMessageSent event, Emitter<ChatDetailState> emit) async {
+  void _onMessageSent(ChatDetailMessageSent event, Emitter<ChatDetailState> emit) {
     final current = state;
     if (current is! ChatDetailLoaded) return;
 
-    // Если редактируем сообщение — отправляем message.update вместо message.send
+    // Если редактирование — отправляем через WS message.update
     if (current.editingId != null) {
       _wsClient.send('message.update', {
         'messageId': current.editingId,
         'content': event.content,
       });
-      // Обновляем локально
-      final updated = current.messages.map((m) {
-        if (m.id == current.editingId) {
-          return MessageItem(
-            id: m.id, chatId: m.chatId, senderId: m.senderId,
-            senderName: m.senderName, isMe: m.isMe, type: m.type,
-            text: event.content, mediaUrl: m.mediaUrl, mediaThumbnail: m.mediaThumbnail,
-            replyToText: m.replyToText, replyToSender: m.replyToSender,
-            isEdited: true, isDeleted: m.isDeleted,
-            status: m.status, sentAt: m.sentAt, readAt: m.readAt,
-            reactions: m.reactions,
-          );
-        }
-        return m;
-      }).toList();
-      emit(current.copyWith(messages: updated, clearEditing: true));
+      emit(current.copyWith(clearEditing: true));
       return;
     }
 
-    final tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
+    // Обычная отправка через repository (WS message.send)
+    _repository.sendMessage(event.chatId, event.type, event.content);
 
-    // Оптимистичное обновление — сразу показываем сообщение
-    final optimisticMsg = MessageItem(
-      id: tempId,
+    // Оптимистичное обновление
+    final optimistic = MessageItem(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
       chatId: event.chatId,
       senderId: 'me',
       isMe: true,
@@ -439,137 +383,72 @@ class ChatDetailBloc extends Bloc<ChatDetailEvent, ChatDetailState> {
       text: event.content,
       status: MessageStatus.sending,
       sentAt: DateTime.now(),
-      replyToText: current.replyToId != null ? 'Сообщение' : null,
     );
 
-    emit(current.copyWith(
-      messages: [...current.messages, optimisticMsg],
-      clearReply: true,
-    ));
-
-    // Haptic feedback при отправке
-    await _haptic.onSendMessage();
-
-    // E2EE шифрование текстового сообщения
-    String? encryptedContent = event.content;
-    bool isE2ee = false;
-
-    if (event.type == 'text' && event.content != null) {
-      try {
-        // Определение recipientId (для 1:1 чата — другой участник)
-        final otherMemberId = current.messages
-            .where((m) => !m.isMe)
-            .firstOrNull?.senderId;
-
-        if (otherMemberId != null) {
-          final hasSession = await _e2ee.ensureSession(otherMemberId);
-          if (hasSession) {
-            encryptedContent = await _e2ee.encryptWithSessionRecovery(
-              otherMemberId,
-              event.content!,
-            );
-            isE2ee = true;
-            logger.d('🔐 Message encrypted with E2EE for $otherMemberId');
-          }
-        }
-      } catch (e) {
-        logger.e('E2EE encryption failed — sending plaintext: $e');
-        encryptedContent = event.content;
-      }
-    }
-
-    // Отправляем через WebSocket (с E2EE-шифрованием при наличии сессии)
-    Map<String, dynamic> wsContent;
-    if (isE2ee) {
-      wsContent = {'e2ee_text': encryptedContent, 'is_encrypted': true};
-    } else if (event.type == 'voice' || event.type == 'location' || event.type == 'contact' || event.type == 'poll' || event.type == 'gif') {
-      // Для нетекстовых типов — парсим JSON-контент если возможно
-      try {
-        wsContent = jsonDecode(event.content ?? '{}') as Map<String, dynamic>;
-      } catch (_) {
-        wsContent = {'text': event.content};
-      }
-    } else {
-      wsContent = {'text': event.content};
-    }
-
-    _wsClient.sendMessage(
-      chatId: event.chatId,
-      type: event.type,
-      content: wsContent,
-      tempId: tempId,
-      replyTo: current.replyToId,
-    );
+    final updatedMessages = [...current.messages, optimistic];
+    emit(current.copyWith(messages: updatedMessages, clearReply: true));
   }
 
-  void _onMessageDeleted(ChatDetailMessageDeleted event, Emitter<ChatDetailState> emit) {
-    final current = state;
-    if (current is! ChatDetailLoaded) return;
-
-    _wsClient.send('message.delete', {'messageId': event.messageId});
-
-    final updated = current.messages.map((m) =>
-        m.id == event.messageId ? MessageItem(
-          id: m.id, chatId: m.chatId, senderId: m.senderId,
-          senderName: m.senderName, isMe: m.isMe, type: m.type,
-          isDeleted: true, sentAt: m.sentAt,
-        ) : m).toList();
-    emit(current.copyWith(messages: updated));
+  Future<void> _onMessageDeleted(ChatDetailMessageDeleted event, Emitter<ChatDetailState> emit) async {
+    try {
+      await _repository.deleteMessage(event.messageId);
+      final current = state;
+      if (current is ChatDetailLoaded) {
+        emit(current.copyWith(messages: current.messages.where((m) => m.id != event.messageId).toList()));
+      }
+    } on CharoApiException catch (e) {
+      logger.e('Delete message error: ${e.message}');
+    }
   }
 
   void _onTypingStarted(ChatDetailTypingStarted event, Emitter<ChatDetailState> emit) {
-    _wsClient.startTyping(event.chatId);
+    _wsClient.send('typing.start', {'chatId': event.chatId});
   }
 
   void _onTypingStopped(ChatDetailTypingStopped event, Emitter<ChatDetailState> emit) {
-    _wsClient.stopTyping(event.chatId);
+    _wsClient.send('typing.stop', {'chatId': event.chatId});
   }
 
   void _onReplySet(ChatDetailReplySet event, Emitter<ChatDetailState> emit) {
     final current = state;
-    if (current is! ChatDetailLoaded) return;
-    emit(current.copyWith(replyToId: event.messageId));
+    if (current is ChatDetailLoaded) {
+      emit(current.copyWith(replyToId: event.messageId));
+    }
   }
 
   void _onEditSet(ChatDetailEditSet event, Emitter<ChatDetailState> emit) {
     final current = state;
-    if (current is! ChatDetailLoaded) return;
-    emit(current.copyWith(editingId: event.messageId));
+    if (current is ChatDetailLoaded) {
+      emit(current.copyWith(editingId: event.messageId));
+    }
   }
 
-  Future<void> _onForwardRequested(ChatDetailForwardRequested event, Emitter<ChatDetailState> emit) async {
+  void _onForwardRequested(ChatDetailForwardRequested event, Emitter<ChatDetailState> emit) {
     _wsClient.send('message.forward', {'messageId': event.messageId});
   }
 
-  Future<void> _onMediaPicked(ChatDetailMediaPicked event, Emitter<ChatDetailState> emit) async {
-    final current = state;
-    if (current is! ChatDetailLoaded) return;
-
-    _wsClient.sendMessage(
-      chatId: event.chatId,
-      type: event.type,
-      content: {'action': 'pick_${event.type}'},
-    );
+  void _onMediaPicked(ChatDetailMediaPicked event, Emitter<ChatDetailState> emit) {
+    _repository.sendMessage(event.chatId, event.type, {'action': 'upload_media'});
   }
 
-  Future<void> _onVoiceRecorded(ChatDetailVoiceRecorded event, Emitter<ChatDetailState> emit) async {
-    _wsClient.sendMessage(chatId: event.chatId, type: 'voice', content: {'action': 'record'});
+  void _onVoiceRecorded(ChatDetailVoiceRecorded event, Emitter<ChatDetailState> emit) {
+    _repository.sendMessage(event.chatId, 'voice', {'action': 'upload_voice'});
   }
 
-  Future<void> _onLocationSent(ChatDetailLocationSent event, Emitter<ChatDetailState> emit) async {
-    _wsClient.sendMessage(chatId: event.chatId, type: 'location', content: {'action': 'send_location'});
+  void _onLocationSent(ChatDetailLocationSent event, Emitter<ChatDetailState> emit) {
+    _repository.sendMessage(event.chatId, 'location', {'action': 'send_location'});
   }
 
-  Future<void> _onContactSent(ChatDetailContactSent event, Emitter<ChatDetailState> emit) async {
-    _wsClient.sendMessage(chatId: event.chatId, type: 'contact', content: {'action': 'send_contact'});
+  void _onContactSent(ChatDetailContactSent event, Emitter<ChatDetailState> emit) {
+    _repository.sendMessage(event.chatId, 'contact', {'action': 'send_contact'});
   }
 
-  Future<void> _onPollCreated(ChatDetailPollCreated event, Emitter<ChatDetailState> emit) async {
-    _wsClient.sendMessage(chatId: event.chatId, type: 'poll', content: {'action': 'create_poll'});
+  void _onPollCreated(ChatDetailPollCreated event, Emitter<ChatDetailState> emit) {
+    _repository.sendMessage(event.chatId, 'poll', {'action': 'create_poll'});
   }
 
-  Future<void> _onGifSent(ChatDetailGifSent event, Emitter<ChatDetailState> emit) async {
-    _wsClient.sendMessage(chatId: event.chatId, type: 'gif', content: {'action': 'search_gif'});
+  void _onGifSent(ChatDetailGifSent event, Emitter<ChatDetailState> emit) {
+    _repository.sendMessage(event.chatId, 'gif', {'action': 'search_gif'});
   }
 
   void _onCallInitiated(ChatDetailCallInitiated event, Emitter<ChatDetailState> emit) {
@@ -580,11 +459,15 @@ class ChatDetailBloc extends Bloc<ChatDetailEvent, ChatDetailState> {
   }
 
   Future<void> _onMuteToggled(ChatDetailMuteToggled event, Emitter<ChatDetailState> emit) async {
-    await _apiClient.patch('/api/v1/chats/${event.chatId}', data: {'is_muted': true});
+    await _repository.muteChat(event.chatId, true);
   }
 
   Future<void> _onDisappearingSet(ChatDetailDisappearingSet event, Emitter<ChatDetailState> emit) async {
-    await _apiClient.patch('/api/v1/chats/${event.chatId}', data: {'disappear_timer': event.seconds});
+    // Update chat via WS — server handles the timer
+    _wsClient.send('chat.update', {
+      'chatId': event.chatId,
+      'disappearTimer': event.seconds,
+    });
     final current = state;
     if (current is ChatDetailLoaded) {
       emit(current.copyWith(disappearingTimer: event.seconds));
@@ -592,11 +475,11 @@ class ChatDetailBloc extends Bloc<ChatDetailEvent, ChatDetailState> {
   }
 
   Future<void> _onExportRequested(ChatDetailExportRequested event, Emitter<ChatDetailState> emit) async {
-    await _apiClient.get('/api/v1/chats/${event.chatId}/export');
+    await _repository.exportChat(event.chatId);
   }
 
   Future<void> _onHistoryCleared(ChatDetailHistoryCleared event, Emitter<ChatDetailState> emit) async {
-    await _apiClient.delete('/api/v1/chats/${event.chatId}/messages');
+    await _repository.clearChatHistory(event.chatId);
     final current = state;
     if (current is ChatDetailLoaded) {
       emit(current.copyWith(messages: []));
@@ -608,11 +491,7 @@ class ChatDetailBloc extends Bloc<ChatDetailEvent, ChatDetailState> {
     if (current is! ChatDetailLoaded) return;
     if (event.query.isEmpty) return;
 
-    final response = await _apiClient.get(
-      '/api/v1/chats/${event.chatId}/search',
-      queryParameters: {'q': event.query},
-    );
-    final results = (response.asList).map<MessageItem>(_parseMessage).toList();
+    final results = await _repository.searchMessagesInChat(event.chatId, event.query);
     emit(current.copyWith(messages: results));
   }
 
@@ -667,7 +546,7 @@ class ChatDetailBloc extends Bloc<ChatDetailEvent, ChatDetailState> {
             final e2eePayload = data['content']?['e2ee_text'] as String?;
             if (e2eePayload != null) {
               _decryptIncomingMessage(msg, e2eePayload);
-              return; // Расшифровка происходит async — добавление через add()
+              return;
             }
           }
         }
@@ -689,7 +568,6 @@ class ChatDetailBloc extends Bloc<ChatDetailEvent, ChatDetailState> {
         add(ChatDetailLoadRequested(chatId: current.chatId));
         break;
       case 'message.disappeared':
-        // Удалить исчезнувшие сообщения из локального состояния
         final messageIds = (event.data['messageIds'] as List?)?.cast<String>() ?? [];
         if (messageIds.isNotEmpty) {
           final updated = current.messages.where((m) => !messageIds.contains(m.id)).toList();
@@ -697,7 +575,6 @@ class ChatDetailBloc extends Bloc<ChatDetailEvent, ChatDetailState> {
         }
         break;
       case 'message.status':
-        // Обработка статуса доставки (sent, delivered, read)
         final statusMessageId = event.data['messageId'] as String?;
         final statusStr = event.data['status'] as String? ?? 'sent';
         if (statusMessageId != null) {
@@ -788,7 +665,6 @@ class ChatDetailBloc extends Bloc<ChatDetailEvent, ChatDetailState> {
 
   // ─── Local DB helpers ──────────────────────────────────────────
 
-  /// Кэширование сообщений в локальную БД
   Future<void> _cacheMessages(String chatId, List<MessageItem> messages) async {
     try {
       final companions = messages.map((m) => LocalMessagesCompanion.insert(
@@ -808,7 +684,6 @@ class ChatDetailBloc extends Bloc<ChatDetailEvent, ChatDetailState> {
     }
   }
 
-  /// Получить локальный чат из Drift
   Future<LocalChat?> _getLocalChat(String chatId) async {
     try {
       final chats = await _localDb.getAllChats();
@@ -818,7 +693,6 @@ class ChatDetailBloc extends Bloc<ChatDetailEvent, ChatDetailState> {
     }
   }
 
-  /// Маппинг LocalMessage (Drift) -> MessageItem
   MessageItem _localMessageToItem(LocalMessage m) {
     return MessageItem(
       id: m.id,

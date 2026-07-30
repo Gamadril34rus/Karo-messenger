@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../core/network/api_client.dart';
+import '../../../../core/domain/charo_repository.dart';
 import '../../../../core/utils/logger.dart';
 import '../../data/story_item.dart';
 
@@ -48,8 +48,8 @@ final class StoriesError extends StoriesState {
 
 // BLoC
 class StoriesBloc extends Bloc<StoriesEvent, StoriesState> {
-  final ApiClient _apiClient;
-  StoriesBloc({required ApiClient apiClient}) : _apiClient = apiClient, super(StoriesInitial()) {
+  final CharoRepository _repository;
+  StoriesBloc({required CharoRepository repository}) : _repository = repository, super(StoriesInitial()) {
     on<StoriesLoadRequested>(_onLoadRequested);
     on<StoryPublishRequested>(_onPublishRequested);
     on<StoryViewRequested>(_onViewRequested);
@@ -59,67 +59,21 @@ class StoriesBloc extends Bloc<StoriesEvent, StoriesState> {
   Future<void> _onLoadRequested(StoriesLoadRequested event, Emitter<StoriesState> emit) async {
     emit(StoriesLoading());
     try {
-      final response = await _apiClient.get('/api/v1/stories');
-      final data = response.asList;
-
-      // Server returns grouped stories: [{userId, userName, avatarUrl, stories: [...]}]
-      final stories = data.map<StoryItem>((json) {
-        final storyItems = (json['stories'] as List<dynamic>?) ?? [];
-        final items = storyItems.map<StoryContentItem>((s) {
-          final sMap = s as Map<String, dynamic>;
-          return StoryContentItem(
-            id: sMap['id'] as String? ?? '',
-            type: _mapStoryType(sMap['type'] as String?),
-            mediaUrl: sMap['mediaUrl'] as String? ?? sMap['media_url'] as String?,
-            textContent: sMap['content'] as String?,
-            backgroundColor: sMap['backgroundColor'] as String? ?? sMap['background_color'] as String?,
-            createdAt: sMap['createdAt'] != null
-                ? DateTime.tryParse(sMap['createdAt'].toString())
-                : null,
-            isViewed: (sMap['views'] as List?)?.isNotEmpty ?? false,
-            viewCount: (sMap['views'] as List?)?.length ?? 0,
-          );
-        }).toList();
-
-        return StoryItem(
-          userId: json['userId'] as String? ?? json['user_id'] as String? ?? '',
-          userName: json['userName'] as String? ?? json['user']?['display_name'] as String?,
-          avatarUrl: json['avatarUrl'] as String? ?? json['user']?['avatar_url'] as String?,
-          type: items.isNotEmpty ? items.first.type : 'image',
-          count: items.length,
-          isViewed: items.every((i) => i.isViewed),
-          items: items,
-        );
-      }).toList();
-
+      final stories = await _repository.getStories();
       emit(StoriesLoaded(stories: stories));
     } on CharoApiException catch (e) {
       emit(StoriesError(message: e.message));
     }
   }
 
-  String _mapStoryType(String? type) {
-    if (type == null) return 'image';
-    final lower = type.toLowerCase();
-    if (lower == 'video') return 'video';
-    if (lower == 'text') return 'text';
-    return 'image';
-  }
-
   Future<void> _onPublishRequested(StoryPublishRequested event, Emitter<StoriesState> emit) async {
     try {
-      final data = <String, dynamic>{
-        'type': event.type.toUpperCase(),
-      };
-
-      if (event.type == 'text') {
-        data['content'] = event.textContent ?? '';
-        data['background_color'] = event.backgroundColor ?? '#6366F1';
-      } else if (event.mediaUrl != null) {
-        data['media_url'] = event.mediaUrl;
-      }
-
-      await _apiClient.post('/api/v1/stories', data: data);
+      await _repository.publishStory(
+        event.type,
+        mediaUrl: event.mediaUrl,
+        textContent: event.textContent,
+        backgroundColor: event.backgroundColor,
+      );
       add(StoriesLoadRequested());
     } catch (e) {
       logger.e('Story publish failed: $e');
@@ -127,11 +81,11 @@ class StoriesBloc extends Bloc<StoriesEvent, StoriesState> {
   }
 
   Future<void> _onViewRequested(StoryViewRequested event, Emitter<StoriesState> emit) async {
-    await _apiClient.get('/api/v1/stories/${event.userId}/views');
+    await _repository.viewStory(event.userId);
   }
 
   Future<void> _onDeleteRequested(StoryDeleteRequested event, Emitter<StoriesState> emit) async {
-    await _apiClient.delete('/api/v1/stories/${event.storyId}');
+    await _repository.deleteStory(event.storyId);
     add(StoriesLoadRequested());
   }
 }

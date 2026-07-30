@@ -113,10 +113,10 @@ Future<void> _setupDependencies(
   sl.registerLazySingleton<PresenceService>(() => PresenceService.instance);
 
   // Чёрный список
-  sl.registerLazySingleton<BlockListService>(() => BlockListService(apiClient: sl()));
+  sl.registerLazySingleton<BlockListService>(() => BlockListService(repository: sl()));
 
   // Управление группами
-  sl.registerLazySingleton<GroupManagementService>(() => GroupManagementService(apiClient: sl()));
+  sl.registerLazySingleton<GroupManagementService>(() => GroupManagementService(repository: sl()));
 
   // Верификация email
   sl.registerLazySingleton<EmailVerificationService>(() => EmailVerificationService(apiClient: sl()));
@@ -180,28 +180,30 @@ Future<void> _setupDependencies(
   });
 
   // ─── BLoCs ────────────────────────────────────────────────────────
+  // Все BLoC-и работают через CharoRepository — замена сервера
+  // требует только новой реализации CharoRepository
   sl.registerFactory(() => AuthBloc(
-        apiClient: sl(),
+        repository: sl(),
         secureStorage: sl(),
         wsClient: sl(),
       ));
   sl.registerFactory(() => ChatListBloc(
-        apiClient: sl(),
+        repository: sl(),
         wsClient: sl(),
         localDb: sl(),
       ));
   sl.registerFactory(() => ChatDetailBloc(
-        apiClient: sl(),
+        repository: sl(),
         wsClient: sl(),
         localDb: sl(),
       ));
-  sl.registerFactory(() => ContactsBloc(apiClient: sl(), localDb: sl()));
-  sl.registerFactory(() => CallsBloc(apiClient: sl(), wsClient: sl()));
-  sl.registerFactory(() => StoriesBloc(apiClient: sl()));
-  sl.registerFactory(() => ProfileBloc(apiClient: sl(), secureStorage: sl(), wsClient: sl()));
-  sl.registerFactory(() => SettingsBloc(apiClient: sl()));
-  sl.registerFactory(() => AiAssistantBloc(apiClient: sl()));
-  sl.registerFactory(() => NearbyBloc(apiClient: sl()));
+  sl.registerFactory(() => ContactsBloc(repository: sl(), localDb: sl()));
+  sl.registerFactory(() => CallsBloc(repository: sl(), wsClient: sl()));
+  sl.registerFactory(() => StoriesBloc(repository: sl()));
+  sl.registerFactory(() => ProfileBloc(repository: sl(), wsClient: sl()));
+  sl.registerFactory(() => SettingsBloc(repository: sl()));
+  sl.registerFactory(() => AiAssistantBloc(repository: sl()));
+  sl.registerFactory(() => NearbyBloc(repository: sl()));
 }
 
 class AppCharoApp extends StatelessWidget {

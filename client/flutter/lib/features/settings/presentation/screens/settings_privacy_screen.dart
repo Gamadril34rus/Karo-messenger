@@ -6,6 +6,7 @@ import 'package:get_it/get_it.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/domain/charo_repository.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/haptic/haptic_service.dart';
 import '../../../../core/utils/logger.dart';
@@ -761,17 +762,16 @@ class _ActiveSessionsSheetState extends State<_ActiveSessionsSheet> {
   Future<void> _loadSessions() async {
     try {
       final sl = GetIt.instance;
-      final apiClient = sl<ApiClient>();
-      final response = await apiClient.get('/api/v1/auth/sessions');
-      final data = response.asList;
+      final repository = sl<CharoRepository>();
+      final sessions = await repository.getSessions();
       setState(() {
-        _sessions = data.map((s) => _SessionInfo(
-          id: s['id'] as String,
-          deviceName: s['device_name'] as String? ?? 'Неизвестное устройство',
-          platform: s['platform'] as String? ?? '',
-          ip: s['ip'] as String? ?? '',
-          lastActive: s['last_active'] as String? ?? '',
-          isCurrent: s['is_current'] as bool? ?? false,
+        _sessions = sessions.map((s) => _SessionInfo(
+          id: s.id,
+          deviceName: s.deviceName,
+          platform: '',
+          ip: s.ip ?? '',
+          lastActive: s.lastActive.toIso8601String(),
+          isCurrent: s.isCurrent,
         )).toList();
         _isLoading = false;
       });
@@ -864,8 +864,8 @@ class _ActiveSessionsSheetState extends State<_ActiveSessionsSheet> {
     HapticService.medium();
     try {
       final sl = GetIt.instance;
-      final apiClient = sl<ApiClient>();
-      await apiClient.delete('/api/v1/auth/sessions/$sessionId');
+      final repository = sl<CharoRepository>();
+      await repository.deleteSession(sessionId);
       setState(() {
         _sessions = _sessions.where((s) => s.id != sessionId).toList();
       });
@@ -883,8 +883,8 @@ class _ActiveSessionsSheetState extends State<_ActiveSessionsSheet> {
     HapticService.heavy();
     try {
       final sl = GetIt.instance;
-      final apiClient = sl<ApiClient>();
-      await apiClient.delete('/api/v1/auth/sessions', data: {'keep_current': true});
+      final repository = sl<CharoRepository>();
+      await repository.deleteAllSessions();
       setState(() {
         _sessions = _sessions.where((s) => s.isCurrent).toList();
       });

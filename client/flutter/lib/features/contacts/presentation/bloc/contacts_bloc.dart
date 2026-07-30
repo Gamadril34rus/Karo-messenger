@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart' show Value;
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../core/network/api_client.dart';
+import '../../../../core/domain/charo_repository.dart';
 import '../../../../core/storage/local_db.dart' as db;
 import '../../../../core/utils/logger.dart';
 import '../../data/contact_item.dart';
@@ -38,11 +38,11 @@ final class ContactsError extends ContactsState {
 
 // BLoC
 class ContactsBloc extends Bloc<ContactsEvent, ContactsState> {
-  final ApiClient _apiClient;
+  final CharoRepository _repository;
   final db.AppDatabase _localDb;
 
-  ContactsBloc({required ApiClient apiClient, db.AppDatabase? localDb})
-      : _apiClient = apiClient,
+  ContactsBloc({required CharoRepository repository, db.AppDatabase? localDb})
+      : _repository = repository,
         _localDb = localDb ?? db.AppDatabase(),
         super(ContactsInitial()) {
     on<ContactsLoadRequested>(_onLoadRequested);
@@ -64,16 +64,9 @@ class ContactsBloc extends Bloc<ContactsEvent, ContactsState> {
       logger.w('Contacts local cache load failed: $e');
     }
 
-    // Then fetch from server
+    // Then fetch from server via repository
     try {
-      final response = await _apiClient.get('/api/v1/contacts');
-      final contacts = (response.asList).map<ContactItem>((json) => ContactItem(
-        userId: json['contact_user_id'] as String? ?? json['user_id'] as String? ?? '',
-        displayName: json['display_name'] as String? ?? json['contact_user']?['display_name'] as String? ?? 'Без имени',
-        username: json['contact_user']?['username'] as String? ?? '',
-        avatarUrl: json['contact_user']?['avatar_url'] as String?,
-        isOnline: json['contact_user']?['is_online'] as bool? ?? false,
-      )).toList();
+      final contacts = await _repository.getContacts();
 
       // Persist to local DB
       await _persistContacts(contacts);
@@ -88,17 +81,17 @@ class ContactsBloc extends Bloc<ContactsEvent, ContactsState> {
   }
 
   Future<void> _onSyncRequested(ContactsSyncRequested event, Emitter<ContactsState> emit) async {
-    await _apiClient.post('/api/v1/contacts/sync');
+    await _repository.syncContacts([]);
     add(ContactsLoadRequested());
   }
 
   Future<void> _onContactAdded(ContactAdded event, Emitter<ContactsState> emit) async {
-    await _apiClient.post('/api/v1/contacts', data: {'identifier': event.identifier});
+    await _repository.addContact(event.identifier);
     add(ContactsLoadRequested());
   }
 
   Future<void> _onContactDeleted(ContactDeleted event, Emitter<ContactsState> emit) async {
-    await _apiClient.delete('/api/v1/contacts/${event.userId}');
+    await _repository.deleteContact(event.userId);
 
     // Remove from local DB
     try {

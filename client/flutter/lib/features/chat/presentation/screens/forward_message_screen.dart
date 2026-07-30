@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/haptic/haptic_service.dart';
-import '../../../../core/network/api_client.dart';
+import '../../../../core/domain/charo_repository.dart';
 import '../../../../core/network/ws_client.dart';
 import '../../../../core/utils/logger.dart';
 import '../../../../shared/widgets/charo_widgets.dart';
@@ -37,11 +37,15 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
 
   Future<void> _loadChats() async {
     try {
-      final apiClient = ApiClient.instance;
-      final response = await apiClient.get('/api/v1/chats');
-      final data = response.asList;
+      final repository = GetIt.instance<CharoRepository>();
+      final chats = await repository.getChats();
       setState(() {
-        _chats = data.map<Map<String, dynamic>>((c) => c as Map<String, dynamic>).toList();
+        _chats = chats.map((c) => {
+          'id': c.id,
+          'title': c.title,
+          'avatar_url': c.avatarUrl,
+          'last_message': c.lastMessage,
+        }).toList();
         _isLoading = false;
       });
     } catch (e) {

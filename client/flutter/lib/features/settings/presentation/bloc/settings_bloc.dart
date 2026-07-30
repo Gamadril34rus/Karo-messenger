@@ -2,16 +2,16 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../../core/network/api_client.dart';
+import '../../../../core/domain/charo_repository.dart';
 import '../../../../core/utils/logger.dart';
 
 /// Settings BLoC — управление всеми настройками приложения
 /// Синхронизация с сервером + локальный кэш
 class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
-  final ApiClient? _apiClient;
+  final CharoRepository? _repository;
 
-  SettingsBloc({ApiClient? apiClient})
-      : _apiClient = apiClient,
+  SettingsBloc({CharoRepository? repository})
+      : _repository = repository,
         super(const SettingsState()) {
     on<SettingsLoadRequested>(_onLoadRequested);
     on<SettingsThemeChanged>(_onThemeChanged);
@@ -51,13 +51,12 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       logger.w('Settings local cache load failed: $e');
     }
 
-    // Then load from server
-    if (_apiClient != null) {
+    // Then load from server via repository
+    if (_repository != null) {
       try {
-        final response = await _apiClient!.get('/api/v1/settings');
-        final data = response.asMap;
-        final privacy = data['privacy'] as Map<String, dynamic>? ?? {};
-        final notifications = data['notifications'] as Map<String, dynamic>? ?? {};
+        final result = await _repository!.getSettings();
+        final privacy = result.privacy;
+        final notifications = result.notifications;
 
         emit(state.copyWith(
           profileVisibility: _mapPrivacyLevel(privacy['profileVisibility'] as String?),
@@ -67,7 +66,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
           readReceipts: privacy['readReceipts'] as bool? ?? state.readReceipts,
           pushEnabled: notifications['pushEnabled'] as bool? ?? notifications['push_enabled'] as bool? ?? state.pushEnabled,
           soundEnabled: notifications['soundEnabled'] as bool? ?? notifications['sound_enabled'] as bool? ?? state.soundEnabled,
-          language: data['language'] as String? ?? state.language,
+          language: result.language,
         ));
         await _persistState(state);
       } catch (e) {
@@ -192,9 +191,25 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   }
 
   Future<void> _saveToServer(String section, Map<String, dynamic> data) async {
-    if (_apiClient == null) return;
+    if (_repository == null) return;
     try {
-      await _apiClient!.patch('/api/v1/settings/$section', data: data);
+      switch (section) {
+        case 'privacy':
+          await _repository!.updatePrivacy(data);
+          break;
+        case 'notifications':
+          await _repository!.updateNotifications(data);
+          break;
+        case 'appearance':
+          await _repository!.updateAppearance(data);
+          break;
+        case 'network':
+          await _repository!.updateNetwork(data);
+          break;
+        case 'storage':
+          await _repository!.updateStorage(data);
+          break;
+      }
     } catch (e) {
       logger.w('Settings server save failed ($section): $e');
     }

@@ -1,9 +1,12 @@
+import '../domain/charo_repository.dart';
 import '../network/api_client.dart';
 import '../utils/logger.dart';
 
 /// ─── Email Verification Service ─────────────────────────────────
 /// Отправка email с кодом подтверждения.
 /// Верификация кода на сервере.
+/// Использует ApiClient напрямую для специфичных endpoints,
+/// которые ещё не добавлены в CharoRepository.
 
 class EmailVerificationService {
   final ApiClient _apiClient;

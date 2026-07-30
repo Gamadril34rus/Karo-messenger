@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/accessibility/charo_accessibility.dart';
 import '../../../../core/haptic/haptic_service.dart';
 import '../../../../shared/widgets/charo_widgets.dart';
 import '../bloc/stories_bloc.dart';
@@ -135,7 +136,10 @@ class _StoryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CharoCard(
+    return CharoAccessibility.storyItem(
+      userName: story.userName ?? 'Пользователь',
+      hasUnviewed: !story.isViewed,
+      child: CharoCard(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       padding: const EdgeInsets.all(12),
       radius: 14,
@@ -192,6 +196,7 @@ class _StoryTile extends StatelessWidget {
           ),
         ],
       ),
+    ),
     );
   }
 }

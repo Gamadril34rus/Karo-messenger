@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 
 import '../../../../core/services/group_management_service.dart';
-import '../../../../core/network/api_client.dart';
+import '../../../../core/domain/charo_repository.dart';
 import '../../../../core/utils/logger.dart';
 import '../../../../shared/widgets/charo_widgets.dart';
 
@@ -35,7 +35,7 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.chatTitle);
-    _groupService = GroupManagementService(apiClient: GetIt.instance<ApiClient>());
+    _groupService = GroupManagementService(repository: GetIt.instance<CharoRepository>());
     _loadMembers();
   }
 
@@ -48,11 +48,17 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
   Future<void> _loadMembers() async {
     setState(() => _isLoading = true);
     try {
-      final response = await GetIt.instance<ApiClient>().get('/api/v1/chats/${widget.chatId}');
-      final data = response.asMap;
-      final membersList = data['members'] as List? ?? [];
+      final repository = GetIt.instance<CharoRepository>();
+      final members = await repository.getChatMembers(widget.chatId);
       setState(() {
-        _members = membersList.map((m) => GroupMember.fromJson(m as Map<String, dynamic>)).toList();
+        _members = members.map((m) => GroupMember(
+          userId: m.userId,
+          username: m.username,
+          displayName: m.displayName,
+          avatarUrl: m.avatarUrl,
+          role: m.role,
+          isOnline: m.isOnline,
+        )).toList();
         _isLoading = false;
       });
     } catch (e) {

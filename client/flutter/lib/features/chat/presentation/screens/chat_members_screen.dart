@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/network/api_client.dart';
+import '../../../../core/domain/charo_repository.dart';
 import '../../../../core/utils/logger.dart';
 import '../../../../shared/widgets/charo_widgets.dart';
 
@@ -38,15 +38,18 @@ class _ChatMembersScreenState extends State<ChatMembersScreen> {
       _error = null;
     });
     try {
-      final apiClient = GetIt.instance<ApiClient>();
-      final response = await apiClient.get('/api/v1/chats/${widget.chatId}');
-      final data = response.asMap;
-      final membersList = data['members'] as List? ?? [];
+      final repository = GetIt.instance<CharoRepository>();
+      final members = await repository.getChatMembers(widget.chatId);
 
       setState(() {
-        _members = membersList
-            .map((m) => ChatMemberInfo.fromJson(m as Map<String, dynamic>))
-            .toList();
+        _members = members.map((m) => ChatMemberInfo(
+          userId: m.userId,
+          username: m.username,
+          displayName: m.displayName,
+          avatarUrl: m.avatarUrl,
+          role: m.role,
+          isOnline: m.isOnline,
+        )).toList();
         _isLoading = false;
       });
     } catch (e) {

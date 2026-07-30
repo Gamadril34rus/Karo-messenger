@@ -1,8 +1,8 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/domain/charo_repository.dart';
 import '../../../../core/e2ee/e2ee_manager.dart';
-import '../../../../core/network/api_client.dart';
 import '../../../../core/storage/secure_storage.dart';
 import '../../../../core/network/ws_client.dart';
 import '../../../../core/audio/notification_service.dart';
@@ -71,7 +71,7 @@ final class AuthRegisterRequested extends AuthEvent {
 
 /// OAuth авторизация
 final class AuthOAuthRequested extends AuthEvent {
-  final String provider; // 'google' | 'apple' | 'vk'
+  final String provider; // 'google' | 'apple'
 
   AuthOAuthRequested({required this.provider});
 
@@ -215,15 +215,15 @@ final class Auth2faRequired extends AuthState {
 // ─── BLoC ─────────────────────────────────────────────────────────
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
-  final ApiClient _apiClient;
+  final CharoRepository _repository;
   final SecureStorageHelper _secureStorage;
   final WsClient _wsClient;
 
   AuthBloc({
-    required ApiClient apiClient,
+    required CharoRepository repository,
     required SecureStorageHelper secureStorage,
     required WsClient wsClient,
-  })  : _apiClient = apiClient,
+  })  : _repository = repository,
         _secureStorage = secureStorage,
         _wsClient = wsClient,
         super(AuthInitial()) {
@@ -252,24 +252,23 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         return;
       }
 
-      // Проверяем валидность токена
-      final response = await _apiClient.get('/api/v1/users/me');
-      final userData = response.asMap;
+      // Проверяем валидность токена через профиль
+      final profile = await _repository.getMyProfile();
 
       // Подключаем WebSocket
       await _wsClient.connect();
 
       // Инициализация E2EE
-      await E2EEKeyManager.instance.initialize(userData['id'] as String);
+      await E2EEKeyManager.instance.initialize(profile.userId);
 
       // Инициализация звуков уведомлений
       await NotificationService.instance.initialize();
 
       emit(AuthAuthenticated(
-        userId: userData['id'] as String,
-        username: userData['username'] as String,
-        displayName: userData['display_name'] as String?,
-        avatarUrl: userData['avatar_url'] as String?,
+        userId: profile.userId,
+        username: profile.username,
+        displayName: profile.displayName,
+        avatarUrl: profile.avatarUrl,
       ));
     } catch (e) {
       logger.w('Auth check failed: $e');
@@ -290,10 +289,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
-      await _apiClient.post('/api/v1/auth/login', data: {
-        'identifier': event.identifier,
-        'method': event.method,
-      });
+      await _repository.login(event.identifier, event.method);
 
       emit(AuthOtpSent(
         identifier: event.identifier,
@@ -313,44 +309,39 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
-      final response = await _apiClient.post('/api/v1/auth/verify', data: {
-        'identifier': event.identifier,
-        'code': event.code,
-        'method': event.method,
-      });
-
-      final data = response.asMap;
+      final result = await _repository.verifyOtp(
+        event.identifier, event.code, event.method,
+      );
 
       // Check if 2FA is required
-      if (data['requires_2fa'] == true) {
+      if (result.requires2fa) {
         emit(Auth2faRequired(
-          tempToken: data['temp_token'] as String? ?? '',
+          tempToken: result.tempToken ?? '',
           identifier: event.identifier,
         ));
         return;
       }
 
       await _saveTokens(
-        accessToken: data['access_token'] as String,
-        refreshToken: data['refresh_token'] as String,
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
       );
 
       // Подключаем WebSocket
       await _wsClient.connect();
 
       // Инициализация E2EE
-      final userId = data['user']['id'] as String;
-      await E2EEKeyManager.instance.initialize(userId);
-      await _secureStorage.setUserId(userId);
+      await E2EEKeyManager.instance.initialize(result.userId);
+      await _secureStorage.setUserId(result.userId);
 
       // Инициализация звуков уведомлений
       await NotificationService.instance.initialize();
 
       emit(AuthAuthenticated(
-        userId: userId,
-        username: data['user']['username'] as String,
-        displayName: data['user']['display_name'] as String?,
-        avatarUrl: data['user']['avatar_url'] as String?,
+        userId: result.userId,
+        username: result.username,
+        displayName: result.displayName,
+        avatarUrl: result.avatarUrl,
       ));
     } on CharoApiException catch (e) {
       emit(AuthError(message: e.message));
@@ -364,15 +355,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
-      await _apiClient.post('/api/v1/auth/register', data: {
-        'username': event.username,
-        'display_name': event.displayName,
-        if (event.phone != null) 'phone': event.phone,
-        if (event.email != null) 'email': event.email,
-        'consent_given': event.consentGiven,
-        'age_confirmed': event.ageConfirmed,
-        'terms_accepted': event.termsAccepted,
-      });
+      await _repository.register(
+        username: event.username,
+        displayName: event.displayName,
+        phone: event.phone,
+        email: event.email,
+        consentGiven: event.consentGiven,
+        ageConfirmed: event.ageConfirmed,
+        termsAccepted: event.termsAccepted,
+      );
 
       // После регистрации отправляем OTP
       if (event.phone != null) {
@@ -392,27 +383,16 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
-      // Redirect to OAuth provider via deep link / browser
-      final response = await _apiClient.get(
-        '/api/v1/auth/oauth/${event.provider}',
-      );
-
-      // The server returns a redirect URL to the OAuth provider
-      // In a real mobile app: open URL in browser/WebView with deep link callback
-      // On web: redirect directly via window.location
-      final redirectData = response.asMap;
+      final oauthResult = await _repository.getOAuthUrl(event.provider);
 
       // Store OAuth state for callback verification
       await _secureStorage.setOAuthState(
         provider: event.provider,
-        state: redirectData['state'] as String? ?? '',
+        state: oauthResult.state,
       );
 
       // The BLoC fetches the redirect URL — UI layer handles the actual redirect
       logger.i('OAuth ${event.provider}: redirect URL received — UI handles redirect');
-
-      // Don't emit a state change — the UI will handle the redirect
-      // and call AuthCheckRequested after OAuth callback
     } on CharoApiException catch (e) {
       emit(AuthError(message: e.message));
     }
@@ -424,7 +404,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     try {
-      await _apiClient.post('/api/v1/auth/logout');
+      await _repository.logout();
     } catch (_) {}
 
     await _wsClient.disconnect();
@@ -445,17 +425,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     emit(AuthLoading());
     try {
-      final response = await _apiClient.delete('/api/v1/auth/account', data: {
-        'confirmation': event.confirmation,
-      });
-
-      final data = response.asMap;
-      final accountId = data['account_id'] as String? ?? '';
-      final recoveryCode = data['recovery_code'] as String? ?? '';
+      final result = await _repository.deleteAccount(event.confirmation);
 
       await _wsClient.disconnect();
       await _secureStorage.clearAll();
-      emit(AuthAccountDeleted(accountId: accountId, recoveryCode: recoveryCode));
+      emit(AuthAccountDeleted(accountId: result.accountId, recoveryCode: result.recoveryCode));
     } on CharoApiException catch (e) {
       emit(AuthError(message: e.message));
     }
@@ -468,31 +442,27 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
-      final response = await _apiClient.post('/api/v1/auth/recover', data: {
-        'account_id': event.accountId,
-        'verification_code': event.recoveryCode,
-      });
-
-      final data = response.asMap;
-      await _saveTokens(
-        accessToken: data['access_token'] as String,
-        refreshToken: data['refresh_token'] as String,
+      final result = await _repository.recoverAccount(
+        event.accountId, event.recoveryCode,
       );
 
-      // After recovery, fetch user profile separately
-      final userResponse = await _apiClient.get('/api/v1/users/me');
-      final userData = userResponse.asMap;
-      final userId = userData['id'] as String;
-      await _secureStorage.setUserId(userId);
+      await _saveTokens(
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
+      );
+
+      // After recovery, fetch user profile
+      final profile = await _repository.getMyProfile();
+      await _secureStorage.setUserId(profile.userId);
       await _wsClient.connect();
-      await E2EEKeyManager.instance.initialize(userId);
+      await E2EEKeyManager.instance.initialize(profile.userId);
       await NotificationService.instance.initialize();
 
       emit(AuthAuthenticated(
-        userId: userId,
-        username: userData['username'] as String,
-        displayName: userData['display_name'] as String?,
-        avatarUrl: userData['avatar_url'] as String?,
+        userId: profile.userId,
+        username: profile.username,
+        displayName: profile.displayName,
+        avatarUrl: profile.avatarUrl,
       ));
     } on CharoApiException catch (e) {
       emit(AuthError(message: e.message));
@@ -521,33 +491,30 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
-      final response = await _apiClient.post('/api/v1/auth/2fa/verify', data: {
-        'temp_token': event.tempToken,
-        'code': event.code,
-      });
+      final result = await _repository.verify2fa(
+        event.tempToken, event.code,
+      );
 
-      final data = response.asMap;
       await _saveTokens(
-        accessToken: data['access_token'] as String,
-        refreshToken: data['refresh_token'] as String,
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
       );
 
       // Подключаем WebSocket
       await _wsClient.connect();
 
       // Инициализация E2EE
-      final userId = data['user']['id'] as String;
-      await E2EEKeyManager.instance.initialize(userId);
-      await _secureStorage.setUserId(userId);
+      await E2EEKeyManager.instance.initialize(result.userId);
+      await _secureStorage.setUserId(result.userId);
 
       // Инициализация звуков уведомлений
       await NotificationService.instance.initialize();
 
       emit(AuthAuthenticated(
-        userId: userId,
-        username: data['user']['username'] as String,
-        displayName: data['user']['display_name'] as String?,
-        avatarUrl: data['user']['avatar_url'] as String?,
+        userId: result.userId,
+        username: result.username,
+        displayName: result.displayName,
+        avatarUrl: result.avatarUrl,
       ));
     } on CharoApiException catch (e) {
       emit(AuthError(message: e.message));
@@ -567,15 +534,22 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     final refreshToken = await _secureStorage.getRefreshToken();
     if (refreshToken == null) throw Exception('No refresh token');
 
-    final response = await _apiClient.post(
-      '/api/v1/auth/refresh',
-      data: {'refresh_token': refreshToken},
-    );
-
-    final data = response.asMap;
+    final result = await _repository.refreshTokens();
     await _saveTokens(
-      accessToken: data['access_token'] as String,
-      refreshToken: data['refresh_token'] as String,
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
     );
   }
+}
+
+/// Обратная совместимость — CharoApiException из ApiClient
+/// (бросается через repository при ошибках HTTP)
+class CharoApiException implements Exception {
+  final String message;
+  final int? statusCode;
+
+  const CharoApiException({required this.message, this.statusCode});
+
+  @override
+  String toString() => 'CharoApiException: $message';
 }

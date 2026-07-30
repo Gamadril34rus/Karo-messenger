@@ -81,6 +81,7 @@ class AppTheme {
       useMaterial3: true,
       colorScheme: colors,
       brightness: brightness,
+      fontFamily: 'CharoSans',
 
       // ── Типографика ────────────────────────────────────────────
       textTheme: TextTheme(

@@ -3,7 +3,7 @@ import 'package:get_it/get_it.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/haptic/haptic_service.dart';
-import '../../../../core/network/api_client.dart';
+import '../../../../core/domain/charo_repository.dart';
 import '../../../../core/utils/logger.dart';
 import '../../../../shared/widgets/charo_widgets.dart';
 
@@ -51,18 +51,16 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
       _error = null;
     });
     try {
-      final apiClient = GetIt.instance<ApiClient>();
-      final response = await apiClient.get('/api/v1/contacts');
-      final contacts = (response.asList).map<ContactPickItem>((json) {
-        final user = json['contact_user'] as Map<String, dynamic>? ?? json;
-        return ContactPickItem(
-          userId: json['contact_user_id'] as String? ?? json['user_id'] as String? ?? '',
-          displayName: user['display_name'] as String? ?? user['displayName'] as String? ?? 'Без имени',
-          username: user['username'] as String? ?? '',
-          avatarUrl: user['avatar_url'] as String? ?? user['avatarUrl'] as String?,
-          isOnline: user['is_online'] as bool? ?? user['isOnline'] as bool? ?? false,
-        );
-      }).toList();
+      final repository = GetIt.instance<CharoRepository>();
+      final contacts = await repository.getContacts();
+      setState(() {
+        _contacts = contacts.map((c) => ContactPickItem(
+          userId: c.userId,
+          displayName: c.displayName,
+          username: c.username,
+          avatarUrl: c.avatarUrl,
+          isOnline: c.isOnline,
+        )).toList();
       setState(() {
         _contacts = contacts;
         _isLoading = false;
@@ -190,12 +188,8 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
   Future<void> _addSelected() async {
     if (_selectedIds.isEmpty) return;
     try {
-      final apiClient = GetIt.instance<ApiClient>();
-      for (final userId in _selectedIds) {
-        await apiClient.post('/api/v1/chats/${widget.chatId}/members', data: {
-          'userId': userId,
-        });
-      }
+      final repository = GetIt.instance<CharoRepository>();
+      await repository.addChatMembers(widget.chatId, _selectedIds.toList());
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Добавлено ${_selectedIds.length} участников')),
