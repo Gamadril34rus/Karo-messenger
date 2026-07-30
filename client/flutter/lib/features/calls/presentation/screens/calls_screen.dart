@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/haptic/haptic_service.dart';
 import '../../../../shared/widgets/charo_widgets.dart';
+import '../../../../shared/widgets/charo_empty_state.dart';
 import '../bloc/calls_bloc.dart';
 import '../../data/call_item.dart';
 
@@ -64,27 +65,10 @@ class _CallsScreenState extends State<CallsScreen> {
           }
           final calls = state is CallsLoaded ? state.calls : <CallItem>[];
           if (calls.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.call_outlined, size: 64, color: context.colors.onSurface.withOpacity(0.15)),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Нет звонков',
-                    style: context.typography.titleLarge?.copyWith(
-                      color: context.colors.onSurface.withOpacity(0.4),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Начните новый звонок',
-                    style: context.typography.bodyMedium?.copyWith(
-                      color: context.colors.onSurface.withOpacity(0.3),
-                    ),
-                  ),
-                ],
-              ),
+            return const CharoEmptyState(
+              emoji: '📞',
+              title: 'Нет звонков',
+              subtitle: 'Совершите первый звонок — нажмите кнопку ниже, чтобы выбрать контакт',
             );
           }
           return ListView.builder(

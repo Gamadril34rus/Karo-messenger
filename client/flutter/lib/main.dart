@@ -12,6 +12,8 @@ import 'core/network/api_client.dart';
 import 'core/network/ws_client.dart';
 import 'core/storage/secure_storage.dart';
 import 'core/storage/local_db.dart';
+import 'core/domain/charo_repository.dart';
+import 'core/data/charo_api_repository.dart';
 import 'core/e2ee/e2ee_manager.dart';
 import 'core/audio/notification_service.dart';
 import 'core/utils/logger.dart';
@@ -84,6 +86,11 @@ Future<void> _setupDependencies(
   final apiClient = ApiClient(sl());
   sl.registerLazySingleton<ApiClient>(() => apiClient);
   sl.registerLazySingleton<WsClient>(() => WsClient(sl()));
+
+  // Repository — абстрактный слой для замены сервера
+  sl.registerLazySingleton<CharoRepository>(() => CharoApiRepository(
+    apiClient: sl(), wsClient: sl(),
+  ));
 
   // E2EE — connect to ApiClient for server key publishing
   E2EEKeyManager.instance.setApiClient(apiClient);

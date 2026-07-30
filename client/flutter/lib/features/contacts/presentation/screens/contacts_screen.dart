@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/haptic/haptic_service.dart';
+import '../../../../shared/widgets/charo_empty_state.dart';
 import '../../../../shared/widgets/charo_widgets.dart';
 import '../bloc/contacts_bloc.dart';
 import '../../data/contact_item.dart';
@@ -66,23 +67,16 @@ class _ContactsScreenState extends State<ContactsScreen> {
             ),
           );
           final contacts = state is ContactsLoaded ? state.contacts : <ContactItem>[];
-          if (contacts.isEmpty) return Center(
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              Icon(Icons.people_outline, size: 64, color: context.colors.onSurface.withOpacity(0.15)),
-              const SizedBox(height: 16),
-              Text('Нет контактов', style: context.typography.titleLarge?.copyWith(
-                color: context.colors.onSurface.withOpacity(0.4),
-              )),
-              const SizedBox(height: 8),
-              Text('Синхронизируйте телефонную книгу', style: context.typography.bodyMedium?.copyWith(
-                color: context.colors.onSurface.withOpacity(0.3),
-              )),
-              const SizedBox(height: 24),
-              FilledButton(
-                onPressed: () {
-                  HapticService.medium();
-                  context.read<ContactsBloc>().add(ContactsSyncRequested());
-                },
+          if (contacts.isEmpty) return CharoEmptyState(
+              emoji: '👥',
+              title: 'Нет контактов',
+              subtitle: 'Синхронизируйте телефонную книгу, чтобы найти друзей',
+              actionLabel: 'Синхронизировать',
+              onAction: () {
+                HapticService.medium();
+                context.read<ContactsBloc>().add(ContactsSyncRequested());
+              },
+            );
                 child: const Text('Синхронизировать'),
               ),
             ]),

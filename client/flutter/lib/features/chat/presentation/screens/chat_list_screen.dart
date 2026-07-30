@@ -7,6 +7,7 @@ import '../../../../core/constants/app_constants.dart';
 import '../../../../core/services/responsive_layout.dart';
 import '../../../../core/accessibility/charo_accessibility.dart';
 import '../../../../shared/widgets/charo_widgets.dart';
+import '../../../../shared/widgets/charo_empty_state.dart';
 import '../bloc/chat_list/chat_bloc.dart';
 import '../../data/chat_item.dart';
 import '../screens/chat_detail_screen.dart';
@@ -129,29 +130,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
             );
           }
           if (state is ChatListLoaded && state.chats.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: context.colors.primary.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    child: Icon(Icons.chat_bubble_outline, size: 40, color: context.colors.primary.withOpacity(0.3)),
-                  ),
-                  const SizedBox(height: 16),
-                  Text('Нет чатов', style: context.typography.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  )),
-                  const SizedBox(height: 8),
-                  Text('Начните общение!', style: context.typography.bodyMedium?.copyWith(
-                    color: context.colors.onSurface.withOpacity(0.6),
-                  )),
-                ],
-              ),
+            return const CharoEmptyState(
+              emoji: '💬',
+              title: 'Нет чатов',
+              subtitle: 'Начните общение — нажмите кнопку ниже, чтобы создать новый чат или группу',
             );
           }
           final chats = state is ChatListLoaded ? state.chats : <ChatItem>[];
