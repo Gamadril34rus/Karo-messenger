@@ -141,94 +141,88 @@ class _CallTile extends StatelessWidget {
       callerName: call.name ?? 'Неизвестный',
       callType: call.type == 'video' ? 'Видеозвонок' : 'Голосовой',
       direction: call.direction,
-      time: call.time.toIso8601String(),
+      time: _formatTime(call.time),
       isMissed: isMissed,
       child: CharoCard(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      padding: const EdgeInsets.all(12),
-      radius: 14,
-      borderWidth: isMissed ? 1 : 0,
-      borderColor: isMissed ? colors.error.withOpacity(0.3) : null,
-      child: Row(
-        children: [
-          CharoAvatar(
-            radius: 22,
-            imageUrl: call.avatarUrl,
-            fallbackText: call.name ?? '?',
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  call.name ?? 'Неизвестный',
-                  style: context.typography.titleMedium?.copyWith(
-                    color: isMissed ? colors.error : colors.onSurface,
-                    fontWeight: isMissed ? FontWeight.w600 : FontWeight.w500,
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        padding: const EdgeInsets.all(12),
+        radius: 14,
+        borderWidth: isMissed ? 1 : 0,
+        borderColor: isMissed ? colors.error.withOpacity(0.3) : null,
+        child: Row(
+          children: [
+            CharoAvatar(
+              radius: 22,
+              imageUrl: call.avatarUrl,
+              fallbackText: call.name ?? '?',
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    call.name ?? 'Неизвестный',
+                    style: context.typography.titleMedium?.copyWith(
+                      color: isMissed ? colors.error : colors.onSurface,
+                      fontWeight: isMissed ? FontWeight.w600 : FontWeight.w500,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Row(
-                  children: [
-                    Icon(
-                      isIncoming ? Icons.call_received : Icons.call_made,
-                      size: 14,
-                      color: isMissed ? colors.error : context.colors.success,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      call.type == 'video' ? 'Видеозвонок' : 'Голосовой',
-                      style: context.typography.bodySmall,
-                    ),
-                    if (call.duration != null) ...[
-                      const SizedBox(width: 6),
-                      Text('• ${_formatDuration(call.duration!)}', style: context.typography.bodySmall),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Icon(
+                        isIncoming ? Icons.call_received : Icons.call_made,
+                        size: 14,
+                        color: isMissed ? colors.error : context.colors.success,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        call.type == 'video' ? 'Видеозвонок' : 'Голосовой',
+                        style: context.typography.bodySmall,
+                      ),
+                      if (call.duration != null) ...[
+                        const SizedBox(width: 6),
+                        Text('• ${_formatDuration(call.duration!)}', style: context.typography.bodySmall),
+                      ],
                     ],
-                  ],
+                  ),
+                ],
+              ),
+            ),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(_formatTime(call.time), style: context.typography.bodySmall),
+                const SizedBox(height: 4),
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: colors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: IconButton(
+                    icon: Icon(
+                      call.type == 'video' ? Icons.videocam : Icons.call,
+                      color: colors.primary,
+                      size: 18,
+                    ),
+                    onPressed: () {
+                      HapticService.light();
+                    },
+                    padding: EdgeInsets.zero,
+                  ),
                 ),
               ],
             ),
-          ),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(_formatTime(call.time), style: context.typography.bodySmall),
-              const SizedBox(height: 4),
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: colors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: IconButton(
-                  icon: Icon(
-                    call.type == 'video' ? Icons.videocam : Icons.call,
-                    color: colors.primary,
-                    size: 18,
-                  ),
-                  onPressed: () {
-                    HapticService.light();
-                  },
-                  padding: EdgeInsets.zero,
-                ),
-              ),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
     );
   }
 
   String _formatTime(DateTime dt) {
-    final now = DateTime.now();
-    final diff = now.difference(dt);
-    if (diff.inDays == 0) return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
-    if (diff.inDays == 1) return 'Вчера';
-    return '${dt.day}.${dt.month}';
-  }
     final now = DateTime.now();
     final diff = now.difference(dt);
     if (diff.inDays == 0) return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';

@@ -7,7 +7,6 @@ import 'package:get_it/get_it.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/domain/charo_repository.dart';
-import '../../../../core/network/api_client.dart';
 import '../../../../core/haptic/haptic_service.dart';
 import '../../../../core/utils/logger.dart';
 import '../../../../shared/widgets/charo_widgets.dart';

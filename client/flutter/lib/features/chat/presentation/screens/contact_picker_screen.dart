@@ -61,8 +61,6 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
           avatarUrl: c.avatarUrl,
           isOnline: c.isOnline,
         )).toList();
-      setState(() {
-        _contacts = contacts;
         _isLoading = false;
       });
     } catch (e) {
