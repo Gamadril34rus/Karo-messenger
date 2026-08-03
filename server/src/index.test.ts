@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { FastifyInstance } from 'fastify';
-import { buildServer } from '../index';
+import { buildServer } from './index';
 
 describe('Server Health & Infrastructure', () => {
   let server: FastifyInstance;

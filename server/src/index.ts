@@ -73,6 +73,7 @@ export async function buildServer(): Promise<FastifyInstance> {
     },
     requestIdHeader: 'x-request-id',
     requestIdLogLabel: 'reqId',
+    logController: { requestIdLogLabel: 'reqId' },
   });
 
   // ─── Глобальные декораторы ─────────────────────────────────────────

@@ -8,4 +8,4 @@ dist/
 npm-debug.log*
 coverage/
 .nyc_output/
-prisma/migrations/
+# prisma/migrations/ — NOT ignored; migrations must be committed for CI
