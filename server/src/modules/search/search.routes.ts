@@ -25,9 +25,13 @@ const searchQuerySchema = z.object({
 export async function searchRoutes(fastify: FastifyInstance) {
   const { prisma } = fastify;
 
-  fastify.get('/', { schema: { querystring: searchQuerySchema } }, async (request, reply) => {
+  fastify.get('/', {}, async (request, reply) => {
     const userId = request.userId!;
-    const { q } = request.query as z.infer<typeof searchQuerySchema>;
+    const parsed = searchQuerySchema.safeParse(request.query);
+    if (!parsed.success) {
+      return reply.code(400).send({ message: parsed.error.issues[0]?.message || 'Validation error' });
+    }
+    const { q } = parsed.data;
 
     const query = q.trim();
 

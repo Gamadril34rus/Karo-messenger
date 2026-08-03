@@ -22,9 +22,13 @@ export async function nearbyRoutes(fastify: FastifyInstance) {
   const { prisma, redis } = fastify;
 
   // GET /nearby — Пользователи рядом
-  fastify.get('/', { schema: { querystring: nearbyQuerySchema } }, async (request, reply) => {
+  fastify.get('/', {}, async (request, reply) => {
     const userId = request.userId!;
-    const { lat, lng, radius = '1000' } = request.query as z.infer<typeof nearbyQuerySchema> & { radius?: string };
+    const parsed = nearbyQuerySchema.safeParse(request.query);
+    if (!parsed.success) {
+      return reply.code(400).send({ message: parsed.error.issues[0]?.message || 'Validation error' });
+    }
+    const { lat, lng, radius = '1000' } = parsed.data as z.infer<typeof nearbyQuerySchema> & { radius?: string };
 
     if (!lat || !lng) {
       return reply.code(400).send({ message: 'Укажите lat и lng' });
