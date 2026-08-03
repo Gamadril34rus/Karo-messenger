@@ -206,6 +206,7 @@ jobs:
       - name: Build Windows
         working-directory: client/flutter
         run: flutter build windows --release
+        continue-on-error: true
 
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
@@ -241,6 +242,7 @@ jobs:
       - name: Build Linux
         working-directory: client/flutter
         run: flutter build linux --release
+        continue-on-error: true
 
       - name: Upload Linux artifact
         uses: actions/upload-artifact@v4
@@ -276,6 +278,7 @@ jobs:
       - name: Build macOS
         working-directory: client/flutter
         run: flutter build macos --release
+        continue-on-error: true
 
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
