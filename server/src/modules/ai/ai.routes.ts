@@ -2,6 +2,17 @@ import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { logger } from '../../utils/logger';
 
+// ─── Validation helper ─────────────────────────────────────────────
+function validateBody<T>(schema: import('zod').ZodSchema<T>, body: unknown): T {
+  const result = schema.safeParse(body);
+  if (!result.success) {
+    const err = new Error(result.error.issues[0]?.message || 'Validation error') as any;
+    err.statusCode = 400;
+    throw err;
+  }
+  return result.data;
+}
+
 /// Gemini AI Integration — real Google Gemini API
 /// Uses @google/generative-ai server-side SDK concept implemented via direct HTTP calls
 

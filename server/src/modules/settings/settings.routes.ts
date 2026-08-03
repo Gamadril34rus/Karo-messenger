@@ -64,6 +64,40 @@ export async function settingsRoutes(fastify: FastifyInstance) {
     });
   });
 
+  // GET /settings/privacy — Настройки приватности
+  fastify.get('/privacy', async (request, reply) => {
+    const userId = request.userId!;
+
+    const privacy = await prisma.privacySettings.findUnique({ where: { userId } });
+
+    return reply.send(privacy ?? {
+      profileVisibility: 'EVERYONE',
+      lastSeenVisibility: 'EVERYONE',
+      avatarVisibility: 'EVERYONE',
+      phoneVisibility: 'CONTACTS',
+      whoCanMessage: 'EVERYONE',
+      whoCanAddToGroups: 'CONTACTS',
+      whoCanCall: 'EVERYONE',
+      readReceipts: true,
+      typingIndicator: true,
+    });
+  });
+
+  // GET /settings/notifications — Настройки уведомлений
+  fastify.get('/notifications', async (request, reply) => {
+    const userId = request.userId!;
+
+    const push = await prisma.pushSettings.findUnique({ where: { userId } });
+
+    return reply.send(push ?? {
+      pushEnabled: true,
+      soundEnabled: true,
+      vibrationEnabled: true,
+      previewEnabled: true,
+      groupMentions: true,
+    });
+  });
+
   // PATCH /settings/privacy — Настройки приватности
   fastify.patch('/privacy', {}, async (request, reply) => {
     const userId = request.userId!;

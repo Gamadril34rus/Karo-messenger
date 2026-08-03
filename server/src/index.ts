@@ -181,13 +181,19 @@ export async function buildServer(): Promise<FastifyInstance> {
     let redisStatus = 'ok';
 
     try {
-      await prisma.$queryRaw`SELECT 1`;
+      await Promise.race([
+        prisma.$queryRaw`SELECT 1`,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000)),
+      ]);
     } catch {
       dbStatus = 'error';
     }
 
     try {
-      const pingResult = await redis.ping();
+      const pingResult = await Promise.race([
+        redis.ping(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000)),
+      ]) as string;
       if (pingResult !== 'PONG') redisStatus = 'error';
     } catch {
       redisStatus = 'error';
