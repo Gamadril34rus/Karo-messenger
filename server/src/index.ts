@@ -72,8 +72,6 @@ export async function buildServer(): Promise<FastifyInstance> {
         : undefined,
     },
     requestIdHeader: 'x-request-id',
-    requestIdLogLabel: 'reqId',
-    logController: { requestIdLogLabel: 'reqId' },
   });
 
   // ─── Глобальные декораторы ─────────────────────────────────────────
@@ -283,4 +281,8 @@ async function main() {
   }
 }
 
-main();
+// Only run main() when executed directly, not when imported by tests
+// Vitest sets process.env.VITEST; tsx/node direct execution does not
+if (!process.env.VITEST) {
+  main();
+}
