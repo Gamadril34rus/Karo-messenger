@@ -238,7 +238,7 @@ class MessageBubble extends StatelessWidget {
           height: 160,
           fit: BoxFit.contain,
           errorBuilder: (_, __, ___) =>
-              const Icon(Icons.emoji_emblems, size: 64),
+              const Icon(Icons.emoji_symbols, size: 64),
         );
 
       case 'gif':

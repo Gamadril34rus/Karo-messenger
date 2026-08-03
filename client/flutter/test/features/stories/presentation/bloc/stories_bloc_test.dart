@@ -1,21 +1,21 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:charo_messenger/core/network/api_client.dart';
+import 'package:charo_messenger/core/domain/charo_repository.dart';
 import 'package:charo_messenger/features/stories/presentation/bloc/stories_bloc.dart';
 import 'package:charo_messenger/features/stories/data/story_item.dart';
 
-class MockApiClient extends Mock implements ApiClient {}
+class MockCharoRepository extends Mock implements CharoRepository {}
 
 void main() {
   group('StoriesBloc', () {
-    late MockApiClient mockApiClient;
+    late MockCharoRepository mockRepository;
 
     setUp(() {
-      mockApiClient = MockApiClient();
+      mockRepository = MockCharoRepository();
     });
 
     test('initial state is StoriesInitial', () {
-      final bloc = StoriesBloc(apiClient: mockApiClient);
+      final bloc = StoriesBloc(repository: mockRepository);
       expect(bloc.state, equals(StoriesInitial()));
       bloc.close();
     });

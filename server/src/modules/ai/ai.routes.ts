@@ -333,17 +333,6 @@ export async function aiRoutes(fastify: FastifyInstance) {
         });
 
         const cdnBase = process.env.CDN_BASE_URL || 'https://cdn.charo.chat';
-
-// ─── Validation helper ─────────────────────────────────────────────
-function validateBody<T>(schema: import('zod').ZodSchema<T>, body: unknown): T {
-  const result = schema.safeParse(body);
-  if (!result.success) {
-    const err = new Error(result.error.issues[0]?.message || 'Validation error') as any;
-    err.statusCode = 400;
-    throw err;
-  }
-  return result.data;
-}
         const url = `${cdnBase}/${objectKey}`;
 
         return reply.send({ url });

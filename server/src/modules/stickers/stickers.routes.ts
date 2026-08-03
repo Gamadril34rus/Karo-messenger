@@ -3,6 +3,17 @@ import { StickerSource } from '@prisma/client';
 import { z } from 'zod';
 import { logger } from '../../utils/logger';
 
+// ─── Validation helper ─────────────────────────────────────────────
+function validateBody<T>(schema: import('zod').ZodSchema<T>, body: unknown): T {
+  const result = schema.safeParse(body);
+  if (!result.success) {
+    const err = new Error(result.error.issues[0]?.message || 'Validation error') as any;
+    err.statusCode = 400;
+    throw err;
+  }
+  return result.data;
+}
+
 const stickerImportSchema = z.object({
   source: z.enum(['TELEGRAM', 'WHATSAPP', 'VIBER', 'VK', 'CUSTOM']),
   sourceId: z.string().min(1).max(200),
@@ -121,17 +132,6 @@ export async function stickersRoutes(fastify: FastifyInstance) {
       secretKey: process.env.MINIO_SECRET_KEY || 'minioadmin',
     });
     const bucket = process.env.MINIO_BUCKET || 'charo-media';
-
-// ─── Validation helper ─────────────────────────────────────────────
-function validateBody<T>(schema: import('zod').ZodSchema<T>, body: unknown): T {
-  const result = schema.safeParse(body);
-  if (!result.success) {
-    const err = new Error(result.error.issues[0]?.message || 'Validation error') as any;
-    err.statusCode = 400;
-    throw err;
-  }
-  return result.data;
-}
 
     const pack = await prisma.stickerPack.create({
       data: {

@@ -12,6 +12,17 @@ import { nanoid } from 'nanoid';
 
 import { logger } from '../../utils/logger';
 
+// ─── Validation helper ─────────────────────────────────────────────
+function validateBody<T>(schema: import('zod').ZodSchema<T>, body: unknown): T {
+  const result = schema.safeParse(body);
+  if (!result.success) {
+    const err = new Error(result.error.issues[0]?.message || 'Validation error') as any;
+    err.statusCode = 400;
+    throw err;
+  }
+  return result.data;
+}
+
 // ─── Схемы валидации ───────────────────────────────────────────────
 
 const loginSchema = z.object({
@@ -1281,17 +1292,6 @@ function buildOAuthUrl(provider: string, state: string): string {
     vk: `https://oauth.vk.com/authorize?client_id=${process.env.VK_CLIENT_ID}&redirect_uri=${process.env.OAUTH_REDIRECT_URL}/callback&response_type=code&scope=email&state=${state}`,
   };
   return baseUrls[provider] || '';
-
-// ─── Validation helper ─────────────────────────────────────────────
-function validateBody<T>(schema: import('zod').ZodSchema<T>, body: unknown): T {
-  const result = schema.safeParse(body);
-  if (!result.success) {
-    const err = new Error(result.error.issues[0]?.message || 'Validation error') as any;
-    err.statusCode = 400;
-    throw err;
-  }
-  return result.data;
-}
 }
 
 async function exchangeOAuthCode(provider: string, code: string, state: string): Promise<any> {
