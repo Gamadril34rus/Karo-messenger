@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -18,6 +19,11 @@ import 'core/e2ee/e2ee_manager.dart';
 import 'core/audio/notification_service.dart';
 import 'core/utils/logger.dart';
 import 'i18n/localizations_delegate.dart';
+
+// Desktop support
+import 'core/desktop/desktop_initializer.dart';
+import 'core/desktop/desktop_hotkeys.dart';
+import 'core/desktop/desktop_platform.dart';
 
 import 'core/services/offline_sync_service.dart';
 import 'core/services/push_notification_service.dart';
@@ -47,11 +53,19 @@ final sl = GetIt.instance;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Десктопная инициализация (окно, трей, хоткеи)
+  if (DesktopPlatform.isDesktop) {
+    await DesktopInitializer.instance.initialize();
+    DesktopHotkeys.instance.initialize();
+  }
+
   // Строгая ориентация для мобильных
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
+  if (!DesktopPlatform.isDesktop) {
+    await SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+  }
 
   // Строка состояния
   SystemChrome.setSystemUIOverlayStyle(
