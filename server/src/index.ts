@@ -34,6 +34,7 @@ import { errorHandler } from './middleware/errorHandler';
 import { authMiddleware } from './middleware/auth';
 
 import { logger } from './utils/logger';
+import { zodValidationPlugin } from './plugins/zodValidation';
 
 // ─── Fastify type augmentation ──────────────────────────────────────
 
@@ -172,6 +173,10 @@ export async function buildServer(): Promise<FastifyInstance> {
 
   // WebSocket
   await fastify.register(websocket);
+
+  // Zod validation — must be registered BEFORE routes
+  // Intercepts schema: { body: zodSchema } and converts to preHandler hooks
+  await fastify.register(zodValidationPlugin);
 
   // ─── Маршруты ──────────────────────────────────────────────────
 
