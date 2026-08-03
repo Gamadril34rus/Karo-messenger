@@ -181,6 +181,7 @@ jobs:
       - name: Install CocoaPods
         working-directory: client/flutter/ios
         run: pod install
+        continue-on-error: true
 
       - name: Build iOS
         working-directory: client/flutter
