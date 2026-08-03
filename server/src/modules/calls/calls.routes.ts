@@ -1,6 +1,17 @@
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
+// ─── Validation helper ─────────────────────────────────────────────
+function validateBody<T>(schema: import('zod').ZodSchema<T>, body: unknown): T {
+  const result = schema.safeParse(body);
+  if (!result.success) {
+    const err = new Error(result.error.issues[0]?.message || 'Validation error') as any;
+    err.statusCode = 400;
+    throw err;
+  }
+  return result.data;
+}
+
 const createCallSchema = z.object({
   chatId: z.string().uuid().optional(),
   type: z.enum(['VOICE', 'VIDEO']),
@@ -11,9 +22,9 @@ export async function callsRoutes(fastify: FastifyInstance) {
   const { prisma } = fastify;
 
   // POST /calls — Инициировать звонок
-  fastify.post('/', { schema: { body: createCallSchema } }, async (request, reply) => {
+  fastify.post('/', {}, async (request, reply) => {
     const userId = request.userId!;
-    const { chatId, type, targetUserIds } = request.body as z.infer<typeof createCallSchema>;
+    const { chatId, type, targetUserIds } = validateBody(createCallSchema, request.body);
 
     const call = await prisma.call.create({
       data: {

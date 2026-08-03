@@ -1,6 +1,17 @@
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
+// ─── Validation helper ─────────────────────────────────────────────
+function validateBody<T>(schema: import('zod').ZodSchema<T>, body: unknown): T {
+  const result = schema.safeParse(body);
+  if (!result.success) {
+    const err = new Error(result.error.issues[0]?.message || 'Validation error') as any;
+    err.statusCode = 400;
+    throw err;
+  }
+  return result.data;
+}
+
 const privacySchema = z.object({
   profileVisibility: z.enum(['EVERYONE', 'CONTACTS', 'NOBODY']).optional(),
   lastSeenVisibility: z.enum(['EVERYONE', 'CONTACTS', 'NOBODY']).optional(),
@@ -54,9 +65,9 @@ export async function settingsRoutes(fastify: FastifyInstance) {
   });
 
   // PATCH /settings/privacy — Настройки приватности
-  fastify.patch('/privacy', { schema: { body: privacySchema } }, async (request, reply) => {
+  fastify.patch('/privacy', {}, async (request, reply) => {
     const userId = request.userId!;
-    const body = request.body as z.infer<typeof privacySchema>;
+    const body = validateBody(privacySchema, request.body);
 
     const privacy = await prisma.privacySettings.upsert({
       where: { userId },
@@ -78,9 +89,9 @@ export async function settingsRoutes(fastify: FastifyInstance) {
   });
 
   // PATCH /settings/notifications — Настройки уведомлений
-  fastify.patch('/notifications', { schema: { body: notificationSchema } }, async (request, reply) => {
+  fastify.patch('/notifications', {}, async (request, reply) => {
     const userId = request.userId!;
-    const body = request.body as z.infer<typeof notificationSchema>;
+    const body = validateBody(notificationSchema, request.body);
 
     const push = await prisma.pushSettings.upsert({
       where: { userId },
@@ -98,9 +109,9 @@ export async function settingsRoutes(fastify: FastifyInstance) {
   });
 
   // PATCH /settings/appearance — Настройки внешнего вида
-  fastify.patch('/appearance', { schema: { body: appearanceSchema } }, async (request, reply) => {
+  fastify.patch('/appearance', {}, async (request, reply) => {
     const userId = request.userId!;
-    const body = request.body as z.infer<typeof appearanceSchema>;
+    const body = validateBody(appearanceSchema, request.body);
     if (body.language) {
       await prisma.user.update({ where: { id: userId }, data: { language: body.language } });
     }

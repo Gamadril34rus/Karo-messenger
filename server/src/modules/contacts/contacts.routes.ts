@@ -1,6 +1,17 @@
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
+// ─── Validation helper ─────────────────────────────────────────────
+function validateBody<T>(schema: import('zod').ZodSchema<T>, body: unknown): T {
+  const result = schema.safeParse(body);
+  if (!result.success) {
+    const err = new Error(result.error.issues[0]?.message || 'Validation error') as any;
+    err.statusCode = 400;
+    throw err;
+  }
+  return result.data;
+}
+
 const addContactSchema = z.object({
   identifier: z.string().optional(),
   contactUserId: z.string().uuid().optional(),
@@ -37,9 +48,9 @@ export async function contactsRoutes(fastify: FastifyInstance) {
   });
 
   // POST /contacts — Добавить контакт
-  fastify.post('/', { schema: { body: addContactSchema } }, async (request, reply) => {
+  fastify.post('/', {}, async (request, reply) => {
     const userId = request.userId!;
-    const { identifier, contactUserId } = request.body as z.infer<typeof addContactSchema>;
+    const { identifier, contactUserId } = validateBody(addContactSchema, request.body);
 
     let targetId = contactUserId;
 
@@ -78,9 +89,9 @@ export async function contactsRoutes(fastify: FastifyInstance) {
   });
 
   // POST /contacts/sync — Синхронизация телефонной книги
-  fastify.post('/sync', { schema: { body: syncSchema } }, async (request, reply) => {
+  fastify.post('/sync', {}, async (request, reply) => {
     const userId = request.userId!;
-    const { phones } = request.body as z.infer<typeof syncSchema>;
+    const { phones } = validateBody(syncSchema, request.body);
 
     const existingUsers = await prisma.user.findMany({
       where: { phone: { in: phones }, status: 'ACTIVE' },
@@ -103,9 +114,9 @@ export async function contactsRoutes(fastify: FastifyInstance) {
   });
 
   // ─── POST /contacts/block — Заблокировать пользователя ────────────
-  fastify.post('/block', { schema: { body: blockSchema } }, async (request, reply) => {
+  fastify.post('/block', {}, async (request, reply) => {
     const userId = request.userId!;
-    const { userId: targetUserId } = request.body as z.infer<typeof blockSchema>;
+    const { userId: targetUserId } = validateBody(blockSchema, request.body);
 
     if (targetUserId === userId) {
       return reply.code(400).send({ message: 'Нельзя заблокировать самого себя' });
