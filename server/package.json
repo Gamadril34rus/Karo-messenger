@@ -2,6 +2,7 @@
   "name": "charo-messenger-server",
   "version": "1.0.0",
   "description": "ЧАРО — Backend Server",
+  "license": "UNLICENSED",
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
