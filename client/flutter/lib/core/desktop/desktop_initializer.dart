@@ -1,4 +1,4 @@
-// © 2024-2026 Charo Team. All rights reserved. PROPRIETARY AND CONFIDENTIAL.
+// © 2024-2026 Бутаев Алексей Юрьевич. All rights reserved. PROPRIETARY AND CONFIDENTIAL.
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';

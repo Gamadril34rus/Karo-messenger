@@ -198,7 +198,7 @@ npx prisma migrate deploy
 ### 10.2 Добавить copyright во все исходники
 В каждый `.dart` и `.ts` файл вверху:
 ```
-// © 2024-2026 Charo Team. All rights reserved.
+// © 2024-2026 Бутаев Алексей Юрьевич (Charo Team). All rights reserved.
 // PROPRIETARY AND CONFIDENTIAL. Do not modify or distribute.
 ```
 

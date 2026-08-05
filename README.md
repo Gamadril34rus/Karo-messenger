@@ -174,7 +174,7 @@ Karo-messenger/
 ## 📜 Лицензия
 
 ```
-Copyright © 2024-2026 Charo Team. All rights reserved.
+Copyright © 2024-2026 Бутаев Алексей Юрьевич (Charo Team). All rights reserved.
 
 ЗАПРЕЩАЕТСЯ: модификация, распространение, декомпилирование,
 коммерческое использование без письменного разрешения.
@@ -188,11 +188,11 @@ Copyright © 2024-2026 Charo Team. All rights reserved.
 
 | Роль | Email |
 |------|-------|
-| Команда | team@charo.chat |
-| Поддержка | support@charo.chat |
-| Безопасность | security@charo.chat |
-| Конфиденциальность | privacy@charo.chat |
-| Юридические вопросы | legal@charo.chat |
+| Команда | pizdec666@yandex.ru |
+| Поддержка | pizdec666@yandex.ru |
+| Безопасность | pizdec666@yandex.ru |
+| Конфиденциальность | pizdec666@yandex.ru |
+| Юридические вопросы | pizdec666@yandex.ru |
 
 ---
 

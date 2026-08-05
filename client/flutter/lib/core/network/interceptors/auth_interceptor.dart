@@ -1,4 +1,4 @@
-// © 2024-2026 Charo Team. All rights reserved. PROPRIETARY AND CONFIDENTIAL.
+// © 2024-2026 Бутаев Алексей Юрьевич. All rights reserved. PROPRIETARY AND CONFIDENTIAL.
 import 'package:dio/dio.dart';
 import '../../storage/secure_storage.dart';
 import '../../utils/logger.dart';

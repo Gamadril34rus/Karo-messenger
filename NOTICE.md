@@ -2,14 +2,14 @@
 
 ## Copyright
 
-Copyright © 2024-2026 Charo Team. All rights reserved.
+Copyright © 2024-2026 Бутаев Алексей Юрьевич (Charo Team). All rights reserved.
 
 ЧАРО (Charo) Messenger — proprietary software. All source code, assets,
-designs, trademarks, and documentation are the exclusive property of Charo Team.
+designs, trademarks, and documentation are the exclusive property of Бутаев Алексей Юрьевич (Charo Team).
 
 ## Trademarks
 
-- **ЧАРО** and **Charo** are registered trademarks of Charo Team.
+- **ЧАРО** and **Charo** are registered trademarks of Бутаев Алексей Юрьевич (Charo Team).
 - The Charo logo and app icon are proprietary assets.
 - No third-party may use these marks without written permission.
 
@@ -36,6 +36,6 @@ Personal data processing notice per ФЗ-152, GDPR, CCPA:
 
 ## Contact
 
-- Legal: legal@charo.chat
-- Security: security@charo.chat
-- General: team@charo.chat
+- Legal: pizdec666@yandex.ru
+- Security: pizdec666@yandex.ru
+- General: pizdec666@yandex.ru

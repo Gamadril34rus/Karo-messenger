@@ -1,4 +1,4 @@
-// © 2024-2026 Charo Team. All rights reserved. PROPRIETARY AND CONFIDENTIAL.
+// © 2024-2026 Бутаев Алексей Юрьевич. All rights reserved. PROPRIETARY AND CONFIDENTIAL.
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
