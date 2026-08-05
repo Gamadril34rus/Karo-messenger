@@ -1,3 +1,4 @@
+// © 2024-2026 Charo Team. All rights reserved. PROPRIETARY AND CONFIDENTIAL.
 /**
  * ЧАРО — Backend Server
  * Fastify + TypeScript + Prisma + WebSocket

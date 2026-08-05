@@ -1,3 +1,4 @@
+// © 2024-2026 Charo Team. All rights reserved. PROPRIETARY AND CONFIDENTIAL.
 /// ─── WebRTC Configuration ────────────────────────────────────────
 /// STUN/TURN серверы для обхода NAT.
 /// Необходимы для работы звонков за NAT/firewall.

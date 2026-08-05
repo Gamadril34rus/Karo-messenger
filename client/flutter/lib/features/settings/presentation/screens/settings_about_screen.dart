@@ -1,3 +1,4 @@
+// © 2024-2026 Charo Team. All rights reserved. PROPRIETARY AND CONFIDENTIAL.
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';

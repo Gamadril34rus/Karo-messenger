@@ -1,3 +1,4 @@
+// © 2024-2026 Charo Team. All rights reserved. PROPRIETARY AND CONFIDENTIAL.
 import '../../../shared/widgets/message_bubble.dart';
 
 /// Модель сообщения для чата

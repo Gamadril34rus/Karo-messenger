@@ -1,3 +1,4 @@
+// © 2024-2026 Charo Team. All rights reserved. PROPRIETARY AND CONFIDENTIAL.
 import '../domain/charo_repository.dart';
 import '../utils/logger.dart';
 

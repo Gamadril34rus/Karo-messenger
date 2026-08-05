@@ -1,3 +1,4 @@
+// © 2024-2026 Charo Team. All rights reserved. PROPRIETARY AND CONFIDENTIAL.
 /// Модель пользователя рядом (Nearby)
 class NearbyUser {
   final String userId;

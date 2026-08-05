@@ -1,3 +1,4 @@
+// © 2024-2026 Charo Team. All rights reserved. PROPRIETARY AND CONFIDENTIAL.
 import 'dart:convert';
 import 'package:drift/drift.dart' show Value;
 import 'package:equatable/equatable.dart';

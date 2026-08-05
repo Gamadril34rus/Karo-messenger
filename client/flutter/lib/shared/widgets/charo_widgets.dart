@@ -1,3 +1,4 @@
+// © 2024-2026 Charo Team. All rights reserved. PROPRIETARY AND CONFIDENTIAL.
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';

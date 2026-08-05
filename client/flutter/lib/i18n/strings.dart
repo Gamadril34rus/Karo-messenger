@@ -1,3 +1,4 @@
+// © 2024-2026 Charo Team. All rights reserved. PROPRIETARY AND CONFIDENTIAL.
 /// AppStrings — централизованный доступ ко всем строкам приложения.
 ///
 /// Используется вместо slang/i18n JSON для прямого доступа в коде.

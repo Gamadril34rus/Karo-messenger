@@ -1,3 +1,4 @@
+// © 2024-2026 Charo Team. All rights reserved. PROPRIETARY AND CONFIDENTIAL.
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

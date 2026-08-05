@@ -1,3 +1,4 @@
+// © 2024-2026 Charo Team. All rights reserved. PROPRIETARY AND CONFIDENTIAL.
 /**
  * Auth Routes — Регистрация, вход, верификация, OAuth, удаление аккаунта,
  * восстановление, экспорт данных, согласие на обработку данных

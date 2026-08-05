@@ -1,3 +1,4 @@
+// © 2024-2026 Charo Team. All rights reserved. PROPRIETARY AND CONFIDENTIAL.
 /**
  * WebSocket Connection Manager
  * Обработка real-time соединений для мессенджера

@@ -1,3 +1,4 @@
+// © 2024-2026 Charo Team. All rights reserved. PROPRIETARY AND CONFIDENTIAL.
 /// Модель сообщения AI-ассистента
 class AiMessage {
   final String id;

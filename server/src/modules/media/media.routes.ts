@@ -1,3 +1,4 @@
+// © 2024-2026 Charo Team. All rights reserved. PROPRIETARY AND CONFIDENTIAL.
 import { FastifyInstance } from 'fastify';
 import { MediaType } from '@prisma/client';
 import * as Minio from 'minio';

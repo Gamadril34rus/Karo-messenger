@@ -1,3 +1,4 @@
+// © 2024-2026 Charo Team. All rights reserved. PROPRIETARY AND CONFIDENTIAL.
 /// Централизованная обработка ошибок ЧАРО
 ///
 /// AppError — единый тип ошибки для всего приложения.
