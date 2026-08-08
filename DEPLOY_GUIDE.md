@@ -1,81 +1,65 @@
-# 🚀 ЧАРО — Деплой на Timeweb Cloud (199₽/мес, РФ, рубли)
+# 🚀 ЧАРО — Бесплатный деплой (0₽ навсегда)
 
-**Один сайт, одна оплата, всё в России.**
+## Вариант 1. Glitch.com — проще всего, 0₽
 
----
+**3 клика и готово:**
 
-## Шаг 1. Регистрация на Timeweb Cloud
+1. Открой эту ссылку в браузере:
+   👉 **https://glitch.com/edit/#!/import/github/Gamadril34rus/Karo-messenger**
 
-1. Зайди на **https://timeweb.cloud**
-2. Зарегайся (email или VK)
-3. **Пополнить баланс** — от 200₽ (Сбер, Тинькоff, ЮMoney, любая российская карта)
+2. Glitch импортирует проект автоматически
 
----
+3. В файле `.env` вставь:
+```
+NODE_ENV=production
+HOST=0.0.0.0
+PORT=3000
+JWT_ACCESS_SECRET=1e1d9d626681ffaaf9f5e08223612db11e22c969e66cdc516e9d922531a4de81
+JWT_REFRESH_SECRET=9dc386c8b6db05de0ae6ec86135c74c4c5ad32b1e775644dd8eb2574eb252b60
+CORS_ORIGINS=*
+LOG_LEVEL=info
+```
 
-## Шаг 2. Создать VPS (виртуальный сервер)
+4. Готово! URL: `https://твоё-имя.glitch.me`
 
-1. **Облачные серверы** → **Создать**
-2. Параметры:
-   - **Тариф:** `2 vCPU / 2 GB RAM / 40 GB SSD` — **199₽/мес**
-   - **ОС:** `Ubuntu 22.04`
-   - **Регион:** `Санкт-Петербург` или `Москва`
-   - **Имя:** `charo-server`
-3. Нажми **Заказать**
-4. Жди 2-3 мин пока создастся
-5. **Скопируй:**
-   - **IP-адрес** (например `45.67.89.12`)
-   - **SSH-пароль** (или создай свой в настройках)
+**Минус:** спит через 5 мин, первый запрос ~10 сек. Для теста ок.
 
 ---
 
-## Шаг 3. Передай мне доступ
+## Вариант 2. Локально на твоём ПК — 0₽
 
-Нужны только 2 значения:
-- **IP-адрес VPS** (из панели Timeweb)
-- **SSH-пароль** (root)
+Если у тебя Windows/Linux/Mac:
 
-Я зайду по SSH и настрою всё автоматически:
-- PostgreSQL + Redis + Node.js + Nginx
-- Клонирование репо, сборка, миграции
-- SSL-сертификат (Let's Encrypt, бесплатно)
-- Автозапуск при перезагрузке
+```bash
+# Установить Node.js с nodejs.org (LTS версию)
+# Потом в терминале:
+git clone https://github.com/Gamadril34rus/Karo-messenger
+cd Karo-messenger/server
+npm ci
+npx prisma generate
+npx prisma migrate deploy
+npm run build
+npm start
+```
 
----
-
-## Что будет после настройки
-
-| Что | URL |
-|-----|-----|
-| Backend API | `https://api.charo.chat` или `https://45.67.89.12` |
-| API Docs | `https://api.charo.chat/docs` |
-| Health | `https://api.charo.chat/health` |
-| Frontend | `https://gamadril34rus.github.io/Karo-messenger/` (GitHub Pages, уже работает) |
+Сервер будет на **http://localhost:3000**
 
 ---
 
-## 💰 Стоимость
+## Вариант 3. Android-телефон — Termux (0₽)
 
-| Сервис | Цена |
-|--------|------|
-| VPS Timeweb (2vCPU/2GB) | 199₽/мес |
-| GitHub Pages (frontend) | 0₽ |
-| Домен (опционально, у Timeweb) | от 190₽/год |
-| **Итого** | **199₽/мес** |
+Запустить сервер прямо на телефоне:
 
----
-
-## 🔄 Альтернативы (тоже РФ, рубли)
-
-| Хостинг | VPS от | Ссылка |
-|---------|--------|--------|
-| Timeweb Cloud | 199₽/мес | https://timeweb.cloud |
-| Selectel | 199₽/мес | https://selectel.ru |
-| Yandex Cloud | ~200₽/мес | https://cloud.yandex.ru |
-| Beget | 290₽/мес | https://beget.com |
-| Reg.ru | от 299₽/мес | https://reg.ru |
+1. Установи **Termux** из F-Droid
+2. В Termux:
+```
+pkg install nodejs git
+git clone https://github.com/Gamadril34rus/Karo-messenger
+cd Karo-messenger/server
+npm ci && npx prisma generate && npm run build
+npm start
+```
 
 ---
 
-## ⚖️ ФЗ-152: Данные в РФ ✅
-
-VPS в дата-центре Timeweb (Санкт-Петербург/Москва) → персональные данные граждан РФ обрабатываются на территории РФ → ФЗ-152 ст.18 выполнена.
+## 💰 Все варианты: 0₽
