@@ -1,0 +1,8 @@
+{
+  "install": "npm ci",
+  "build": "npx prisma generate",
+  "start": "npx tsx src/index.ts",
+  "watch": {
+    "throttle": 1000
+  }
+}

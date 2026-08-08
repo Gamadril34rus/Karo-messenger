@@ -1,0 +1,122 @@
+// © 2024-2026 Бутаев Алексей Юрьевич. All rights reserved. PROPRIETARY AND CONFIDENTIAL.
+import { FastifyInstance } from 'fastify';
+import { z } from 'zod';
+
+// ─── Validation helper ─────────────────────────────────────────────
+function validateBody<T>(schema: import('zod').ZodSchema<T>, body: unknown): T {
+  const result = schema.safeParse(body);
+  if (!result.success) {
+    const err = new Error(result.error.issues[0]?.message || 'Validation error') as any;
+    err.statusCode = 400;
+    throw err;
+  }
+  return result.data;
+}
+
+const createStorySchema = z.object({
+  type: z.enum(['IMAGE', 'VIDEO', 'TEXT']),
+  content: z.string().max(1000).optional(),
+  backgroundColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+});
+
+export async function storyRoutes(fastify: FastifyInstance) {
+  const { prisma } = fastify;
+
+  // POST /stories — Опубликовать историю
+  fastify.post('/', {}, async (request, reply) => {
+    const userId = request.userId!;
+    const { type, content, backgroundColor } = validateBody(createStorySchema, request.body);
+
+    const story = await prisma.story.create({
+      data: {
+        userId,
+        type,
+        content,
+        backgroundColor,
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 часа
+      },
+    });
+
+    return reply.code(201).send(story);
+  });
+
+  // GET /stories — Лента историй
+  fastify.get('/', async (request, reply) => {
+    const userId = request.userId!;
+
+    // Получаем контакты пользователя
+    const contacts = await prisma.contact.findMany({
+      where: { userId, isBlocked: false },
+      select: { contactUserId: true },
+    });
+    const contactIds = contacts.map(c => c.contactUserId);
+    const userIds = [userId, ...contactIds];
+
+    const stories = await prisma.story.findMany({
+      where: {
+        userId: { in: userIds },
+        expiresAt: { gt: new Date() },
+      },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        user: { select: { id: true, displayName: true, avatarUrl: true } },
+        views: { where: { userId } },
+      },
+    });
+
+    // Группируем по пользователю
+    const grouped = new Map<string, object>();
+    for (const story of stories) {
+      const uid = story.userId;
+      if (!grouped.has(uid)) {
+        grouped.set(uid, {
+          userId: uid,
+          userName: story.user.displayName,
+          avatarUrl: story.user.avatarUrl,
+          stories: [],
+        });
+      }
+      const entry = grouped.get(uid) as Record<string, unknown>;
+      (entry['stories'] as Array<unknown>).push(story);
+    }
+
+    return reply.send({ data: Array.from(grouped.values()) });
+  });
+
+  // DELETE /stories/:id — Удалить историю
+  fastify.delete('/:id', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const userId = request.userId!;
+
+    const story = await prisma.story.findUnique({ where: { id } });
+    if (!story || story.userId !== userId) {
+      return reply.code(403).send({ message: 'Нельзя удалить чужую историю' });
+    }
+
+    await prisma.story.delete({ where: { id } });
+    return reply.code(204).send();
+  });
+
+  // GET /stories/:id/views — Просмотры истории
+  fastify.get('/:id/views', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const userId = request.userId!;
+
+    const story = await prisma.story.findUnique({ where: { id } });
+    if (!story) return reply.code(404).send({ message: 'История не найдена' });
+
+    // Отмечаем просмотр
+    await prisma.storyView.upsert({
+      where: { storyId_userId: { storyId: id, userId } },
+      create: { storyId: id, userId },
+      update: {},
+    });
+
+    const views = await prisma.storyView.findMany({
+      where: { storyId: id },
+      include: { user: { select: { id: true, displayName: true, avatarUrl: true } } },
+    });
+
+    return reply.send({ views });
+  });
+}
