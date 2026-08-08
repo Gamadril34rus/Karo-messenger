@@ -1,15 +1,31 @@
-# 🚀 ЧАРО — Бесплатный деплой (0₽ навсегда)
+# 🚀 ЧАРО — Бесплатный деплой на Bonto.dev (0₽, без карты)
 
-## Вариант 1. Glitch.com — проще всего, 0₽
+**Glitch закрылся в июле 2025. Bonto.dev — его замена. Бесплатно, без карты.**
 
-**3 клика и готово:**
+---
 
-1. Открой эту ссылку в браузере:
-   👉 **https://glitch.com/edit/#!/import/github/Gamadril34rus/Karo-messenger**
+## Шаг 1. Регистрация на Bonto.dev (1 мин)
 
-2. Glitch импортирует проект автоматически
+1. Открой **https://bonto.dev/register**
+2. Заполни: email, username, password
+3. **Карта НЕ нужна**
 
-3. В файле `.env` вставь:
+---
+
+## Шаг 2. Создать проект из GitHub (1 мин)
+
+1. После входа → **New Project**
+2. Выбери **Import from Git**
+3. Вставь URL: `https://github.com/Gamadril34rus/Karo-messenger`
+4. Root Directory: `server`
+5. Нажми **Create**
+
+---
+
+## Шаг 3. Настроить переменные (1 мин)
+
+В проекте открой файл `.env` и вставь:
+
 ```
 NODE_ENV=production
 HOST=0.0.0.0
@@ -20,46 +36,40 @@ CORS_ORIGINS=*
 LOG_LEVEL=info
 ```
 
-4. Готово! URL: `https://твоё-имя.glitch.me`
+---
 
-**Минус:** спит через 5 мин, первый запрос ~10 сек. Для теста ок.
+## Шаг 4. Готово!
+
+Сервер запустится автоматически.
+URL: **https://твоё-имя.bonto.run**
+
+Проверь: открой `https://твоё-имя.bonto.run/health`
 
 ---
 
-## Вариант 2. Локально на твоём ПК — 0₽
+## 💰 0₽ навсегда
 
-Если у тебя Windows/Linux/Mac:
+| План | Цена | Что входит |
+|------|------|------------|
+| Free | 0₽ | 50 часов/мес, 512 MB RAM, auto-sleep/wake |
+| Pro | $5/мес | Always-on, больше RAM |
 
-```bash
-# Установить Node.js с nodejs.org (LTS версию)
-# Потом в терминале:
-git clone https://github.com/Gamadril34rus/Karo-messenger
-cd Karo-messenger/server
-npm ci
-npx prisma generate
-npx prisma migrate deploy
-npm run build
-npm start
-```
-
-Сервер будет на **http://localhost:3000**
+**Free план:** сервер спит через 5 мин без запросов, просыпается за ~5 сек.
+Для теста и проверки — хватает.
 
 ---
 
-## Вариант 3. Android-телефон — Termux (0₽)
+## ⚠️ Если Bonto не зайдёт из РФ
 
-Запустить сервер прямо на телефоне:
-
-1. Установи **Termux** из F-Droid
-2. В Termux:
-```
-pkg install nodejs git
-git clone https://github.com/Gamadril34rus/Karo-messenger
-cd Karo-messenger/server
-npm ci && npx prisma generate && npm run build
-npm start
-```
+Используй VPN при регистрации, потом сайт работает без VPN.
 
 ---
 
-## 💰 Все варианты: 0₽
+## Альтернативы (тоже бесплатно)
+
+| Сервис | URL | Карта | Заметка |
+|--------|-----|-------|---------|
+| **Bonto.dev** | https://bonto.dev | ❌ | Лучший вариант |
+| **Vercel** | https://vercel.com | ❌ | Только serverless, не подходит для WebSocket |
+| **Fly.io** | https://fly.io | ❌ | Нужен CLI, сложнее |
+| **Oracle Cloud** | https://cloud.oracle.com | ❌ | Free VPS forever, но сложная регистрация |
