@@ -1,6 +1,18 @@
+// © 2024-2026 Бутаев Алексей Юрьевич. All rights reserved. PROPRIETARY AND CONFIDENTIAL.
 import { FastifyInstance } from 'fastify';
 import { ChatType } from '@prisma/client';
 import { z } from 'zod';
+
+// ─── Validation helper ─────────────────────────────────────────────
+function validateBody<T>(schema: import('zod').ZodSchema<T>, body: unknown): T {
+  const result = schema.safeParse(body);
+  if (!result.success) {
+    const err = new Error(result.error.issues[0]?.message || 'Validation error') as any;
+    err.statusCode = 400;
+    throw err;
+  }
+  return result.data;
+}
 
 const createChatSchema = z.object({
   type: z.enum(['private', 'group', 'channel', 'secret']),
@@ -89,9 +101,9 @@ export async function chatsRoutes(fastify: FastifyInstance) {
   });
 
   // POST /chats — Создать чат
-  fastify.post('/', { schema: { body: createChatSchema } }, async (request, reply) => {
+  fastify.post('/', {}, async (request, reply) => {
     const userId = request.userId!;
-    const body = request.body as z.infer<typeof createChatSchema>;
+    const body = validateBody(createChatSchema, request.body);
 
     const chat = await prisma.chat.create({
       data: {

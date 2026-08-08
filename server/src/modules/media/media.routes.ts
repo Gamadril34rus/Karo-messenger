@@ -1,23 +1,30 @@
+// © 2024-2026 Бутаев Алексей Юрьевич. All rights reserved. PROPRIETARY AND CONFIDENTIAL.
 import { FastifyInstance } from 'fastify';
 import { MediaType } from '@prisma/client';
 import * as Minio from 'minio';
 import { logger } from '../../utils/logger';
 
 /// MinIO Client — real object storage integration
+let _minioClient: Minio.Client | null = null;
+let _minioReady = false;
+
 function getMinioClient(): Minio.Client {
-  return new Minio.Client({
-    endPoint: process.env.MINIO_ENDPOINT || 'localhost',
-    port: Number(process.env.MINIO_PORT) || 9000,
-    useSSL: process.env.MINIO_USE_SSL === 'true',
-    accessKey: process.env.MINIO_ACCESS_KEY || 'minioadmin',
-    secretKey: process.env.MINIO_SECRET_KEY || 'minioadmin',
-  });
+  if (!_minioClient) {
+    _minioClient = new Minio.Client({
+      endPoint: process.env.MINIO_ENDPOINT || 'localhost',
+      port: Number(process.env.MINIO_PORT) || 9000,
+      useSSL: process.env.MINIO_USE_SSL === 'true',
+      accessKey: process.env.MINIO_ACCESS_KEY || 'minioadmin',
+      secretKey: process.env.MINIO_SECRET_KEY || 'minioadmin',
+    });
+  }
+  return _minioClient;
 }
 
 const CDN_BASE = process.env.CDN_BASE_URL || 'https://cdn.charo.chat';
 const BUCKET = process.env.MINIO_BUCKET || 'charo-media';
 
-/// Ensure bucket exists on startup
+/// Ensure bucket exists on startup — gracefully handles MinIO being unavailable
 async function ensureBucket(client: Minio.Client): Promise<void> {
   const exists = await client.bucketExists(BUCKET);
   if (!exists) {
@@ -30,12 +37,19 @@ export async function mediaRoutes(fastify: FastifyInstance) {
   const { prisma } = fastify;
   const minioClient = getMinioClient();
 
-  // Ensure bucket exists
-  await ensureBucket(minioClient);
+  // Ensure bucket exists — non-fatal if MinIO is unavailable (e.g. CI without MinIO)
+  try {
+    await ensureBucket(minioClient);
+    _minioReady = true;
+  } catch (err) {
+    logger.warn(`MinIO not available, media uploads will be disabled: ${err}`);
+    _minioReady = false;
+  }
 
   // POST /media/upload — Upload file to MinIO
   fastify.post('/upload', async (request, reply) => {
     const userId = request.userId!;
+    if (!_minioReady) return reply.code(503).send({ message: 'Хранилище файлов недоступно' });
     const data = await request.file();
     if (!data) return reply.code(400).send({ message: 'Файл не предоставлен' });
 
@@ -132,6 +146,7 @@ export async function mediaRoutes(fastify: FastifyInstance) {
   // POST /media/upload/chunk — Upload a chunk
   fastify.post('/upload/chunk', async (request, reply) => {
     const userId = request.userId!;
+    if (!_minioReady) return reply.code(503).send({ message: 'Хранилище файлов недоступно' });
     const data = await request.file();
     if (!data) return reply.code(400).send({ message: 'Chunk data required' });
 
@@ -174,6 +189,7 @@ export async function mediaRoutes(fastify: FastifyInstance) {
   fastify.post('/upload/:sessionId/complete', async (request, reply) => {
     const { sessionId } = request.params as { sessionId: string };
     const userId = request.userId!;
+    if (!_minioReady) return reply.code(503).send({ message: 'Хранилище файлов недоступно' });
     const body = request.body as { total_chunks?: number; file_size?: number };
 
     const sessionJson = await fastify.redis.get(`upload_session:${sessionId}`);
@@ -254,19 +270,21 @@ export async function mediaRoutes(fastify: FastifyInstance) {
     if (!media) return reply.code(404).send({ message: 'Файл не найден' });
 
     // Delete from MinIO
-    try {
-      // Extract object key from CDN URL
-      const objectKey = media.url.replace(`${CDN_BASE}/`, '');
-      await minioClient.removeObject(BUCKET, objectKey);
-      logger.info(`File deleted from MinIO: ${objectKey}`);
+    if (_minioReady) {
+      try {
+        // Extract object key from CDN URL
+        const objectKey = media.url.replace(`${CDN_BASE}/`, '');
+        await minioClient.removeObject(BUCKET, objectKey);
+        logger.info(`File deleted from MinIO: ${objectKey}`);
 
-      // Delete thumbnail if exists
-      if (media.thumbnailUrl) {
-        const thumbKey = media.thumbnailUrl.replace(`${CDN_BASE}/`, '');
-        try { await minioClient.removeObject(BUCKET, thumbKey); } catch { /* ignore */ }
+        // Delete thumbnail if exists
+        if (media.thumbnailUrl) {
+          const thumbKey = media.thumbnailUrl.replace(`${CDN_BASE}/`, '');
+          try { await minioClient.removeObject(BUCKET, thumbKey); } catch { /* ignore */ }
+        }
+      } catch (err) {
+        logger.warn(`MinIO delete failed: ${err}`);
       }
-    } catch (err) {
-      logger.warn(`MinIO delete failed: ${err}`);
     }
 
     await prisma.media.delete({ where: { id } });

@@ -1,5 +1,17 @@
+// © 2024-2026 Бутаев Алексей Юрьевич. All rights reserved. PROPRIETARY AND CONFIDENTIAL.
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+
+// ─── Validation helper ─────────────────────────────────────────────
+function validateBody<T>(schema: import('zod').ZodSchema<T>, body: unknown): T {
+  const result = schema.safeParse(body);
+  if (!result.success) {
+    const err = new Error(result.error.issues[0]?.message || 'Validation error') as any;
+    err.statusCode = 400;
+    throw err;
+  }
+  return result.data;
+}
 
 const nearbyQuerySchema = z.object({
   lat: z.string().regex(/^-?\d+(\.\d+)?$/),
@@ -11,9 +23,13 @@ export async function nearbyRoutes(fastify: FastifyInstance) {
   const { prisma, redis } = fastify;
 
   // GET /nearby — Пользователи рядом
-  fastify.get('/', { schema: { querystring: nearbyQuerySchema } }, async (request, reply) => {
+  fastify.get('/', {}, async (request, reply) => {
     const userId = request.userId!;
-    const { lat, lng, radius = '1000' } = request.query as z.infer<typeof nearbyQuerySchema> & { radius?: string };
+    const parsed = nearbyQuerySchema.safeParse(request.query);
+    if (!parsed.success) {
+      return reply.code(400).send({ message: parsed.error.issues[0]?.message || 'Validation error' });
+    }
+    const { lat, lng, radius = '1000' } = parsed.data as z.infer<typeof nearbyQuerySchema> & { radius?: string };
 
     if (!lat || !lng) {
       return reply.code(400).send({ message: 'Укажите lat и lng' });

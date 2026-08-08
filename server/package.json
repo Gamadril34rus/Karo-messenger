@@ -2,6 +2,7 @@
   "name": "charo-messenger-server",
   "version": "1.0.0",
   "description": "ЧАРО — Backend Server",
+  "license": "UNLICENSED",
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
@@ -44,7 +45,8 @@
     "tsx": "^4.19.2",
     "typescript": "^5.7.3",
     "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.51.0",
-    "zod": "^3.24.2"
+    "zod": "^3.24.2",
+    "zod-to-json-schema": "^3.25.2"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
@@ -53,6 +55,7 @@
     "@types/qrcode": "^1.5.5",
     "@types/ws": "^8.18.1",
     "eslint": "^9.17.0",
+    "typescript-eslint": "^8.18.0",
     "prisma": "6.19.3",
     "vitest": "^2.1.8"
   }

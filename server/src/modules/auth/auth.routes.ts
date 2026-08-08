@@ -1,3 +1,4 @@
+// © 2024-2026 Бутаев Алексей Юрьевич. All rights reserved. PROPRIETARY AND CONFIDENTIAL.
 /**
  * Auth Routes — Регистрация, вход, верификация, OAuth, удаление аккаунта,
  * восстановление, экспорт данных, согласие на обработку данных
@@ -11,6 +12,17 @@ import crypto from 'crypto';
 import { nanoid } from 'nanoid';
 
 import { logger } from '../../utils/logger';
+
+// ─── Validation helper ─────────────────────────────────────────────
+function validateBody<T>(schema: import('zod').ZodSchema<T>, body: unknown): T {
+  const result = schema.safeParse(body);
+  if (!result.success) {
+    const err = new Error(result.error.issues[0]?.message || 'Validation error') as any;
+    err.statusCode = 400;
+    throw err;
+  }
+  return result.data;
+}
 
 // ─── Схемы валидации ───────────────────────────────────────────────
 
@@ -33,7 +45,7 @@ const verifySchema = z.object({
 const registerSchema = z.object({
   username: z.string().min(3).max(64).regex(/^[a-zA-Z0-9_]+$/),
   display_name: z.string().min(1).max(128),
-  phone: z.string().optional(),
+  phone: z.string().min(10, 'Укажите реальный номер телефона').regex(/^\+?\d{10,15}$/, 'Неверный формат номера телефона'),
   email: z.string().email().optional(),
   password: z.string().min(6).max(128).optional(),
   consent_given: z.literal(true, { message: 'Необходимо согласие на обработку данных' }),
@@ -80,9 +92,8 @@ export async function authRoutes(fastify: FastifyInstance) {
   // ─── POST /auth/login — Отправить OTP ─────────────────────────
   fastify.post('/login', {
     config: { rateLimit: { max: 5, timeWindow: '1 minute' } },
-    schema: { body: loginSchema },
   }, async (request, reply) => {
-    const { identifier, method } = request.body as z.infer<typeof loginSchema>;
+    const { identifier, method } = validateBody(loginSchema, request.body);
 
     // Rate limit: 1 OTP per minute
     const lastSent = await redis.get(`otp_limit:${identifier}`);
@@ -142,9 +153,8 @@ export async function authRoutes(fastify: FastifyInstance) {
   // ─── POST /auth/login/password — Вход по паролю ──────────────
   fastify.post('/login/password', {
     config: { rateLimit: { max: 5, timeWindow: '1 minute' } },
-    schema: { body: loginPasswordSchema },
   }, async (request, reply) => {
-    const { identifier, password } = request.body as z.infer<typeof loginPasswordSchema>;
+    const { identifier, password } = validateBody(loginPasswordSchema, request.body);
 
     // Rate limit: 5 password attempts per 15 minutes
     const attemptsKey = `pw_attempts:${identifier}`;
@@ -198,9 +208,8 @@ export async function authRoutes(fastify: FastifyInstance) {
   // ─── POST /auth/verify — Верифицировать OTP ───────────────────
   fastify.post('/verify', {
     config: { rateLimit: { max: 10, timeWindow: '1 minute' } },
-    schema: { body: verifySchema },
   }, async (request, reply) => {
-    const { identifier, code, method } = request.body as z.infer<typeof verifySchema>;
+    const { identifier, code, method } = validateBody(verifySchema, request.body);
 
     // Anti brute-force: max 5 attempts per 15 minutes
     const attemptsKey = `otp_verify:${identifier}`;
@@ -273,9 +282,8 @@ export async function authRoutes(fastify: FastifyInstance) {
   // ─── POST /auth/register — Регистрация ────────────────────────
   fastify.post('/register', {
     config: { rateLimit: { max: 3, timeWindow: '1 minute' } },
-    schema: { body: registerSchema },
   }, async (request, reply) => {
-    const data = request.body as z.infer<typeof registerSchema>;
+    const data = validateBody(registerSchema, request.body);
 
     // CRITICAL: Check consent, age, terms acceptance
     if (!data.consent_given) {
@@ -369,9 +377,8 @@ export async function authRoutes(fastify: FastifyInstance) {
 
   // ─── POST /auth/refresh — Обновить токен ─────────────────────
   fastify.post('/refresh', {
-    schema: { body: refreshSchema },
   }, async (request, reply) => {
-    const { refresh_token } = request.body as z.infer<typeof refreshSchema>;
+    const { refresh_token } = validateBody(refreshSchema, request.body);
 
     try {
       const decoded = jwt.verify(
@@ -414,10 +421,9 @@ export async function authRoutes(fastify: FastifyInstance) {
   // ─── DELETE /auth/account — Удаление аккаунта ─────────────────
   fastify.delete('/account', {
     preHandler: [fastify.authenticate],
-    schema: { body: deleteAccountSchema },
   }, async (request, reply) => {
     const userId = request.userId!;
-    const { confirmation } = request.body as z.infer<typeof deleteAccountSchema>;
+    const { confirmation } = validateBody(deleteAccountSchema, request.body);
 
     if (confirmation !== 'DELETE') {
       return reply.code(400).send({ message: 'Введите DELETE для подтверждения удаления' });
@@ -469,9 +475,8 @@ export async function authRoutes(fastify: FastifyInstance) {
   // ─── POST /auth/recover — Восстановление удалённого аккаунта ──
   fastify.post('/recover', {
     config: { rateLimit: { max: 3, timeWindow: '1 minute' } },
-    schema: { body: restoreSchema },
   }, async (request, reply) => {
-    const { account_id, verification_code } = request.body as z.infer<typeof restoreSchema>;
+    const { account_id, verification_code } = validateBody(restoreSchema, request.body);
 
     const recoveryData = await redis.get(`account_recovery:${account_id}`);
     if (!recoveryData) {
@@ -513,9 +518,8 @@ export async function authRoutes(fastify: FastifyInstance) {
 
   // ─── POST /auth/forgot — Запросить восстановление доступа ─────
   fastify.post('/forgot', {
-    schema: { body: recoverSchema },
   }, async (request, reply) => {
-    const { username, backup_identifier } = request.body as z.infer<typeof recoverSchema>;
+    const { username, backup_identifier } = validateBody(recoverSchema, request.body);
 
     const user = await prisma.user.findUnique({
       where: { username },

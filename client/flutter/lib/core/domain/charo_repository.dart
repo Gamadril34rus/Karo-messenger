@@ -1,3 +1,4 @@
+// © 2024-2026 Бутаев Алексей Юрьевич. All rights reserved. PROPRIETARY AND CONFIDENTIAL.
 import '../../features/chat/data/chat_item.dart';
 import '../../features/chat/data/message_item.dart';
 import '../../features/contacts/data/contact_item.dart';
