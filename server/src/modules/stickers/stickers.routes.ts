@@ -1,7 +1,19 @@
+// © 2024-2026 Бутаев Алексей Юрьевич. All rights reserved. PROPRIETARY AND CONFIDENTIAL.
 import { FastifyInstance } from 'fastify';
 import { StickerSource } from '@prisma/client';
 import { z } from 'zod';
 import { logger } from '../../utils/logger';
+
+// ─── Validation helper ─────────────────────────────────────────────
+function validateBody<T>(schema: import('zod').ZodSchema<T>, body: unknown): T {
+  const result = schema.safeParse(body);
+  if (!result.success) {
+    const err = new Error(result.error.issues[0]?.message || 'Validation error') as any;
+    err.statusCode = 400;
+    throw err;
+  }
+  return result.data;
+}
 
 const stickerImportSchema = z.object({
   source: z.enum(['TELEGRAM', 'WHATSAPP', 'VIBER', 'VK', 'CUSTOM']),
@@ -35,8 +47,8 @@ export async function stickersRoutes(fastify: FastifyInstance) {
 
   // POST /stickers/import — Import stickers from Telegram/VK/WhatsApp/Viber
   // Real implementation: downloads sticker images from source API and stores in MinIO
-  fastify.post('/import', { schema: { body: stickerImportSchema } }, async (request, reply) => {
-    const { source, sourceId, name } = request.body as z.infer<typeof stickerImportSchema>;
+  fastify.post('/import', {}, async (request, reply) => {
+    const { source, sourceId, name } = validateBody(stickerImportSchema, request.body);
 
     const CDN_BASE = process.env.CDN_BASE_URL || 'https://cdn.charo.chat';
 

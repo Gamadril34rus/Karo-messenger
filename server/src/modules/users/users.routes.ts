@@ -1,3 +1,4 @@
+// © 2024-2026 Бутаев Алексей Юрьевич. All rights reserved. PROPRIETARY AND CONFIDENTIAL.
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import * as Minio from 'minio';
@@ -5,6 +6,17 @@ import { logger } from '../../utils/logger';
 
 const CDN_BASE = process.env.CDN_BASE_URL || 'https://cdn.charo.chat';
 const BUCKET = process.env.MINIO_BUCKET || 'charo-media';
+
+// ─── Validation helper ─────────────────────────────────────────────
+function validateBody<T>(schema: import('zod').ZodSchema<T>, body: unknown): T {
+  const result = schema.safeParse(body);
+  if (!result.success) {
+    const err = new Error(result.error.issues[0]?.message || 'Validation error') as any;
+    err.statusCode = 400;
+    throw err;
+  }
+  return result.data;
+}
 
 function getMinioClient(): Minio.Client {
   return new Minio.Client({
@@ -37,9 +49,9 @@ export async function usersRoutes(fastify: FastifyInstance) {
   });
 
   // PATCH /users/me — Обновить профиль
-  fastify.patch('/me', { schema: { body: updateProfileSchema } }, async (request, reply) => {
+  fastify.patch('/me', {}, async (request, reply) => {
     const userId = request.userId!;
-    const body = request.body as z.infer<typeof updateProfileSchema>;
+    const body = validateBody(updateProfileSchema, request.body);
 
     const user = await prisma.user.update({
       where: { id: userId },

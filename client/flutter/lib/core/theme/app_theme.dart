@@ -1,3 +1,4 @@
+// © 2024-2026 Бутаев Алексей Юрьевич. All rights reserved. PROPRIETARY AND CONFIDENTIAL.
 import 'package:flutter/material.dart';
 
 /// Тема ЧАРО — минималистичная, динамичная, изящная.
@@ -252,8 +253,8 @@ class AppTheme {
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
           TargetPlatform.android: _CharoPageTransitionsBuilder(),
-          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-          TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.iOS: _CharoPageTransitionsBuilder(),
+          TargetPlatform.macOS: _CharoPageTransitionsBuilder(),
           TargetPlatform.windows: _CharoPageTransitionsBuilder(),
           TargetPlatform.linux: _CharoPageTransitionsBuilder(),
         },

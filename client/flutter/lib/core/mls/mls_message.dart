@@ -1,3 +1,4 @@
+// © 2024-2026 Бутаев Алексей Юрьевич. All rights reserved. PROPRIETARY AND CONFIDENTIAL.
 import 'dart:convert';
 
 /// MLS Message — сообщение протокола MLS (Messaging Layer Security)

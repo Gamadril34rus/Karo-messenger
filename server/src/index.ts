@@ -1,3 +1,4 @@
+// © 2024-2026 Бутаев Алексей Юрьевич. All rights reserved. PROPRIETARY AND CONFIDENTIAL.
 /**
  * ЧАРО — Backend Server
  * Fastify + TypeScript + Prisma + WebSocket
@@ -53,18 +54,41 @@ declare module 'fastify' {
 
 export async function buildServer(): Promise<FastifyInstance> {
   const prisma = new PrismaClient();
-  const redis = new Redis({
-    host: process.env.REDIS_HOST || 'localhost',
-    port: Number(process.env.REDIS_PORT) || 6379,
-    password: process.env.REDIS_PASSWORD,
-    maxRetriesPerRequest: null,
-    lazyConnect: true,
-  });
+
+  // Redis — gracefully handle missing Redis (degraded mode)
+  let redis: Redis;
+  const redisUrl = process.env.REDIS_URL;
+  if (redisUrl) {
+    redis = new Redis(redisUrl, {
+      maxRetriesPerRequest: null,
+      lazyConnect: true,
+      connectTimeout: 5000,
+    });
+  } else {
+    redis = new Redis({
+      host: process.env.REDIS_HOST || 'localhost',
+      port: Number(process.env.REDIS_PORT) || 6379,
+      password: process.env.REDIS_PASSWORD || undefined,
+      maxRetriesPerRequest: null,
+      lazyConnect: true,
+      connectTimeout: 5000,
+    });
+  }
+
+  // Try connecting Redis; if unreachable, log warning and continue in degraded mode
+  try {
+    await Promise.race([
+      redis.connect(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000)),
+    ]);
+  } catch (err) {
+    logger.warn('⚠️  Redis unavailable — running in degraded mode (no cache/sessions)');
+  }
 
   const fastify = Fastify({
     logger: {
       level: process.env.LOG_LEVEL || 'info',
-      transport: process.env.NODE_ENV !== 'test'
+      transport: process.env.NODE_ENV === 'development'
         ? {
             target: 'pino-pretty',
             options: { colorize: true },
@@ -72,10 +96,18 @@ export async function buildServer(): Promise<FastifyInstance> {
         : undefined,
     },
     requestIdHeader: 'x-request-id',
-    requestIdLogLabel: 'reqId',
   });
 
-  // ─── Глобальные декораторы ─────────────────────────────────────────
+  // Try Prisma connection; if unreachable, log warning and continue in degraded mode
+  try {
+    await Promise.race([
+      prisma.$connect(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000)),
+    ]);
+    logger.info('✅ Prisma connected to database');
+  } catch (err) {
+    logger.warn('⚠️  Database unavailable — running in degraded mode (no persistence)');
+  }
 
   fastify.decorate('prisma', prisma);
   fastify.decorate('redis', redis);
@@ -182,13 +214,19 @@ export async function buildServer(): Promise<FastifyInstance> {
     let redisStatus = 'ok';
 
     try {
-      await prisma.$queryRaw`SELECT 1`;
+      await Promise.race([
+        prisma.$queryRaw`SELECT 1`,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000)),
+      ]);
     } catch {
       dbStatus = 'error';
     }
 
     try {
-      const pingResult = await redis.ping();
+      const pingResult = await Promise.race([
+        redis.ping(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000)),
+      ]) as string;
       if (pingResult !== 'PONG') redisStatus = 'error';
     } catch {
       redisStatus = 'error';
@@ -259,8 +297,8 @@ async function main() {
   const shutdown = async (signal: string) => {
     logger.info(`${signal} received, shutting down gracefully...`);
     await fastify.close();
-    await fastify.prisma.$disconnect();
-    await fastify.redis.quit();
+    try { await fastify.prisma.$disconnect(); } catch {}
+    try { await fastify.redis.quit(); } catch {}
     process.exit(0);
   };
 
@@ -282,4 +320,8 @@ async function main() {
   }
 }
 
-main();
+// Only run main() when executed directly, not when imported by tests
+// Vitest sets process.env.VITEST; tsx/node direct execution does not
+if (!process.env.VITEST) {
+  main();
+}

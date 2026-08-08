@@ -1,3 +1,4 @@
+// © 2024-2026 Бутаев Алексей Юрьевич. All rights reserved. PROPRIETARY AND CONFIDENTIAL.
 import '../../../shared/widgets/message_bubble.dart';
 
 /// Модель сообщения для чата

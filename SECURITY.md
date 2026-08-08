@@ -1,70 +1,41 @@
-# Security Policy
+# Security Policy — ЧАРО Messenger
 
 ## Supported Versions
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 1.0.x   | :white_check_mark: |
-| < 1.0   | :x:                |
+| Version | Supported |
+| ------- | --------- |
+| 1.1.x   | ✅ Active |
+| < 1.0   | ❌ EOL    |
 
 ## Reporting a Vulnerability
 
-We take security seriously. If you discover a security vulnerability in ЧАРО, please report it responsibly.
+**Не публикуйте уязвимости в GitHub Issues!**
 
-### How to Report
+Отправляйте отчёт на: **pizdec666@yandex.ru**
 
-**Do NOT** open a public GitHub issue for security vulnerabilities.
+### Что включить в отчёт:
+- Описание уязвимости
+- Шаги воспроизведения
+- Версия сервера/клиента
+- Скриншоты/логи (без персональных данных)
+- Возможное решение (опционально)
 
-Instead, please:
+### Процесс:
+1. Подтверждение — в течение 48 часов
+2. Оценка критичности — в течение 5 рабочих дней
+3. Патч — критические: 7 дней, средние: 30 дней, низкие: 90 дней
+4. Уведомление — после выпуска патча
 
-1. **Email**: Send details to security@charo.chat
-2. **PGP**: Encrypt your report using our public key (available at https://charo.chat/.well-known/pgp-key.txt)
-3. **Response time**: We will acknowledge receipt within 24 hours and provide a detailed response within 72 hours
+## Security Measures
 
-### What to Include
-
-- Description of the vulnerability
-- Steps to reproduce
-- Affected versions
-- Potential impact
-- Any suggested fixes (optional)
-
-### Our Commitment
-
-- We will investigate all legitimate reports
-- We will keep you informed of our progress
-- We will credit you in our security advisories (unless you prefer anonymity)
-- We will not take legal action against researchers who act in good faith
-
-### Scope
-
-**In scope:**
-- ЧАРО server (Fastify API)
-- ЧАРО client (Flutter)
-- Authentication & authorization bypasses
-- E2EE implementation flaws
-- Data exposure vulnerabilities
-- Denial of service vulnerabilities
-- Injection vulnerabilities
-
-**Out of scope:**
-- Social engineering attacks
-- Physical attacks
-- Attacks requiring privileged access to server infrastructure
-- Vulnerabilities in third-party services (report to them directly)
-
-### Bug Bounty
-
-We are currently evaluating a bug bounty program. Until then, we offer our gratitude and public acknowledgment for responsible disclosures.
-
-## Security Best Practices
-
-When deploying ЧАРО:
-
-1. **Always** change default JWT secrets
-2. **Always** use HTTPS in production
-3. **Always** set strong database passwords
-4. **Never** expose Redis or PostgreSQL ports to the public internet
-5. **Always** keep dependencies up to date
-6. **Always** enable rate limiting
-7. **Review** your `.env` file for sensitive values before deployment
+- **E2EE** — Signal Protocol (Double Ratchet, Sealed Sender)
+- **JWT** — RSA-256, rotate every 15m access / 30d refresh
+- **ФЗ-152** — персональные данные хранятся в РФ
+- **GDPR** — право на удаление, экспорт данных
+- **CCPA** — opt-out, не продаём данные
+- **COPPA** — возрастное ограничение 13+
+- **Rate Limiting** — 100 req/min per IP
+- **Helmet** — CSP, HSTS, X-Frame-Options
+- **Input Validation** — Zod schemas на всех endpoints
+- **SQL Injection** — Prisma parameterized queries
+- **XSS** — content sanitization

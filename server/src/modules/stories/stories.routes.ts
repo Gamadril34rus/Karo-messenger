@@ -1,5 +1,17 @@
+// © 2024-2026 Бутаев Алексей Юрьевич. All rights reserved. PROPRIETARY AND CONFIDENTIAL.
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+
+// ─── Validation helper ─────────────────────────────────────────────
+function validateBody<T>(schema: import('zod').ZodSchema<T>, body: unknown): T {
+  const result = schema.safeParse(body);
+  if (!result.success) {
+    const err = new Error(result.error.issues[0]?.message || 'Validation error') as any;
+    err.statusCode = 400;
+    throw err;
+  }
+  return result.data;
+}
 
 const createStorySchema = z.object({
   type: z.enum(['IMAGE', 'VIDEO', 'TEXT']),
@@ -11,9 +23,9 @@ export async function storyRoutes(fastify: FastifyInstance) {
   const { prisma } = fastify;
 
   // POST /stories — Опубликовать историю
-  fastify.post('/', { schema: { body: createStorySchema } }, async (request, reply) => {
+  fastify.post('/', {}, async (request, reply) => {
     const userId = request.userId!;
-    const { type, content, backgroundColor } = request.body as z.infer<typeof createStorySchema>;
+    const { type, content, backgroundColor } = validateBody(createStorySchema, request.body);
 
     const story = await prisma.story.create({
       data: {

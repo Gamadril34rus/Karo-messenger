@@ -1,5 +1,17 @@
+// © 2024-2026 Бутаев Алексей Юрьевич. All rights reserved. PROPRIETARY AND CONFIDENTIAL.
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+
+// ─── Validation helper ─────────────────────────────────────────────
+function validateBody<T>(schema: import('zod').ZodSchema<T>, body: unknown): T {
+  const result = schema.safeParse(body);
+  if (!result.success) {
+    const err = new Error(result.error.issues[0]?.message || 'Validation error') as any;
+    err.statusCode = 400;
+    throw err;
+  }
+  return result.data;
+}
 
 const sendSchema = z.object({
   chatId: z.string().uuid(),
@@ -34,10 +46,10 @@ export async function messagesRoutes(fastify: FastifyInstance) {
   });
 
   // PATCH /messages/:id — Редактировать сообщение
-  fastify.patch('/:id', { schema: { body: editSchema } }, async (request, reply) => {
+  fastify.patch('/:id', {}, async (request, reply) => {
     const { id } = request.params as { id: string };
     const userId = request.userId!;
-    const { content } = request.body as z.infer<typeof editSchema>;
+    const { content } = validateBody(editSchema, request.body);
 
     const message = await prisma.message.findUnique({ where: { id } });
     if (!message) return reply.code(404).send({ message: 'Сообщение не найдено' });
@@ -74,10 +86,10 @@ export async function messagesRoutes(fastify: FastifyInstance) {
   });
 
   // POST /messages/:id/react — Реакция
-  fastify.post('/:id/react', { schema: { body: reactSchema } }, async (request, reply) => {
+  fastify.post('/:id/react', {}, async (request, reply) => {
     const { id } = request.params as { id: string };
     const userId = request.userId!;
-    const { emoji } = request.body as z.infer<typeof reactSchema>;
+    const { emoji } = validateBody(reactSchema, request.body);
 
     const existing = await prisma.reaction.findUnique({
       where: { messageId_userId_emoji: { messageId: id, userId, emoji } },

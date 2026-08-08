@@ -1,3 +1,4 @@
+// © 2024-2026 Бутаев Алексей Юрьевич. All rights reserved. PROPRIETARY AND CONFIDENTIAL.
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 
@@ -238,7 +239,7 @@ class MessageBubble extends StatelessWidget {
           height: 160,
           fit: BoxFit.contain,
           errorBuilder: (_, __, ___) =>
-              const Icon(Icons.emoji_emblems, size: 64),
+              const Icon(Icons.emoji_symbols, size: 64),
         );
 
       case 'gif':
