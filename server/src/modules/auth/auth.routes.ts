@@ -45,7 +45,7 @@ const verifySchema = z.object({
 const registerSchema = z.object({
   username: z.string().min(3).max(64).regex(/^[a-zA-Z0-9_]+$/),
   display_name: z.string().min(1).max(128),
-  phone: z.string().optional(),
+  phone: z.string().min(10, 'Укажите реальный номер телефона').regex(/^\+?\d{10,15}$/, 'Неверный формат номера телефона'),
   email: z.string().email().optional(),
   password: z.string().min(6).max(128).optional(),
   consent_given: z.literal(true, { message: 'Необходимо согласие на обработку данных' }),
