@@ -1,7 +1,7 @@
 {
-  "install": "npm ci",
-  "build": "npx prisma generate",
-  "start": "npx tsx src/index.ts",
+  "install": "echo ok",
+  "build": "echo ok",
+  "start": "node test-server.js",
   "watch": {
     "throttle": 1000
   }
