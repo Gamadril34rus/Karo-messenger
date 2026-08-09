@@ -513,9 +513,9 @@ class ChatDetailBloc extends Bloc<ChatDetailEvent, ChatDetailState> {
       if (m.id == event.messageId) {
         final existing = m.reactions.where((r) => r.emoji == event.emoji).firstOrNull;
         final updatedReactions = existing != null
-            ? m.reactions.map((r) => r.emoji == event.emoji
+            ? m.reactions.map<Reaction>((r) => r.emoji == event.emoji
                 ? Reaction(emoji: r.emoji, count: r.count + 1, isSelected: true)
-                : r).toList<Reaction>()
+                : r).toList()
             : [...m.reactions, Reaction(emoji: event.emoji, count: 1, isSelected: true)];
         return MessageItem(
           id: m.id, chatId: m.chatId, senderId: m.senderId,
