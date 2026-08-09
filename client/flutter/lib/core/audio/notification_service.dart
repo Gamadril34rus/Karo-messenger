@@ -61,7 +61,7 @@ class NotificationService {
       requestBadgePermission: true,
       requestSoundPermission: true,
     );
-    const linuxSettings = LinuxInitializationSettings(defaultActionIcon: null);
+    const linuxSettings = LinuxInitializationSettings();
     const macosSettings = DarwinInitializationSettings();
 
     const initSettings = InitializationSettings(
@@ -117,7 +117,7 @@ class NotificationService {
       showWhen: true,
       enableVibration: true,
       playSound: true,
-      sound: RawResourceAndroidNotificationSound('charo_message'),
+      sound: const RawResourceAndroidNotificationSound('charo_message'),
       category: AndroidNotificationCategory.message,
       styleInformation: BigTextStyleInformation(messageText),
     );
@@ -140,9 +140,9 @@ class NotificationService {
 
     await _notificationsPlugin.show(
       notificationId,
-      senderName,
-      messageText,
-      notificationDetails,
+      title: senderName,
+      body: messageText,
+      notificationDetails: notificationDetails,
       payload: 'chat:$chatId',
     );
   }
@@ -191,9 +191,9 @@ class NotificationService {
 
     await _notificationsPlugin.show(
       notificationId,
-      callerName,
-      isVideo ? 'Видеозвонок' : 'Голосовой звонок',
-      notificationDetails,
+      title: callerName,
+      body: isVideo ? 'Видеозвонок' : 'Голосовой звонок',
+      notificationDetails: notificationDetails,
       payload: 'call:$callId',
     );
   }
@@ -201,13 +201,13 @@ class NotificationService {
   /// Cancel call notification (when call is answered/ended)
   Future<void> cancelCallNotification(String callId) async {
     final notificationId = callId.hashCode & 0x7FFFFFFF;
-    await _notificationsPlugin.cancel(notificationId);
+    await _notificationsPlugin.cancel(id: notificationId);
   }
 
   /// Cancel message notification for a chat (when chat is opened)
   Future<void> cancelMessageNotification(String chatId) async {
     final notificationId = chatId.hashCode & 0x7FFFFFFF;
-    await _notificationsPlugin.cancel(notificationId);
+    await _notificationsPlugin.cancel(id: notificationId);
   }
 
   void _onNotificationTap(NotificationResponse response) {

@@ -44,7 +44,7 @@ class DesktopInitializer with TrayListener, WindowListener {
       windowManager.addListener(this);
 
       // ─── Системный трей ──────────────────────────────────────────
-      await trayManager.ensureInitialized();
+      await trayManager.setIcon('');
       trayManager.addListener(this);
 
       await _updateTray();

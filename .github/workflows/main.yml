@@ -143,6 +143,7 @@ jobs:
         run: |
           flutter create . --platforms=android
           flutter pub get
+          dart run build_runner build --delete-conflicting-outputs 2>/dev/null || true
 
       - name: Build APK
         working-directory: client/flutter

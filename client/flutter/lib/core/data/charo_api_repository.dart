@@ -227,7 +227,7 @@ class CharoApiRepository implements CharoRepository {
       chatId: j['chatId'] as String? ?? j['chat_id'] as String? ?? '',
       senderId: j['senderId'] as String? ?? j['sender_id'] as String? ?? '',
       type: j['type'] as String? ?? 'text',
-      content: j['content']?.toString(),
+      text: j['content']?.toString(),
       isEdited: j['isEdited'] as bool? ?? j['is_edited'] as bool? ?? false,
       isRead: j['isRead'] as bool? ?? false,
       createdAt: j['createdAt'] != null
@@ -248,7 +248,7 @@ class CharoApiRepository implements CharoRepository {
       chatId: chatId,
       senderId: '',
       type: type,
-      content: content?.toString(),
+      text: content?.toString(),
       createdAt: DateTime.now(),
     );
   }
