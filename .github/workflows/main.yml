@@ -138,6 +138,10 @@ jobs:
         working-directory: client/flutter
         run: flutter pub get
 
+      - name: Regenerate Android project
+        working-directory: client/flutter
+        run: flutter create . --platforms=android
+
       - name: Build APK
         working-directory: client/flutter
         run: flutter build apk --release --split-per-abi
