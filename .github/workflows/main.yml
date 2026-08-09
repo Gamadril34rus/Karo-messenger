@@ -142,6 +142,16 @@ jobs:
         working-directory: client/flutter
         run: |
           flutter create . --platforms=android
+          # Fix Kotlin language version for sentry_flutter compatibility
+          sed -i 's/kotlinCompilerExtensionVersion = "1.5.*"/kotlinCompilerExtensionVersion = "1.9.0"/' android/build.gradle.kts 2>/dev/null || true
+          sed -i 's/kotlinCompilerExtensionVersion = "1.5.*"/kotlinCompilerExtensionVersion = "1.9.0"/' android/app/build.gradle.kts 2>/dev/null || true
+          sed -i 's/kotlinCompilerExtensionVersion = "1.6.*"/kotlinCompilerExtensionVersion = "1.9.0"/' android/build.gradle.kts 2>/dev/null || true
+          sed -i 's/kotlinCompilerExtensionVersion = "1.6.*"/kotlinCompilerExtensionVersion = "1.9.0"/' android/app/build.gradle.kts 2>/dev/null || true
+          sed -i 's/kotlinCompiler8.*"/kotlin("1.9.0")/' android/build.gradle.kts 2>/dev/null || true
+          # Ensure Kotlin plugin version is 1.9.x
+          sed -i 's/id("org.jetbrains.kotlin.android") version "1.8.*/id("org.jetbrains.kotlin.android") version "1.9.0"/' android/settings.gradle.kts 2>/dev/null || true
+          sed -i 's/id("org.jetbrains.kotlin.android") version "1.7.*/id("org.jetbrains.kotlin.android") version "1.9.0"/' android/settings.gradle.kts 2>/dev/null || true
+          sed -i 's/id("org.jetbrains.kotlin.android") version "1.6.*/id("org.jetbrains.kotlin.android") version "1.9.0"/' android/settings.gradle.kts 2>/dev/null || true
           flutter pub get
           dart run build_runner build --delete-conflicting-outputs 2>/dev/null || true
 
