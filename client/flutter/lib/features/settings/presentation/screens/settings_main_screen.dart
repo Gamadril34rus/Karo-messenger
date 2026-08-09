@@ -303,7 +303,7 @@ class SettingsMainScreen extends StatelessWidget {
             onPressed: () {
               if (controller.text == 'DELETE') {
                 Navigator.pop(ctx);
-                context.read<AuthBloc>().add(const AuthDeleteAccountRequested(confirmation: 'DELETE'));
+                context.read<AuthBloc>().add(AuthDeleteAccountRequested(confirmation: 'DELETE'));
               }
             },
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
