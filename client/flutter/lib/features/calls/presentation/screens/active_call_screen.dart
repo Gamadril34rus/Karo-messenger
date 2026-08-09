@@ -197,6 +197,7 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
         case RTCPeerConnectionState.RTCPeerConnectionStateDisconnected:
         case RTCPeerConnectionState.RTCPeerConnectionStateFailed:
         case RTCPeerConnectionState.RTCPeerConnectionStateClosed:
+        case RTCPeerConnectionState.RTCPeerConnectionStateNew:
           _endCall();
           break;
       }

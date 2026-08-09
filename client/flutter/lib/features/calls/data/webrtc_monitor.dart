@@ -81,18 +81,19 @@ class WebRtcMonitor {
       int rtt = 0;
 
       for (final statsMap in report) {
-        final statsType = statsMap['type'] as String? ?? '';
+        final values = statsMap.values;
+        final statsType = statsMap.type;
 
         if (statsType == 'outbound-rtp') {
-          packetsSent += (statsMap['packetsSent'] as int?) ?? 0;
-          bytesSent += (statsMap['bytesSent'] as int?) ?? 0;
+          packetsSent += (statsMap.values as dynamic)['packetsSent'] as int? ?? 0;
+          bytesSent += (statsMap.values as dynamic)['bytesSent'] as int? ?? 0;
         } else if (statsType == 'inbound-rtp') {
-          packetsReceived += (statsMap['packetsReceived'] as int?) ?? 0;
-          packetsLost += (statsMap['packetsLost'] as int?) ?? 0;
-          bytesReceived += (statsMap['bytesReceived'] as int?) ?? 0;
+          packetsReceived += (statsMap.values as dynamic)['packetsReceived'] as int? ?? 0;
+          packetsLost += (statsMap.values as dynamic)['packetsLost'] as int? ?? 0;
+          bytesReceived += (statsMap.values as dynamic)['bytesReceived'] as int? ?? 0;
         } else if (statsType == 'candidate-pair' || statsType == 'transport') {
           // RTT is in the active candidate-pair as currentRoundTripTime (seconds)
-          final rttSec = statsMap['currentRoundTripTime'] as double?;
+          final rttSec = (statsMap.values as dynamic)['currentRoundTripTime'] as double?;
           if (rttSec != null) {
             rtt = (rttSec * 1000).round(); // Convert to ms
           }
@@ -204,7 +205,7 @@ class WebRtcMonitor {
     required double maxBitrate,
     required bool simulcastEnabled,
   }) {
-    logger.d('WebRTC: Applying video settings — $codec $width×$height $fpsfps ${maxBitrate}Kbps simulcast=$simulcastEnabled');
+    logger.d('WebRTC: Applying video settings — $codec $width×$height ${fps}fps ${maxBitrate}Kbps simulcast=$simulcastEnabled');
 
     if (_peerConnection == null) return;
 
@@ -213,10 +214,11 @@ class WebRtcMonitor {
       for (final sender in senders) {
         if (sender.track?.kind == 'video') {
           final parameters = sender.parameters;
-          if (parameters.encodings.isNotEmpty) {
+          final encodings = parameters.encodings;
+          if (encodings != null && encodings.isNotEmpty) {
             // Set max bitrate on primary encoding
-            parameters.encodings[0].maxBitrate = maxBitrate.toInt();
-            parameters.encodings[0].maxFramerate = fps;
+            encodings[0].maxBitrate = maxBitrate.toInt();
+            encodings[0].maxFramerate = fps;
 
             // Enable simulcast: add low/mid/high encodings
             final encodings = parameters.encodings;
