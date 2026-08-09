@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/haptic/haptic_service.dart';
+import '../../../../shared/widgets/charo_widgets.dart';
 import '../bloc/auth_bloc.dart';
 
 /// Экран восстановления удалённого аккаунта (30-дневный grace period)

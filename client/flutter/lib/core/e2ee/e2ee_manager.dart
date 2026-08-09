@@ -58,4 +58,15 @@ class E2EEKeyManager {
   }
 
   Future<void> reset() async => wipeAllKeys();
+
+  /// Set API client for server key exchange (stub — no-op)
+  void setApiClient(ApiClient apiClient) {
+    logger.i('E2EE: API client set (stub)');
+  }
+
+  /// Decrypt with recovery key for account recovery flow (stub)
+  Future<String> decryptWithRecovery(String remoteUserId, Map<String, dynamic> payload) async {
+    logger.w('E2EE: Decrypt with recovery is stub — returning raw payload');
+    return payload['ciphertext']?.toString() ?? '';
+  }
 }

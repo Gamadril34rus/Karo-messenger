@@ -7,7 +7,7 @@ import '../../../../../core/domain/charo_repository.dart';
 import '../../../../../core/network/api_client.dart' show CharoApiException;
 import '../../../../../core/network/ws_client.dart';
 import '../../../../../core/storage/local_db.dart';
-import '../../../../../core/storage/local_db.g.dart';
+import '../../../../../core/storage/local_db.dart';
 import '../../../../../core/utils/logger.dart';
 import '../../../data/chat_item.dart';
 

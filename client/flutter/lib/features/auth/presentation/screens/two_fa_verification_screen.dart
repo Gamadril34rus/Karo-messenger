@@ -125,7 +125,7 @@ class _TwoFaVerificationScreenState extends State<TwoFaVerificationScreen> {
                     onPressed: (isLoading || !canVerify) ? null : _onVerify,
                     icon: isLoading
                         ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : const Icon(Icons.shield_check_outlined),
+                        : const Icon(Icons.shield_outlined),
                     label: const Text('Подтвердить'),
                   );
                 },

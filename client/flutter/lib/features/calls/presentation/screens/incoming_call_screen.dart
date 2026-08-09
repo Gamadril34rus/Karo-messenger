@@ -125,7 +125,7 @@ class _IncomingCallScreenState extends State<IncomingCallScreen>
 
             // ── Caller info ───────────────────────────────────────
             _PulseBuilder(
-              animation: _pulseAnimation,
+              listenable: _pulseAnimation,
               builder: (context, child) {
                 return Transform.scale(
                   scale: _pulseAnimation.value,

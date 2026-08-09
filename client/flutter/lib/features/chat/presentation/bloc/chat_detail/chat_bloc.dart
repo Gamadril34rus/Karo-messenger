@@ -10,8 +10,8 @@ import '../../../../../core/network/api_client.dart' show CharoApiException;
 import '../../../../../core/haptic/haptic_service.dart';
 import '../../../../../core/network/ws_client.dart';
 import '../../../../../core/storage/local_db.dart';
-import '../../../../../core/storage/local_db.g.dart';
 import '../../../../../core/utils/logger.dart';
+import '../../../../../shared/widgets/message_bubble.dart' show MessageStatus, Reaction;
 import '../../../data/message_item.dart';
 
 // ─── Events ────────────────────────────────────────────────────────

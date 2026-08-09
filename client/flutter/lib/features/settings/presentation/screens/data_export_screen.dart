@@ -11,7 +11,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/domain/charo_repository.dart';
 import '../../../../core/utils/logger.dart';
 import '../../../../shared/widgets/charo_widgets.dart';
-import '../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
 
 /// Экран экспорта данных пользователя — GDPR Art.20, ФЗ-152 Art.14, CCPA
 ///

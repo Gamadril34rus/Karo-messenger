@@ -17,6 +17,7 @@ class CharoCard extends StatelessWidget {
   final double borderWidth;
   final Color? borderColor;
   final double elevation;
+  final VoidCallback? onTap;
 
   const CharoCard({
     super.key,
@@ -30,6 +31,7 @@ class CharoCard extends StatelessWidget {
     this.borderWidth = 0,
     this.borderColor,
     this.elevation = 0,
+    this.onTap,
   });
 
   @override
@@ -74,12 +76,21 @@ class CharoCard extends StatelessWidget {
       );
     }
 
-    return Container(
+    final card = Container(
       margin: margin,
       padding: padding,
       decoration: decoration,
       child: child,
     );
+
+    if (onTap != null) {
+      return InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(radius),
+        child: card,
+      );
+    }
+    return card;
   }
 }
 

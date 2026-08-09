@@ -338,16 +338,9 @@ class _PremiumChatTile extends StatelessWidget {
           child: InkWell(
             borderRadius: BorderRadius.circular(16),
             onTap: () {
-              final isDesktop = ResponsiveLayout.isDesktop(context);
-              if (isDesktop) {
-                // Desktop: select chat in master-detail
-                _selectChat(chat.id);
-              } else {
-                // Mobile: navigate to detail
-                context.go('/chat/${chat.id}');
-              }
+              context.go('/chat/${chat.id}');
             },
-            onLongPress: () => _showChatActions(context),
+            onLongPress: () {},
           child: Container(
             margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),

@@ -197,11 +197,8 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
         case RTCPeerConnectionState.RTCPeerConnectionStateDisconnected:
         case RTCPeerConnectionState.RTCPeerConnectionStateFailed:
         case RTCPeerConnectionState.RTCPeerConnectionStateClosed:
-<<<<<<< HEAD
-=======
         case RTCPeerConnectionState.RTCPeerConnectionStateNew:
         case RTCPeerConnectionState.RTCPeerConnectionStateConnecting:
->>>>>>> 399f349361b1275044970c6dc76f8a29abaf04dd
           _endCall();
           break;
       }
@@ -326,7 +323,7 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
     _peerConnection?.getSenders().then((senders) {
       for (final sender in senders) {
         if (sender.track?.kind == 'audio') {
-          sender.track!.setEnabled(!_isMuted);
+          sender.track!.enabled = !_isMuted;
         }
       }
     });
@@ -339,7 +336,7 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
     _peerConnection?.getSenders().then((senders) {
       for (final sender in senders) {
         if (sender.track?.kind == 'video') {
-          sender.track!.setEnabled(!_isCameraOff);
+          sender.track!.enabled = !_isCameraOff;
         }
       }
     });
@@ -358,7 +355,7 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
       for (final sender in senders) {
         if (sender.track?.kind == 'video') {
           // Helper method in flutter_webrtc
-          helper.switchCamera(sender.track!);
+          await Helper.switchCamera(sender.track!);
         }
       }
     });

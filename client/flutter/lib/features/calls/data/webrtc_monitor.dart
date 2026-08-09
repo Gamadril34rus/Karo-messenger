@@ -221,12 +221,7 @@ class WebRtcMonitor {
             encodings[0].maxFramerate = fps;
 
             // Enable simulcast: add low/mid/high encodings
-<<<<<<< HEAD
-            final encodings = parameters.encodings;
-            if (simulcastEnabled && encodings != null && encodings.length >= 3) {
-=======
             if (simulcastEnabled && encodings.length >= 3) {
->>>>>>> 399f349361b1275044970c6dc76f8a29abaf04dd
               encodings[0].rid = 'high';
               encodings[0].maxBitrate = maxBitrate.toInt();
               encodings[1].rid = 'mid';
@@ -243,11 +238,7 @@ class WebRtcMonitor {
           });
 
           // Apply resolution/fps constraints on the video track
-<<<<<<< HEAD
-          sender.track!.enabled = true;
-=======
           sender.track?.enabled = true;
->>>>>>> 399f349361b1275044970c6dc76f8a29abaf04dd
           logger.i('WebRTC: Video settings applied — $codec $width×$height ${fps}fps');
         }
       }
@@ -265,11 +256,7 @@ class WebRtcMonitor {
     _peerConnection!.getSenders().then((senders) {
       for (final sender in senders) {
         if (sender.track?.kind == 'video') {
-<<<<<<< HEAD
-          sender.track!.enabled = false;
-=======
           sender.track?.enabled = false;
->>>>>>> 399f349361b1275044970c6dc76f8a29abaf04dd
           logger.i('WebRTC: Video track disabled');
         }
       }

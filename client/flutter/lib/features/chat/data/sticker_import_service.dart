@@ -547,11 +547,7 @@ class StickerImportService {
       'description': 'Imported sticker pack',
       'icon': result.stickers.isNotEmpty ? result.stickers.first.filePath.split('/').last : '',
       'isFeatured': false,
-<<<<<<< HEAD
-      'stickers': result.stickers.map((s) => {
-=======
       'stickers': result.stickers.map((s) => <String, dynamic>{
->>>>>>> 399f349361b1275044970c6dc76f8a29abaf04dd
         'id': s.id,
         'file': s.filePath.split('/').last,
         'emoji': s.emoji ?? '😊',
@@ -574,11 +570,7 @@ class StickerImportService {
       'version': '1.0.0',
       'description': 'Custom imported emoji pack',
       'license': 'User-provided — check rights before distribution',
-<<<<<<< HEAD
-      'customImages': result.emojis.map((e) => {
-=======
       'customImages': result.emojis.map((e) => <String, dynamic>{
->>>>>>> 399f349361b1275044970c6dc76f8a29abaf04dd
         'id': e.id,
         'file': e.filePath.split('/').last,
         'unicode': e.unicode,

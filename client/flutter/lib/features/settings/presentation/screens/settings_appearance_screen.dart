@@ -91,13 +91,13 @@ class _SettingsAppearanceScreenState extends State<SettingsAppearanceScreen> {
                   spacing: 12,
                   runSpacing: 8,
                   children: [
-                    _AccentColorOption(color: const Color(0xFF2563EB), name: 'Синий', key: 'blue', selectedKey: _accentColor, onSelect: (k) => setState(() => _accentColor = k)),
-                    _AccentColorOption(color: const Color(0xFF8B5CF6), name: 'Фиолетовый', key: 'violet', selectedKey: _accentColor, onSelect: (k) => setState(() => _accentColor = k)),
-                    _AccentColorOption(color: const Color(0xFF10B981), name: 'Зелёный', key: 'green', selectedKey: _accentColor, onSelect: (k) => setState(() => _accentColor = k)),
-                    _AccentColorOption(color: const Color(0xFFF59E0B), name: 'Оранжевый', key: 'orange', selectedKey: _accentColor, onSelect: (k) => setState(() => _accentColor = k)),
-                    _AccentColorOption(color: const Color(0xFFEF4444), name: 'Красный', key: 'red', selectedKey: _accentColor, onSelect: (k) => setState(() => _accentColor = k)),
-                    _AccentColorOption(color: const Color(0xFFEC4899), name: 'Розовый', key: 'pink', selectedKey: _accentColor, onSelect: (k) => setState(() => _accentColor = k)),
-                    _AccentColorOption(color: const Color(0xFF06B6D4), name: 'Голубой', key: 'cyan', selectedKey: _accentColor, onSelect: (k) => setState(() => _accentColor = k)),
+                    _AccentColorOption(color: const Color(0xFF2563EB), name: 'Синий', optionKey: 'blue', selectedKey: _accentColor, onSelect: (k) => setState(() => _accentColor = k)),
+                    _AccentColorOption(color: const Color(0xFF8B5CF6), name: 'Фиолетовый', optionKey: 'violet', selectedKey: _accentColor, onSelect: (k) => setState(() => _accentColor = k)),
+                    _AccentColorOption(color: const Color(0xFF10B981), name: 'Зелёный', optionKey: 'green', selectedKey: _accentColor, onSelect: (k) => setState(() => _accentColor = k)),
+                    _AccentColorOption(color: const Color(0xFFF59E0B), name: 'Оранжевый', optionKey: 'orange', selectedKey: _accentColor, onSelect: (k) => setState(() => _accentColor = k)),
+                    _AccentColorOption(color: const Color(0xFFEF4444), name: 'Красный', optionKey: 'red', selectedKey: _accentColor, onSelect: (k) => setState(() => _accentColor = k)),
+                    _AccentColorOption(color: const Color(0xFFEC4899), name: 'Розовый', optionKey: 'pink', selectedKey: _accentColor, onSelect: (k) => setState(() => _accentColor = k)),
+                    _AccentColorOption(color: const Color(0xFF06B6D4), name: 'Голубой', optionKey: 'cyan', selectedKey: _accentColor, onSelect: (k) => setState(() => _accentColor = k)),
                   ],
                 ),
               ),
@@ -281,23 +281,23 @@ class _SettingsAppearanceScreenState extends State<SettingsAppearanceScreen> {
 class _AccentColorOption extends StatelessWidget {
   final Color color;
   final String name;
-  final String key;
+  final String optionKey;
   final String selectedKey;
   final ValueChanged<String> onSelect;
 
   const _AccentColorOption({
     required this.color,
     required this.name,
-    required this.key,
+    required this.optionKey,
     required this.selectedKey,
     required this.onSelect,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isSelected = selectedKey == key;
+    final isSelected = selectedKey == optionKey;
     return GestureDetector(
-      onTap: () => onSelect(key),
+      onTap: () => onSelect(optionKey),
       child: Column(
         children: [
           AnimatedContainer(

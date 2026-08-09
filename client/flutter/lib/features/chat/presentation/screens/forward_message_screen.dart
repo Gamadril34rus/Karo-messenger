@@ -1,6 +1,7 @@
 // © 2024-2026 Бутаев Алексей Юрьевич. All rights reserved. PROPRIETARY AND CONFIDENTIAL.
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_theme.dart';
@@ -65,7 +66,7 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
 
   void _forwardTo(String chatId) {
     HapticService.instance.medium();
-    final wsClient = WsClient.instance;
+    final wsClient = GetIt.instance<WsClient>();
     wsClient.send('message.forward', {
       'messageId': widget.messageId,
       'targetChatId': chatId,

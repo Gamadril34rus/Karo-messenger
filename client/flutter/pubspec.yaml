@@ -155,3 +155,6 @@ flutter:
           weight: 600
         - asset: assets/fonts/CharoSans-Bold.ttf
           weight: 700
+
+dependency_overrides:
+  record_linux: ^1.1.0
