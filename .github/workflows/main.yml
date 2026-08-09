@@ -144,25 +144,35 @@ jobs:
           flutter create . --platforms=android
           # Patch build.gradle.kts for core library desugaring (required by flutter_local_notifications)
           python3 << 'PYEOF'
-          import re
           with open('android/app/build.gradle.kts', 'r') as f:
               content = f.read()
+          print("=== build.gradle.kts START ===")
+          print(content[:3000])
+          print("=== build.gradle.kts END ===")
           # 1) Enable desugaring in existing compileOptions block
           if 'isCoreLibraryDesugaringEnabled' not in content:
               content = content.replace(
                   'compileOptions {',
                   'compileOptions {\n        isCoreLibraryDesugaringEnabled = true'
               )
-          # 2) Add coreLibraryDesugaring dependency in dependencies block
+          # 2) Add coreLibraryDesugaring dependency — search for any dependencies block format
           if 'coreLibraryDesugaring' not in content:
-              # Find the dependencies block and add after it opens
-              content = content.replace(
-                  'dependencies {',
-                  'dependencies {\n    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.12.1")'
+              import re
+              # Match "dependencies {" with possible whitespace
+              content = re.sub(
+                  r'(dependencies\s*\{)',
+                  r'\1\n    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.12.1")',
+                  content,
+                  count=1
               )
           with open('android/app/build.gradle.kts', 'w') as f:
               f.write(content)
           print("Patched build.gradle.kts for desugaring")
+          with open('android/app/build.gradle.kts', 'r') as f:
+              content = f.read()
+          print("=== PATCHED START ===")
+          print(content[:3000])
+          print("=== PATCHED END ===")
           PYEOF
           flutter pub get
           dart run build_runner build --delete-conflicting-outputs 2>/dev/null || true
