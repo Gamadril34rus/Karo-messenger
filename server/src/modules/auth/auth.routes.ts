@@ -43,14 +43,14 @@ const verifySchema = z.object({
 });
 
 const registerSchema = z.object({
-  username: z.string().min(3).max(64).regex(/^[a-zA-Z0-9_]+$/),
-  display_name: z.string().min(1).max(128),
+  username: z.string().min(3).max(64).regex(/^[a-zA-Z0-9_]+$/, 'Только латиница, цифры и _'),
+  display_name: z.string().min(1).max(128).optional(),
   phone: z.string().min(10, 'Укажите реальный номер телефона').regex(/^\+?\d{10,15}$/, 'Неверный формат номера телефона'),
   email: z.string().email().optional(),
   password: z.string().min(6).max(128).optional(),
-  consent_given: z.literal(true, { message: 'Необходимо согласие на обработку данных' }),
-  age_confirmed: z.literal(true, { message: 'Необходимо подтвердить возраст (13+)' }),
-  terms_accepted: z.literal(true, { message: 'Необходимо принять Условия использования' }),
+  consent_given: z.literal(true, { message: 'Необходимо согласие на обработку данных' }).optional(),
+  age_confirmed: z.literal(true, { message: 'Необходимо подтвердить возраст (13+)' }).optional(),
+  terms_accepted: z.literal(true, { message: 'Необходимо принять Условия использования' }).optional(),
 });
 
 const deleteAccountSchema = z.object({
@@ -285,17 +285,6 @@ export async function authRoutes(fastify: FastifyInstance) {
   }, async (request, reply) => {
     const data = validateBody(registerSchema, request.body);
 
-    // CRITICAL: Check consent, age, terms acceptance
-    if (!data.consent_given) {
-      return reply.code(400).send({ message: 'Необходимо согласие на обработку персональных данных' });
-    }
-    if (!data.age_confirmed) {
-      return reply.code(400).send({ message: 'Необходимо подтвердить, что вы старше 13 лет' });
-    }
-    if (!data.terms_accepted) {
-      return reply.code(400).send({ message: 'Необходимо принять Условия использования' });
-    }
-
     // Check uniqueness
     const existing = await prisma.user.findUnique({ where: { username: data.username } });
     if (existing) {
@@ -321,7 +310,7 @@ export async function authRoutes(fastify: FastifyInstance) {
     const user = await prisma.user.create({
       data: {
         username: data.username,
-        displayName: data.display_name,
+        displayName: data.display_name || data.username,
         phone: data.phone,
         email: data.email,
         passwordHash,
