@@ -49,7 +49,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
     setState(() => _isSearching = true);
 
     try {
-      final repository = GetIt.instance<Object>();
+      final repository = GetIt.instance<dynamic>();
       final result = await repository.search(query.trim());
 
       final results = <_SearchResult>[];
@@ -82,7 +82,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
           type: 'contact',
           id: contact.userId,
           title: contact.displayName ?? contact.username,
-          subtitle: Text('@${contact.username}'),
+          subtitle: '@${contact.username}',
           icon: Icons.person_outline,
           color: const Color(0xFF8B5CF6),
         ));

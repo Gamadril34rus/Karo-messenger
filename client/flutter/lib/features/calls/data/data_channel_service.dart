@@ -34,7 +34,7 @@ class DataChannelService {
   DataChannelService();
 
   /// Создание DataChannel (для инициатора звонка)
-  void createDataChannel(RTCPeerConnection peerConnection) {
+  Future<void> createDataChannel(RTCPeerConnection peerConnection) async {
     _peerConnection = peerConnection;
 
     final config = RTCDataChannelInit()
@@ -49,7 +49,7 @@ class DataChannelService {
   }
 
   /// Подключение к существующему DataChannel (для отвечающего)
-  Future<void> connectToDataChannel(RTCDataChannel dataChannel) {
+  Future<void> connectToDataChannel(RTCDataChannel dataChannel) async {
     _dataChannel = dataChannel;
     _setupDataChannelHandlers();
     logger.i('📡 DataChannel "charo-chat" connected');
