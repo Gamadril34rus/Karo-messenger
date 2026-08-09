@@ -161,15 +161,11 @@ jobs:
           import re
           content = re.sub(r'compileSdk\s*=\s*\d+', 'compileSdk = 36', content)
           print('Updated compileSdk to 36 in app build.gradle.kts')
-          # Also patch root build.gradle.kts to set subprojects compileSdk
-          root_gradle = 'android/build.gradle.kts'
-          with open(root_gradle, 'r') as f:
-              root_content = f.read()
-          if 'subprojects' not in root_content:
-              root_content = root_content.rstrip() + '\n\nsubprojects {\n    afterEvaluate {\n        if (project.hasProperty(\"android\")) {\n            project.android.compileSdk = 36\n        }\n    }\n}\n'
-              with open(root_gradle, 'w') as f:
-                  f.write(root_content)
-              print('Patched root build.gradle.kts with subprojects compileSdk=36')
+          # Also set global compileSdk override via gradle.properties
+          gradle_props = 'android/gradle.properties'
+          with open(gradle_props, 'a') as f:
+              f.write('\nandroid.useAndroidX=true\nandroid.compileSdk=36\n')
+          print('Set android.compileSdk=36 in gradle.properties')
           # 2) Add coreLibraryDesugaring dependency
           if 'coreLibraryDesugaring' not in content:
               if 'dependencies' in content:
