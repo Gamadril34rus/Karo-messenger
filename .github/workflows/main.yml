@@ -166,16 +166,6 @@ jobs:
           with open(gradle_props, 'a') as f:
               f.write('\nandroid.useAndroidX=true\n')
           print('Set android.useAndroidX in gradle.properties')
-          # Patch ALL plugin build.gradle.kts files to use compileSdk 36
-          import glob
-          for gfile in glob.glob('android/**/build.gradle.kts', recursive=True):
-              with open(gfile, 'r') as f:
-                  gcontent = f.read()
-              if 'compileSdk' in gcontent and 'compileSdk = 36' not in gcontent:
-                  gcontent = re.sub(r'compileSdk\s*=\s*\d+', 'compileSdk = 36', gcontent)
-                  with open(gfile, 'w') as f:
-                      f.write(gcontent)
-                  print(f'Patched compileSdk=36 in {gfile}')
           # 2) Add coreLibraryDesugaring dependency
           if 'coreLibraryDesugaring' not in content:
               if 'dependencies' in content:
@@ -200,6 +190,18 @@ jobs:
           print('has coreLibraryDesugaring dep: ' + str('coreLibraryDesugaring' in final))
           "
           flutter pub get
+          # NOW patch ALL plugin build.gradle.kts files to use compileSdk 36
+          python3 -c "
+          import re, glob
+          for gfile in glob.glob('android/**/build.gradle.kts', recursive=True):
+              with open(gfile, 'r') as f:
+                  gcontent = f.read()
+              if 'compileSdk' in gcontent and 'compileSdk = 36' not in gcontent:
+                  gcontent = re.sub(r'compileSdk\s*=\s*\d+', 'compileSdk = 36', gcontent)
+                  with open(gfile, 'w') as f:
+                      f.write(gcontent)
+                  print(f'Patched compileSdk=36 in {gfile}')
+          "
           dart run build_runner build --delete-conflicting-outputs 2>/dev/null || true
 
       - name: Build APK
