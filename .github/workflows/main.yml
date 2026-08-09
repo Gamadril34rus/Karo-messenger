@@ -163,13 +163,13 @@ jobs:
                   # Has dependencies block — add inside it
                   content = re.sub(
                       r'(dependencies\s*\{)',
-                      r'\1\n    coreLibraryDesugaring(\"com.android.tools:desugar_jdk_libs:2.12.1\")',
+                      r'\1\n    coreLibraryDesugaring(\"com.android.tools:desugar_jdk_libs:2.1.4\")',
                       content,
                       count=1
                   )
               else:
                   # No dependencies block — append one at end
-                  content = content.rstrip() + '\n\ndependencies {\n    coreLibraryDesugaring(\"com.android.tools:desugar_jdk_libs:2.12.1\")\n}\n'
+                  content = content.rstrip() + '\n\ndependencies {\n    coreLibraryDesugaring(\"com.android.tools:desugar_jdk_libs:2.1.4\")\n}\n'
               print('Added coreLibraryDesugaring dependency')
           with open(gradle_file, 'w') as f:
               f.write(content)
