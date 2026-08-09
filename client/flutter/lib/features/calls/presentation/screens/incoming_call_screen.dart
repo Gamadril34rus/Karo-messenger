@@ -43,7 +43,7 @@ class _IncomingCallScreenState extends State<IncomingCallScreen>
   void initState() {
     super.initState();
     NotificationService.instance.playCallSound();
-    HapticService.heavy();
+    HapticService.instance.heavy();
 
     // Pulse animation
     _pulseController = AnimationController(
@@ -79,7 +79,7 @@ class _IncomingCallScreenState extends State<IncomingCallScreen>
   }
 
   void _acceptCall() {
-    HapticService.medium();
+    HapticService.instance.medium();
     NotificationService.instance.stopCallSound();
     _ringTimeout?.cancel();
 
@@ -93,7 +93,7 @@ class _IncomingCallScreenState extends State<IncomingCallScreen>
   }
 
   void _rejectCall() {
-    HapticService.heavy();
+    HapticService.instance.heavy();
     NotificationService.instance.stopCallSound();
     _ringTimeout?.cancel();
 

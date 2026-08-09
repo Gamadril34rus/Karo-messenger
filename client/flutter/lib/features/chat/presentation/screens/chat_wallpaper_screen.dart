@@ -50,7 +50,7 @@ class _ChatWallpaperScreenState extends State<ChatWallpaperScreen> {
   }
 
   Future<void> _selectWallpaper(String id) async {
-    HapticService.selection();
+    HapticService.instance.selectionClick();
     setState(() => _selectedWallpaper = id);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('wallpaper_${widget.chatId}', id);

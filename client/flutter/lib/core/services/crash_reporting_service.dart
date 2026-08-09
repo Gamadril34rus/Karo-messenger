@@ -58,7 +58,7 @@ class CrashReportingService {
       await Sentry.captureException(
         error,
         stackTrace: stackTrace,
-        hint: hint != null ? {'hint': hint} : null,
+        hint: hint != null ? Hint.withMap({'hint': hint}) : null,
       );
     } catch (e) {
       logger.e('📊 Sentry report error failed: $e');

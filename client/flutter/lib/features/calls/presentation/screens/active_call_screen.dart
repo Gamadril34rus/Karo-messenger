@@ -192,7 +192,7 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
           });
           _startCallTimer();
           NotificationService.instance.stopCallSound();
-          HapticService.medium();
+          HapticService.instance.medium();
           break;
         case RTCPeerConnectionState.RTCPeerConnectionStateDisconnected:
         case RTCPeerConnectionState.RTCPeerConnectionStateFailed:
@@ -321,7 +321,7 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
 
   void _toggleMute() {
     setState(() => _isMuted = !_isMuted);
-    HapticService.light();
+    HapticService.instance.light();
 
     _peerConnection?.getSenders().then((senders) {
       for (final sender in senders) {
@@ -334,7 +334,7 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
 
   void _toggleCamera() {
     setState(() => _isCameraOff = !_isCameraOff);
-    HapticService.light();
+    HapticService.instance.light();
 
     _peerConnection?.getSenders().then((senders) {
       for (final sender in senders) {
@@ -347,12 +347,12 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
 
   void _toggleSpeaker() {
     setState(() => _isSpeakerOn = !_isSpeakerOn);
-    HapticService.light();
+    HapticService.instance.light();
     // In production, switch audio output device via flutter_webrtc
   }
 
   void _switchCamera() {
-    HapticService.medium();
+    HapticService.instance.medium();
     // Switch front/back camera
     _peerConnection?.getSenders().then((senders) {
       for (final sender in senders) {
@@ -365,7 +365,7 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
   }
 
   void _endCall() {
-    HapticService.heavy();
+    HapticService.instance.heavy();
     NotificationService.instance.stopCallSound();
     _callTimer?.cancel();
 

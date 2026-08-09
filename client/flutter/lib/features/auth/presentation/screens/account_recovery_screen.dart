@@ -53,7 +53,7 @@ class _AccountRecoveryScreenState extends State<AccountRecoveryScreen> {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthAuthenticated) {
-          HapticService.medium();
+          HapticService.instance.medium();
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Аккаунт восстановлен! Установите номер/email в настройках.'),
@@ -62,7 +62,7 @@ class _AccountRecoveryScreenState extends State<AccountRecoveryScreen> {
           );
           context.go('/chats');
         } else if (state is AuthError) {
-          HapticService.heavy();
+          HapticService.instance.heavy();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
@@ -208,7 +208,7 @@ class _AccountRecoveryScreenState extends State<AccountRecoveryScreen> {
   }
 
   void _onRecover() {
-    HapticService.medium();
+    HapticService.instance.medium();
     context.read<AuthBloc>().add(AuthAccountRecoveryRequested(
       accountId: _accountIdController.text.trim(),
       recoveryCode: _codeController.text.trim(),

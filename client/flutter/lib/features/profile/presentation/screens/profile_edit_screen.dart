@@ -148,7 +148,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   }
 
   void _showAvatarOptions() {
-    HapticService.medium();
+    HapticService.instance.medium();
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -203,7 +203,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
 
   Future<void> _save() async {
     setState(() => _isSaving = true);
-    HapticService.medium();
+    HapticService.instance.medium();
 
     context.read<ProfileBloc>().add(ProfileUpdated(
       displayName: _nameController.text.trim(),

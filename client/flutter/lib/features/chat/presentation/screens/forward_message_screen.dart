@@ -64,7 +64,7 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
   }
 
   void _forwardTo(String chatId) {
-    HapticService.medium();
+    HapticService.instance.medium();
     final wsClient = WsClient.instance;
     wsClient.send('message.forward', {
       'messageId': widget.messageId,
@@ -89,7 +89,7 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
-              HapticService.light();
+              HapticService.instance.light();
               // Toggle search
             },
           ),

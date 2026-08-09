@@ -1,5 +1,6 @@
 // © 2024-2026 Бутаев Алексей Юрьевич. All rights reserved. PROPRIETARY AND CONFIDENTIAL.
 import '../domain/charo_repository.dart';
+import '../../features/chat/data/chat_item.dart';
 import '../utils/logger.dart';
 
 /// ─── Group Management Service ────────────────────────────────────
@@ -87,5 +88,4 @@ class GroupManagementService {
   }
 }
 
-// Re-export ChatItem for backward compatibility
-import '../../features/chat/data/chat_item.dart';
+// Re-export ChatItem for backward compatibility — already imported above

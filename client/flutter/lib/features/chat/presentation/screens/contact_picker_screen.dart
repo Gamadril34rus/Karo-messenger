@@ -165,7 +165,7 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
           contact: contact,
           isSelected: isSelected,
           onTap: () {
-            HapticService.selection();
+            HapticService.instance.selectionClick();
             setState(() {
               if (isSelected) {
                 _selectedIds.remove(contact.userId);

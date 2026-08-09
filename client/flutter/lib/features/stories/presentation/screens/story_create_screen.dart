@@ -320,7 +320,7 @@ class _StoryCreateScreenState extends State<StoryCreateScreen> {
   }
 
   Future<void> _pickMedia() async {
-    HapticService.light();
+    HapticService.instance.light();
     try {
       final fileType = _type == 'image' ? FileType.image : FileType.video;
       final result = await FilePicker.platform.pickFiles(type: fileType, allowMultiple: false);
@@ -333,7 +333,7 @@ class _StoryCreateScreenState extends State<StoryCreateScreen> {
   }
 
   Future<void> _pickCamera() async {
-    HapticService.light();
+    HapticService.instance.light();
     try {
       // Camera capture — use image_picker or camera package
       // For now, fall back to gallery
@@ -433,7 +433,7 @@ class _TypeChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        HapticService.selection();
+        HapticService.instance.selectionClick();
         onTap();
       },
       child: AnimatedContainer(

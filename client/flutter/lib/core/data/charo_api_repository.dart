@@ -226,13 +226,16 @@ class CharoApiRepository implements CharoRepository {
       id: j['id'] as String? ?? '',
       chatId: j['chatId'] as String? ?? j['chat_id'] as String? ?? '',
       senderId: j['senderId'] as String? ?? j['sender_id'] as String? ?? '',
+      senderName: j['senderName'] as String? ?? j['sender_name'] as String?,
+      isMe: j['isMe'] as bool? ?? j['is_me'] as bool? ?? false,
       type: j['type'] as String? ?? 'text',
       text: j['content']?.toString(),
       isEdited: j['isEdited'] as bool? ?? j['is_edited'] as bool? ?? false,
-      isRead: j['isRead'] as bool? ?? false,
-      createdAt: j['createdAt'] != null
+      sentAt: j['createdAt'] != null
           ? DateTime.tryParse(j['createdAt'].toString()) ?? DateTime.now()
-          : DateTime.now(),
+          : j['sentAt'] != null
+              ? DateTime.tryParse(j['sentAt'].toString()) ?? DateTime.now()
+              : DateTime.now(),
     );
   }
 
@@ -247,9 +250,11 @@ class CharoApiRepository implements CharoRepository {
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       chatId: chatId,
       senderId: '',
+      senderName: null,
+      isMe: true,
       type: type,
       text: content?.toString(),
-      createdAt: DateTime.now(),
+      sentAt: DateTime.now(),
     );
   }
 

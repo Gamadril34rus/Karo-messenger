@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/domain/charo_repository.dart';
 import '../../../../core/e2ee/e2ee_manager.dart';
+import '../../../../core/network/api_client.dart' show CharoApiException;
 import '../../../../core/storage/secure_storage.dart';
 import '../../../../core/network/ws_client.dart';
 import '../../../../core/audio/notification_service.dart';
@@ -543,14 +544,4 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 }
 
-/// Обратная совместимость — CharoApiException из ApiClient
-/// (бросается через repository при ошибках HTTP)
-class CharoApiException implements Exception {
-  final String message;
-  final int? statusCode;
-
-  const CharoApiException({required this.message, this.statusCode});
-
-  @override
-  String toString() => 'CharoApiException: $message';
-}
+// CharoApiException imported from api_client.dart above

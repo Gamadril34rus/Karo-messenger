@@ -2,7 +2,16 @@
 import 'package:flutter/material.dart';
 
 class GroupManagementScreen extends StatefulWidget {
-  const GroupManagementScreen({super.key});
+  final String chatId;
+  final String chatTitle;
+  final String? avatarUrl;
+
+  const GroupManagementScreen({
+    super.key,
+    required this.chatId,
+    this.chatTitle = 'Группа',
+    this.avatarUrl,
+  });
 
   @override
   State<GroupManagementScreen> createState() => _GroupManagementScreenState();
@@ -11,8 +20,9 @@ class GroupManagementScreen extends StatefulWidget {
 class _GroupManagementScreenState extends State<GroupManagementScreen> {
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
+    return Scaffold(
+      appBar: AppBar(title: Text(widget.chatTitle)),
+      body: const Center(
         child: Text('В разработке'),
       ),
     );

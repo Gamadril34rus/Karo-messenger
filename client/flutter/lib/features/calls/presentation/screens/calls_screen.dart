@@ -33,7 +33,7 @@ class _CallsScreenState extends State<CallsScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.search),
-            onPressed: () => HapticService.light(),
+            onPressed: () => HapticService.instance.light(),
           ),
         ],
       ),
@@ -55,7 +55,7 @@ class _CallsScreenState extends State<CallsScreen> {
                     const SizedBox(height: 16),
                     FilledButton(
                       onPressed: () {
-                        HapticService.light();
+                        HapticService.instance.light();
                         context.read<CallsBloc>().add(CallsLoadRequested());
                       },
                       child: const Text('Повторить'),
@@ -82,7 +82,7 @@ class _CallsScreenState extends State<CallsScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          HapticService.medium();
+          HapticService.instance.medium();
           _showNewCallSheet(context);
         },
         child: const Icon(Icons.dialpad),
@@ -108,7 +108,7 @@ class _CallsScreenState extends State<CallsScreen> {
               icon: Icons.person_add,
               title: 'Выбрать контакт',
               onTap: () {
-                HapticService.light();
+                HapticService.instance.light();
                 Navigator.pop(ctx);
                 context.go('/contacts');
               },
@@ -117,7 +117,7 @@ class _CallsScreenState extends State<CallsScreen> {
               icon: Icons.dialpad,
               title: 'Набрать номер',
               onTap: () {
-                HapticService.light();
+                HapticService.instance.light();
                 Navigator.pop(ctx);
               },
             ),
@@ -210,7 +210,7 @@ class _CallTile extends StatelessWidget {
                       size: 18,
                     ),
                     onPressed: () {
-                      HapticService.light();
+                      HapticService.instance.light();
                     },
                     padding: EdgeInsets.zero,
                   ),

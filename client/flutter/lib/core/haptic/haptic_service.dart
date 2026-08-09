@@ -26,19 +26,19 @@ class HapticService {
   }
 
   /// Мягкий тап — нажатие кнопки, выбор чата, переключение таба
-  Future<void> light() async {
+  Future<void> _light() async {
     if (!_enabled) return;
     await HapticFeedback.lightImpact();
   }
 
   /// Средний удар — отправка сообщения, ответ на звонок, toggle
-  Future<void> medium() async {
+  Future<void> _medium() async {
     if (!_enabled) return;
     await HapticFeedback.mediumImpact();
   }
 
   /// Сильный удар — удаление сообщения, выход из чата, важное действие
-  Future<void> heavy() async {
+  Future<void> _heavy() async {
     if (!_enabled) return;
     await HapticFeedback.heavyImpact();
   }
@@ -63,24 +63,23 @@ class HapticService {
 
   /// Контекстные методы — привязка к конкретным действиям
 
-  Future<void> onSendMessage() async => medium();
+  Future<void> onSendMessage() async => _medium();
   Future<void> onReceiveMessage() async => notification();
-  Future<void> onIncomingCall() async => heavy();
-  Future<void> onCallAnswered() async => medium();
-  Future<void> onCallEnded() async => light();
-  Future<void> onReactionAdded() async => light();
-  Future<void> onDeleteMessage() async => heavy();
+  Future<void> onIncomingCall() async => _heavy();
+  Future<void> onCallAnswered() async => _medium();
+  Future<void> onCallEnded() async => _light();
+  Future<void> onReactionAdded() async => _light();
+  Future<void> onDeleteMessage() async => _heavy();
   Future<void> onErrorOccurred() async => error();
   Future<void> onTabSwitch() async => selectionClick();
-  Future<void> onChatOpened() async => light();
-  Future<void> onVoiceRecordStart() async => medium();
-  Future<void> onVoiceRecordStop() async => heavy();
-  Future<void> onStickerSent() async => light();
+  Future<void> onChatOpened() async => _light();
+  Future<void> onVoiceRecordStart() async => _medium();
+  Future<void> onVoiceRecordStop() async => _heavy();
+  Future<void> onStickerSent() async => _light();
   Future<void> onSwipeAction() async => selectionClick();
 
-  // Static convenience methods for quick usage in widgets
-  static Future<void> selection() async => instance.selectionClick();
-  static Future<void> light() async => instance.light();
-  static Future<void> medium() async => instance.medium();
-  static Future<void> heavy() async => instance.heavy();
+  // Public convenience accessors
+  Future<void> light() async => _light();
+  Future<void> medium() async => _medium();
+  Future<void> heavy() async => _heavy();
 }

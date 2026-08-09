@@ -31,7 +31,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
       appBar: AppBar(
         title: const Text('Контакты'),
         actions: [
-          IconButton(icon: const Icon(Icons.search), onPressed: () => HapticService.light()),
+          IconButton(icon: const Icon(Icons.search), onPressed: () => HapticService.instance.light()),
           IconButton(icon: const Icon(Icons.person_add), onPressed: _showAddContact),
           PopupMenuButton(
             itemBuilder: (ctx) => [
@@ -40,7 +40,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
               const PopupMenuItem(value: 'qr', child: Text('QR-код')),
             ],
             onSelected: (v) {
-              HapticService.light();
+              HapticService.instance.light();
               if (v == 'sync') context.read<ContactsBloc>().add(ContactsSyncRequested());
               if (v == 'qr') _showQrCode();
             },
@@ -60,7 +60,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
                 const SizedBox(height: 16),
                 FilledButton(
                   onPressed: () {
-                    HapticService.light();
+                    HapticService.instance.light();
                     context.read<ContactsBloc>().add(ContactsLoadRequested());
                   },
                   child: const Text('Повторить'),
@@ -75,7 +75,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
               subtitle: 'Синхронизируйте телефонную книгу, чтобы найти друзей',
               actionLabel: 'Синхронизировать',
               onAction: () {
-                HapticService.medium();
+                HapticService.instance.medium();
                 context.read<ContactsBloc>().add(ContactsSyncRequested());
               },
             );
@@ -106,7 +106,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
 
   void _showAddContact() {
     final controller = TextEditingController();
-    HapticService.light();
+    HapticService.instance.light();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -184,7 +184,7 @@ class _ContactTile extends StatelessWidget {
           title: contact.displayName,
           subtitle: '@${contact.username}',
           onTap: () {
-          HapticService.light();
+          HapticService.instance.light();
           _showContactSheet(context, contact);
         },
         onLongPress: () => _showContactSheet(context, contact),
@@ -212,7 +212,7 @@ class _ContactTile extends StatelessWidget {
   }
 
   void _showContactSheet(BuildContext context, ContactItem contact) {
-    HapticService.medium();
+    HapticService.instance.medium();
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -240,12 +240,12 @@ class _ContactTile extends StatelessWidget {
               title: 'Действия',
               children: [
                 CharoTile(icon: Icons.chat, title: 'Написать', onTap: () {
-                  HapticService.light();
+                  HapticService.instance.light();
                   Navigator.pop(ctx);
                   context.go('/chat/${contact.userId}');
                 }),
                 CharoTile(icon: Icons.call, title: 'Позвонить', onTap: () {
-                  HapticService.light();
+                  HapticService.instance.light();
                   Navigator.pop(ctx);
                   context.go('/call/${contact.userId}', extra: {
                     'recipientName': contact.displayName,
@@ -255,7 +255,7 @@ class _ContactTile extends StatelessWidget {
                   });
                 }),
                 CharoTile(icon: Icons.videocam, title: 'Видеозвонок', onTap: () {
-                  HapticService.light();
+                  HapticService.instance.light();
                   Navigator.pop(ctx);
                   context.go('/call/${contact.userId}', extra: {
                     'recipientName': contact.displayName,
@@ -265,12 +265,12 @@ class _ContactTile extends StatelessWidget {
                   });
                 }),
                 CharoTile(icon: Icons.block, title: 'Заблокировать', isDestructive: true, onTap: () {
-                  HapticService.light();
+                  HapticService.instance.light();
                   Navigator.pop(ctx);
                   _confirmBlock(context);
                 }),
                 CharoTile(icon: Icons.person_remove, title: 'Удалить контакт', isDestructive: true, onTap: () {
-                  HapticService.light();
+                  HapticService.instance.light();
                   Navigator.pop(ctx);
                   context.read<ContactsBloc>().add(ContactDeleted(userId: contact.userId));
                 }),

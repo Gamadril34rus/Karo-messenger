@@ -33,7 +33,7 @@ class _NearbyScreenState extends State<NearbyScreen> {
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
-              HapticService.medium();
+              HapticService.instance.medium();
               context.read<NearbyBloc>().add(NearbyLoadRequested());
             },
           ),
@@ -52,7 +52,7 @@ class _NearbyScreenState extends State<NearbyScreen> {
                 const SizedBox(height: 16),
                 FilledButton(
                   onPressed: () {
-                    HapticService.light();
+                    HapticService.instance.light();
                     context.read<NearbyBloc>().add(NearbyLoadRequested());
                   },
                   child: const Text('Повторить'),
@@ -105,7 +105,7 @@ class _NearbyScreenState extends State<NearbyScreen> {
                             height: 44,
                             child: GestureDetector(
                               onTap: () {
-                                HapticService.light();
+                                HapticService.instance.light();
                                 _showUserSheet(context, u);
                               },
                               child: Container(
@@ -198,7 +198,7 @@ class _NearbyScreenState extends State<NearbyScreen> {
               children: [
                 Expanded(
                   child: FilledButton.icon(
-                    onPressed: () { HapticService.light(); Navigator.pop(ctx); },
+                    onPressed: () { HapticService.instance.light(); Navigator.pop(ctx); },
                     icon: const Icon(Icons.chat_bubble),
                     label: const Text('Написать'),
                   ),
@@ -206,7 +206,7 @@ class _NearbyScreenState extends State<NearbyScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () { HapticService.light(); Navigator.pop(ctx); },
+                    onPressed: () { HapticService.instance.light(); Navigator.pop(ctx); },
                     icon: const Icon(Icons.call),
                     label: const Text('Позвонить'),
                   ),
@@ -273,6 +273,6 @@ class _NearbyUserTile extends StatelessWidget {
   }
 
   void _showUserSheet(BuildContext context, NearbyUser user) {
-    HapticService.light();
+    HapticService.instance.light();
   }
 }

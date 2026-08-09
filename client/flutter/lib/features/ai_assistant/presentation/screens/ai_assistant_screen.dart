@@ -39,7 +39,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () {
-              HapticService.light();
+              HapticService.instance.light();
               context.read<AiAssistantBloc>().add(AiConversationCreated());
             },
           ),
@@ -51,7 +51,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
               const PopupMenuItem(value: 'sticker', child: Text('Сгенерировать стикер')),
             ],
             onSelected: (v) {
-              HapticService.light();
+              HapticService.instance.light();
               if (v == 'voice') _startVoiceMode();
               if (v == 'translate') _startTranslateMode();
               if (v == 'summarize') _startSummarizeMode();
@@ -190,7 +190,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
   void _sendMessage() {
     final text = _inputController.text.trim();
     if (text.isEmpty) return;
-    HapticService.light();
+    HapticService.instance.light();
     context.read<AiAssistantBloc>().add(AiMessageSent(text: text));
     _inputController.clear();
   }
@@ -200,7 +200,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
   }
 
   void _startVoiceMode() {
-    HapticService.medium();
+    HapticService.instance.medium();
     context.read<AiAssistantBloc>().add(AiVoiceModeRequested());
   }
 
@@ -209,13 +209,13 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
   }
 
   void _startSummarizeMode() {
-    HapticService.light();
+    HapticService.instance.light();
     context.read<AiAssistantBloc>().add(AiSummarizeRequested(chatId: 'current'));
   }
 
   void _startStickerGeneration() {
     final controller = TextEditingController();
-    HapticService.medium();
+    HapticService.instance.medium();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -317,7 +317,7 @@ class _SuggestionChip extends StatelessWidget {
       side: BorderSide(color: context.colors.primary.withOpacity(0.2)),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       onPressed: () {
-        HapticService.light();
+        HapticService.instance.light();
         onTap();
       },
     );

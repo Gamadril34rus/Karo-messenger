@@ -46,10 +46,10 @@ class _TwoFaVerificationScreenState extends State<TwoFaVerificationScreen> {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthAuthenticated) {
-          HapticService.medium();
+          HapticService.instance.medium();
           context.go('/chats');
         } else if (state is AuthError) {
-          HapticService.heavy();
+          HapticService.instance.heavy();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.message), backgroundColor: context.colors.error),
           );
@@ -172,7 +172,7 @@ class _TwoFaVerificationScreenState extends State<TwoFaVerificationScreen> {
   }
 
   void _onVerify() {
-    HapticService.medium();
+    HapticService.instance.medium();
     context.read<AuthBloc>().add(Auth2faVerifyRequested(
       tempToken: _tempToken,
       code: _codeController.text.trim(),

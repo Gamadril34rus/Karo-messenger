@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../core/domain/charo_repository.dart';
 import '../../../../../core/e2ee/e2ee_manager.dart';
+import '../../../../../core/network/api_client.dart' show CharoApiException;
 import '../../../../../core/haptic/haptic_service.dart';
 import '../../../../../core/network/ws_client.dart';
 import '../../../../../core/storage/local_db.dart';

@@ -3,6 +3,7 @@ import 'package:drift/drift.dart' show Value;
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/domain/charo_repository.dart';
+import '../../../../core/network/api_client.dart' show CharoApiException;
 import '../../../../core/storage/local_db.dart' as db;
 import '../../../../core/utils/logger.dart';
 import '../../data/contact_item.dart';

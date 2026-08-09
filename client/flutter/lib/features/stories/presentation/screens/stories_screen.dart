@@ -34,7 +34,7 @@ class _StoriesScreenState extends State<StoriesScreen> {
           IconButton(
             icon: const Icon(Icons.add_a_photo),
             onPressed: () {
-              HapticService.medium();
+              HapticService.instance.medium();
               _publishStory();
             },
           ),
@@ -52,7 +52,7 @@ class _StoriesScreenState extends State<StoriesScreen> {
                 Text(state.message),
                 FilledButton(
                   onPressed: () {
-                    HapticService.light();
+                    HapticService.instance.light();
                     context.read<StoriesBloc>().add(StoriesLoadRequested());
                   },
                   child: const Text('Повторить'),
@@ -75,7 +75,7 @@ class _StoriesScreenState extends State<StoriesScreen> {
               const SizedBox(height: 24),
               FilledButton.icon(
                 onPressed: () {
-                  HapticService.medium();
+                  HapticService.instance.medium();
                   _publishStory();
                 },
                 icon: const Icon(Icons.add_a_photo),
@@ -85,7 +85,7 @@ class _StoriesScreenState extends State<StoriesScreen> {
           );
           return RefreshIndicator(
             onRefresh: () async {
-              HapticService.light();
+              HapticService.instance.light();
               context.read<StoriesBloc>().add(StoriesLoadRequested());
             },
             child: ListView.builder(
@@ -109,17 +109,17 @@ class _StoriesScreenState extends State<StoriesScreen> {
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           Padding(padding: const EdgeInsets.all(16), child: Text('Новая история', style: context.typography.titleLarge)),
           CharoTile(icon: Icons.photo_camera, title: 'Фото', onTap: () {
-            HapticService.light();
+            HapticService.instance.light();
             Navigator.pop(ctx);
             context.go('/story-create', extra: {'storyType': 'image'});
           }),
           CharoTile(icon: Icons.videocam, title: 'Видео', onTap: () {
-            HapticService.light();
+            HapticService.instance.light();
             Navigator.pop(ctx);
             context.go('/story-create', extra: {'storyType': 'video'});
           }),
           CharoTile(icon: Icons.text_fields, title: 'Текст', onTap: () {
-            HapticService.light();
+            HapticService.instance.light();
             Navigator.pop(ctx);
             context.go('/story-create', extra: {'storyType': 'text'});
           }),
@@ -147,7 +147,7 @@ class _StoryTile extends StatelessWidget {
       borderWidth: story.isViewed ? 0 : 1.5,
       borderColor: story.isViewed ? null : context.colors.primary.withOpacity(0.5),
       onTap: () {
-        HapticService.medium();
+        HapticService.instance.medium();
         // Открываем полноэкранный просмотрщик
         final allStories = BlocProvider.of<StoriesBloc>(context).state is StoriesLoaded
             ? (BlocProvider.of<StoriesBloc>(context).state as StoriesLoaded).stories

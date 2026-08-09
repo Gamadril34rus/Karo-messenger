@@ -53,7 +53,7 @@ class _CreateChatScreenState extends State<CreateChatScreen> {
   }
 
   void _toggleUser(UserSearchResult user) {
-    HapticService.light();
+    HapticService.instance.light();
     setState(() {
       if (_selectedUsers.any((u) => u.userId == user.userId)) {
         _selectedUsers.removeWhere((u) => u.userId == user.userId);
@@ -70,7 +70,7 @@ class _CreateChatScreenState extends State<CreateChatScreen> {
     if (_selectedUsers.isEmpty) return;
 
     setState(() => _isCreating = true);
-    HapticService.medium();
+    HapticService.instance.medium();
 
     try {
       final repository = GetIt.instance<CharoRepository>();

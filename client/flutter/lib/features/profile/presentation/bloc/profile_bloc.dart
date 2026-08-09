@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/domain/charo_repository.dart';
+import '../../../../core/network/api_client.dart' show CharoApiException;
 import '../../../../core/network/ws_client.dart';
 
 // ─── Events ────────────────────────────────────────────────────────

@@ -325,7 +325,7 @@ class _SettingsPrivacyScreenState extends State<SettingsPrivacyScreen> {
   // ─── App Lock Settings ─────────────────────────────────────────
 
   void _showAppLockSettings() {
-    HapticService.selection();
+    HapticService.instance.selectionClick();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -341,7 +341,7 @@ class _SettingsPrivacyScreenState extends State<SettingsPrivacyScreen> {
   // ─── Active Sessions ───────────────────────────────────────────
 
   void _showActiveSessions() {
-    HapticService.selection();
+    HapticService.instance.selectionClick();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -355,7 +355,7 @@ class _SettingsPrivacyScreenState extends State<SettingsPrivacyScreen> {
   // ─── Secret Chats Info ─────────────────────────────────────────
 
   void _showSecretChatsInfo() {
-    HapticService.selection();
+    HapticService.instance.selectionClick();
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -434,7 +434,7 @@ class _SettingsPrivacyScreenState extends State<SettingsPrivacyScreen> {
   // ─── Disappearing Timer Picker ─────────────────────────────────
 
   void _showDisappearingTimerPicker() {
-    HapticService.selection();
+    HapticService.instance.selectionClick();
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -535,7 +535,7 @@ class _SettingsPrivacyScreenState extends State<SettingsPrivacyScreen> {
   // ─── Recovery Code Dialog ───────────────────────────────────────
 
   void _showRecoveryCodeDialog(String accountId, String recoveryCode) {
-    HapticService.heavy();
+    HapticService.instance.heavy();
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -658,7 +658,7 @@ class _AppLockSettingsSheetState extends State<_AppLockSettingsSheet> {
               value: _lockEnabled,
               onChanged: (v) {
                 setState(() => _lockEnabled = v);
-                HapticService.medium();
+                HapticService.instance.medium();
               },
             ),
             const SizedBox(height: 16),
@@ -678,7 +678,7 @@ class _AppLockSettingsSheetState extends State<_AppLockSettingsSheet> {
                 selected: {_lockMethod},
                 onSelectionChanged: (v) {
                   setState(() => _lockMethod = v.first);
-                  HapticService.selection();
+                  HapticService.instance.selectionClick();
                   if (_lockMethod == 'biometric') {
                     _checkBiometrics();
                   }
@@ -861,7 +861,7 @@ class _ActiveSessionsSheetState extends State<_ActiveSessionsSheet> {
   }
 
   Future<void> _terminateSession(String sessionId) async {
-    HapticService.medium();
+    HapticService.instance.medium();
     try {
       final sl = GetIt.instance;
       final repository = sl<CharoRepository>();
@@ -880,7 +880,7 @@ class _ActiveSessionsSheetState extends State<_ActiveSessionsSheet> {
   }
 
   Future<void> _terminateAllOtherSessions() async {
-    HapticService.heavy();
+    HapticService.instance.heavy();
     try {
       final sl = GetIt.instance;
       final repository = sl<CharoRepository>();

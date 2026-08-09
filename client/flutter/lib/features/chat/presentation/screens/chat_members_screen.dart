@@ -2,7 +2,14 @@
 import 'package:flutter/material.dart';
 
 class ChatMembersScreen extends StatefulWidget {
-  const ChatMembersScreen({super.key});
+  final String chatId;
+  final String chatTitle;
+
+  const ChatMembersScreen({
+    super.key,
+    required this.chatId,
+    this.chatTitle = 'Чат',
+  });
 
   @override
   State<ChatMembersScreen> createState() => _ChatMembersScreenState();
@@ -11,8 +18,9 @@ class ChatMembersScreen extends StatefulWidget {
 class _ChatMembersScreenState extends State<ChatMembersScreen> {
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
+    return Scaffold(
+      appBar: AppBar(title: Text(widget.chatTitle)),
+      body: const Center(
         child: Text('В разработке'),
       ),
     );

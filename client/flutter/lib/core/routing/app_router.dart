@@ -308,7 +308,7 @@ class MainScaffold extends StatelessWidget {
             NavigationRail(
               selectedIndex: _currentIndex(context),
               onDestinationSelected: (i) {
-                HapticService.selection();
+                HapticService.instance.selectionClick();
                 final routes = ['/chats', '/calls', '/stories', '/contacts', '/settings'];
                 context.go(routes[i]);
               },
@@ -411,7 +411,7 @@ class CharoBottomNav extends StatelessWidget {
         selectedIndex: index,
         onDestinationSelected: (i) {
           // Haptic feedback on tab switch
-          HapticService.selection();
+          HapticService.instance.selectionClick();
           final routes = ['/chats', '/calls', '/stories', '/contacts', '/settings'];
           context.go(routes[i]);
         },

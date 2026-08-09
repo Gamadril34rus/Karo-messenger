@@ -131,12 +131,12 @@ class _StoryViewerScreenState extends State<StoryViewerScreen> {
   }
 
   void _onTapLeft() {
-    HapticService.light();
+    HapticService.instance.light();
     _goToPreviousStory();
   }
 
   void _onTapRight() {
-    HapticService.light();
+    HapticService.instance.light();
     _goToNextStory();
   }
 
@@ -452,13 +452,13 @@ class _StoryViewerScreenState extends State<StoryViewerScreen> {
           IconButton(
             icon: const Icon(Icons.favorite_border, color: Colors.white, size: 24),
             onPressed: () {
-              HapticService.light();
+              HapticService.instance.light();
             },
           ),
           IconButton(
             icon: const Icon(Icons.send, color: Colors.white, size: 24),
             onPressed: () {
-              HapticService.light();
+              HapticService.instance.light();
             },
           ),
         ],

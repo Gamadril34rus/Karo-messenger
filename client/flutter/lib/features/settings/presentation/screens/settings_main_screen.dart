@@ -315,7 +315,7 @@ class SettingsMainScreen extends StatelessWidget {
   }
 
   void _showRecoveryCodeDialog(BuildContext context, String accountId, String recoveryCode) {
-    HapticService.heavy();
+    HapticService.instance.heavy();
     showDialog(
       context: context,
       barrierDismissible: false,

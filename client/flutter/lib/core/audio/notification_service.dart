@@ -61,7 +61,7 @@ class NotificationService {
       requestBadgePermission: true,
       requestSoundPermission: true,
     );
-    const linuxSettings = LinuxInitializationSettings(defaultActionIcon: null);
+    const linuxSettings = LinuxInitializationSettings();
     const macosSettings = DarwinInitializationSettings();
 
     const initSettings = InitializationSettings(
@@ -108,7 +108,7 @@ class NotificationService {
   }) async {
     if (!_pushEnabled) return;
 
-    const androidDetails = AndroidNotificationDetails(
+    final androidDetails = AndroidNotificationDetails(
       'charo_messages',
       'ЧАРО — Сообщения',
       channelDescription: 'Входящие сообщения в ЧАРО',
@@ -117,7 +117,7 @@ class NotificationService {
       showWhen: true,
       enableVibration: true,
       playSound: true,
-      sound: RawResourceAndroidNotificationSound('charo_message'),
+      sound: const RawResourceAndroidNotificationSound('charo_message'),
       category: AndroidNotificationCategory.message,
       styleInformation: BigTextStyleInformation(messageText),
     );
@@ -130,7 +130,7 @@ class NotificationService {
       categoryIdentifier: 'charo_message',
     );
 
-    const notificationDetails = NotificationDetails(
+    final notificationDetails = NotificationDetails(
       android: androidDetails,
       iOS: iosDetails,
     );
@@ -164,7 +164,7 @@ class NotificationService {
       showWhen: true,
       enableVibration: true,
       playSound: true,
-      sound: RawResourceAndroidNotificationSound('charo_call'),
+      sound: const RawResourceAndroidNotificationSound('charo_call'),
       category: AndroidNotificationCategory.call,
       fullScreenIntent: true,
       autoCancel: false,
