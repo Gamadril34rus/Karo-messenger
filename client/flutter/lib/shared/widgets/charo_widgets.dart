@@ -372,7 +372,7 @@ class _CharoAvatarState extends State<CharoAvatar>
                 width: widget.radius * 0.45,
                 height: widget.radius * 0.45,
                 decoration: BoxDecoration(
-                  color: colors.success,
+                  color: colors.primary,
                   shape: BoxShape.circle,
                   border: Border.all(
                     color: colors.surface,

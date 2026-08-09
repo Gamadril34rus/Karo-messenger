@@ -182,7 +182,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       CharoSwitchTile(
                         icon: Icons.cake_outlined,
-                        iconColor: context.colors.warning,
+                        iconColor: context.warning,
                         title: 'Я старше 13 лет',
                         subtitle: 'ЧАРО доступен только для пользователей 13+',
                         value: _ageConfirmed,
@@ -190,7 +190,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       CharoSwitchTile(
                         icon: Icons.gavel_outlined,
-                        iconColor: context.colors.info,
+                        iconColor: context.info,
                         title: 'Принимаю Условия использования',
                         subtitle: 'AGPL-3.0 | Права и обязанности',
                         value: _termsAccepted,

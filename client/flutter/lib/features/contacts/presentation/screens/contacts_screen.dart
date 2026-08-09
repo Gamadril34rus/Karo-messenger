@@ -79,10 +79,6 @@ class _ContactsScreenState extends State<ContactsScreen> {
                 context.read<ContactsBloc>().add(ContactsSyncRequested());
               },
             );
-                child: const Text('Синхронизировать'),
-              ),
-            ]),
-          );
           final online = contacts.where((c) => c.isOnline).toList();
           final offline = contacts.where((c) => !c.isOnline).toList();
           return ListView(
@@ -184,7 +180,7 @@ class _ContactTile extends StatelessWidget {
         isBlocked: false,
         child: CharoTile(
           icon: Icons.person,
-          iconColor: contact.isOnline ? context.colors.success : context.colors.onSurface.withOpacity(0.5),
+          iconColor: contact.isOnline ? context.success : context.colors.onSurface.withOpacity(0.5),
           title: contact.displayName,
           subtitle: '@${contact.username}',
           onTap: () {

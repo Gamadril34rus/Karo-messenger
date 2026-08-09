@@ -83,10 +83,10 @@ class _AccountRecoveryScreenState extends State<AccountRecoveryScreen> {
                 width: 64,
                 height: 64,
                 decoration: BoxDecoration(
-                  color: context.colors.success.withOpacity(0.1),
+                  color: context.success.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.restore, size: 32, color: context.colors.success),
+                child: Icon(Icons.restore, size: 32, color: context.success),
               ),
               const SizedBox(height: 24),
               Text(
@@ -151,16 +151,16 @@ class _AccountRecoveryScreenState extends State<AccountRecoveryScreen> {
               // Important notice
               CharoCard(
                 borderWidth: 1,
-                borderColor: context.colors.warning.withOpacity(0.3),
+                borderColor: context.warning.withOpacity(0.3),
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(children: [
-                      Icon(Icons.info_outline, color: context.colors.warning, size: 20),
+                      Icon(Icons.info_outline, color: context.warning, size: 20),
                       const SizedBox(width: 8),
                       Text('Важно', style: context.typography.titleMedium?.copyWith(
-                        color: context.colors.warning,
+                        color: context.warning,
                         fontWeight: FontWeight.w600,
                       )),
                     ]),
@@ -189,7 +189,7 @@ class _AccountRecoveryScreenState extends State<AccountRecoveryScreen> {
                         : const Icon(Icons.restore),
                     label: const Text('Восстановить аккаунт'),
                     style: FilledButton.styleFrom(
-                      backgroundColor: context.colors.success,
+                      backgroundColor: context.success,
                     ),
                   );
                 },

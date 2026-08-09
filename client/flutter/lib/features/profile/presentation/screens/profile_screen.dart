@@ -134,7 +134,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             height: 8,
                             decoration: BoxDecoration(
                               color: profile.isOnline
-                                  ? context.colors.success
+                                  ? context.success
                                   : context.colors.onSurface.withOpacity(0.3),
                               shape: BoxShape.circle,
                             ),
@@ -146,7 +146,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 : 'был(а) ${_formatLastSeen(profile.lastSeen)}',
                             style: context.typography.bodyMedium?.copyWith(
                               color: profile.isOnline
-                                  ? context.colors.success
+                                  ? context.success
                                   : context.colors.onSurface.withOpacity(0.5),
                             ),
                           ),

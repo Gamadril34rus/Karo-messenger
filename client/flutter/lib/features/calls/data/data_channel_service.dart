@@ -34,7 +34,7 @@ class DataChannelService {
   DataChannelService();
 
   /// Создание DataChannel (для инициатора звонка)
-  void createDataChannel(RTCPeerConnection peerConnection) {
+  Future<void> createDataChannel(RTCPeerConnection peerConnection) async {
     _peerConnection = peerConnection;
 
     final config = RTCDataChannelInit()
@@ -42,14 +42,14 @@ class DataChannelService {
       ..maxRetransmits = 3
       ..protocol = 'charo-chat-v1';
 
-    _dataChannel = peerConnection.createDataChannel('charo-chat', config);
+    _dataChannel = await peerConnection.createDataChannel('charo-chat', config);
     _setupDataChannelHandlers();
 
     logger.i('📡 DataChannel "charo-chat" created (ordered=true, maxRetransmits=3)');
   }
 
   /// Подключение к существующему DataChannel (для отвечающего)
-  void connectToDataChannel(RTCDataChannel dataChannel) {
+  Future<void> connectToDataChannel(RTCDataChannel dataChannel) async {
     _dataChannel = dataChannel;
     _setupDataChannelHandlers();
     logger.i('📡 DataChannel "charo-chat" connected');

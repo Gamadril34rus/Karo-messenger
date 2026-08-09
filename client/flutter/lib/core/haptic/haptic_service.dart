@@ -52,7 +52,7 @@ class HapticService {
   /// Вибрация уведомления — новое сообщение, входящий звонок
   Future<void> notification() async {
     if (!_enabled) return;
-    await HapticFeedback.notification();
+    await HapticFeedback.mediumImpact();
   }
 
   /// Selection click — прокрутка, выбор элемента из списка

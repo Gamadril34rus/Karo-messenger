@@ -175,7 +175,7 @@ class _CallTile extends StatelessWidget {
                       Icon(
                         isIncoming ? Icons.call_received : Icons.call_made,
                         size: 14,
-                        color: isMissed ? colors.error : context.colors.success,
+                        color: isMissed ? colors.error : context.success,
                       ),
                       const SizedBox(width: 4),
                       Text(

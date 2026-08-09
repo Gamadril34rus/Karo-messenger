@@ -217,7 +217,7 @@ class _LoginScreenState extends State<LoginScreen>
                 ),
                 const SizedBox(height: 12),
                 _OAuthButton(
-                  icon: Icons.vk_plus,
+                  icon: Icons.group,
                   label: 'Войти через VK',
                   onTap: () => context.read<AuthBloc>().add(
                         AuthOAuthRequested(provider: 'vk'),

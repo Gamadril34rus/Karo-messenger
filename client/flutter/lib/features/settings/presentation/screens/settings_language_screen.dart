@@ -54,7 +54,7 @@ class _SettingsLanguageScreenState extends State<SettingsLanguageScreen> {
                 ? [context.colors.primary.withOpacity(0.06), context.colors.outlineVariant]
                 : null,
             child: CharoTile(
-              icon: Icons.language_outlined,
+              icon: Icons.language,
               iconColor: context.colors.primary,
               title: 'Системный язык',
               subtitle: 'Автоматически по настройкам устройства',

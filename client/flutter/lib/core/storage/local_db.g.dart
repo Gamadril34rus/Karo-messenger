@@ -290,9 +290,15 @@ class LocalChatsCompanion extends UpdateCompanion<LocalChat> {
     this.isMuted = const Value(false),
     this.isPinned = const Value(false),
     this.isArchived = const Value(false),
+<<<<<<< HEAD
     required DateTime updatedAt,
     required DateTime createdAt,
   }) : this.id = Value(id), this.updatedAt = Value(updatedAt), this.createdAt = Value(createdAt);
+=======
+    this.updatedAt = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  }) : this.id = Value(id);
+>>>>>>> 399f349361b1275044970c6dc76f8a29abaf04dd
 }
 
 class LocalMessagesCompanion extends UpdateCompanion<LocalMessage> {

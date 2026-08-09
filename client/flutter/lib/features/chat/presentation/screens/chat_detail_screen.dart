@@ -312,7 +312,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                               ? '$memberCount участников'
                               : 'был(а) недавно',
                       style: context.typography.bodySmall?.copyWith(
-                        color: isOnline ? context.colors.success : context.colors.onSurface.withOpacity(0.5),
+                        color: isOnline ? context.success : context.colors.onSurface.withOpacity(0.5),
                       ),
                     ),
                   ],

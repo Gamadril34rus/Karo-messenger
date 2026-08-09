@@ -135,16 +135,16 @@ class _TwoFaVerificationScreenState extends State<TwoFaVerificationScreen> {
               // Recovery codes info
               CharoCard(
                 borderWidth: 1,
-                borderColor: context.colors.warning.withOpacity(0.3),
+                borderColor: context.warning.withOpacity(0.3),
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(children: [
-                      Icon(Icons.info_outline, color: context.colors.warning, size: 20),
+                      Icon(Icons.info_outline, color: context.warning, size: 20),
                       const SizedBox(width: 8),
                       Text('Коды восстановления', style: context.typography.titleMedium?.copyWith(
-                        color: context.colors.warning,
+                        color: context.warning,
                         fontWeight: FontWeight.w600,
                       )),
                     ]),
