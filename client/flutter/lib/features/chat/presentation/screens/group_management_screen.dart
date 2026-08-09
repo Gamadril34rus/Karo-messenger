@@ -29,7 +29,7 @@ class GroupManagementScreen extends StatefulWidget {
 class _GroupManagementScreenState extends State<GroupManagementScreen> {
   late TextEditingController _titleController;
   bool _isLoading = false;
-  List<GroupMember> _members = [];
+  List<ListTile> _members = [];
   late GroupManagementService _groupService;
 
   @override
@@ -180,7 +180,7 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
     );
   }
 
-  Widget _buildMemberTile(BuildContext context, GroupMember member) {
+  Widget _buildMemberTile(BuildContext context, ListTile member) {
     final roleLabel = member.role == 'OWNER' ? '👑 Владелец'
         : member.role == 'ADMIN' ? '⭐ Админ' : '';
     return CharoTile(
@@ -205,7 +205,7 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
     // Show contact picker — navigate to contacts screen
   }
 
-  void _handleMemberAction(String action, GroupMember member) async {
+  void _handleMemberAction(String action, ListTile member) async {
     try {
       if (action == 'admin') {
         await _groupService.updateMemberRole(

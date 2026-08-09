@@ -165,7 +165,7 @@ class _ChatMembersScreenState extends State<ChatMembersScreen> {
       iconColor: member.isOnline ? const Color(0xFF10B981) : context.colors.onSurface.withOpacity(0.4),
       title: member.displayName ?? member.username,
       subtitle: roleLabel ?? (member.isOnline ? 'В сети' : null),
-      leading: CharoAvatar(
+      CharoAvatar(
         radius: 22,
         imageUrl: member.avatarUrl,
         fallbackText: member.displayName ?? member.username,
@@ -177,7 +177,7 @@ class _ChatMembersScreenState extends State<ChatMembersScreen> {
 
   void _addMember() {
     // Navigate to contact picker screen
-    Navigator.of(context).pushNamed('/contact-picker/${widget.chatId}', extra: {
+    Navigator.of(context).pushNamed('/contact-picker/${widget.chatId}', {
       'multiSelect': true,
       'title': 'Добавить участников',
     });
@@ -185,7 +185,7 @@ class _ChatMembersScreenState extends State<ChatMembersScreen> {
 
   void _viewMemberProfile(ChatMemberInfo member) {
     // Navigate to user profile
-    Navigator.of(context).pushReplacementNamed('profile', parameters: {'id': member.userId});
+    Navigator.of(context).pushReplacementNamed('profile', arguments: {'id': member.userId});
   }
 }
 
