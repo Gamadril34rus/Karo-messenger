@@ -141,19 +141,16 @@ jobs:
       - name: Build APK
         working-directory: client/flutter
         run: flutter build apk --release --split-per-abi
-        continue-on-error: true
 
       - name: Build App Bundle
         working-directory: client/flutter
         run: flutter build appbundle --release
-        continue-on-error: true
 
       - name: Upload APK artifacts
         uses: actions/upload-artifact@v4
         with:
           name: charo-android-apk
           path: client/flutter/build/app/outputs/flutter-apk/*.apk
-        continue-on-error: true
 
   # ─── Build iOS ─────────────────────────────────────────────────────
   build-ios:
@@ -177,12 +174,10 @@ jobs:
       - name: Install CocoaPods
         working-directory: client/flutter/ios
         run: pod install
-        continue-on-error: true
 
       - name: Build iOS
         working-directory: client/flutter
         run: flutter build ios --release --no-codesign
-        continue-on-error: true
 
   # ─── Build Windows ─────────────────────────────────────────────────
   build-windows:
@@ -206,14 +201,12 @@ jobs:
       - name: Build Windows
         working-directory: client/flutter
         run: flutter build windows --release
-        continue-on-error: true
 
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
           name: charo-windows
           path: client/flutter/build/windows/x64/runner/Release/
-        continue-on-error: true
 
   # ─── Build Linux ───────────────────────────────────────────────────
   build-linux:
@@ -242,14 +235,12 @@ jobs:
       - name: Build Linux
         working-directory: client/flutter
         run: flutter build linux --release
-        continue-on-error: true
 
       - name: Upload Linux artifact
         uses: actions/upload-artifact@v4
         with:
           name: charo-linux
           path: client/flutter/build/linux/x64/release/bundle/
-        continue-on-error: true
 
   # ─── Build macOS ───────────────────────────────────────────────────
   build-macos:
@@ -273,19 +264,16 @@ jobs:
       - name: Install CocoaPods (macOS)
         working-directory: client/flutter/macos
         run: pod install
-        continue-on-error: true
 
       - name: Build macOS
         working-directory: client/flutter
         run: flutter build macos --release
-        continue-on-error: true
 
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
         with:
           name: charo-macos
           path: client/flutter/build/macos/Build/Products/Release/*.app
-        continue-on-error: true
 
   # ─── Deploy Web ────────────────────────────────────────────────────
   deploy-web:
@@ -311,7 +299,6 @@ jobs:
       - name: Build Web
         working-directory: client/flutter
         run: flutter build web --release --web-renderer canvaskit
-        continue-on-error: true
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
@@ -319,7 +306,6 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: client/flutter/build/web
           publish_branch: gh-pages
-        continue-on-error: true
 
   # ─── Build Server ──────────────────────────────────────────────────
   build-server:
@@ -338,7 +324,6 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-        continue-on-error: true
 
       - name: Build and Push Server Image
         uses: docker/build-push-action@v6
@@ -348,7 +333,6 @@ jobs:
           tags: |
             charo-messenger/server:${{ github.sha }}
             charo-messenger/server:latest
-        continue-on-error: true
 
   # ─── Legacy Name & Stubs Check ─────────────────────────────────────
   charo-check:
