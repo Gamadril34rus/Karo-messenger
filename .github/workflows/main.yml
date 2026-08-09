@@ -143,26 +143,33 @@ jobs:
         run: |
           flutter create . --platforms=android
           # Enable core library desugaring (required by flutter_local_notifications)
-          # Patch android/app/build.gradle.kts to add compileOptions and desugaring dependency
-          python3 -c "
-          import re
+          # Show current file for debugging
+          echo "=== Before patch ==="
+          cat android/app/build.gradle.kts
+          # Use Python to patch the file more robustly
+          python3 << 'PYEOF'
           with open('android/app/build.gradle.kts', 'r') as f:
               content = f.read()
-          # Add isCoreLibraryDesugaringEnabled in compileOptions (inside android block)
+          # Add compileOptions with desugaring enabled after any compileSdk line
           if 'isCoreLibraryDesugaringEnabled' not in content:
-              content = content.replace(
-                  'compileSdk = flutter.compileSdkVersion',
-                  'compileSdk = flutter.compileSdkVersion\n    compileOptions {\n        isCoreLibraryDesugaringEnabled = true\n    }'
+              import re
+              content = re.sub(
+                  r'(compileSdk\s*=\s*[^\n]+)',
+                  r'\1\n    compileOptions {\n        isCoreLibraryDesugaringEnabled = true\n    }',
+                  content,
+                  count=1
               )
-          # Add coreLibraryDesugaring dependency
+          # Add coreLibraryDesugaring dependency after the last implementation() line in dependencies block
           if 'coreLibraryDesugaring' not in content:
               content = content.replace(
-                  'implementation(flutter.embedding)',
-                  'implementation(flutter.embedding)\n    coreLibraryDesugaring(\"com.android.tools:desugar_jdk_libs:2.1.4\")'
+                  'testImplementation("junit:junit:4.13.2")',
+                  'coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")\n    testImplementation("junit:junit:4.13.2")'
               )
           with open('android/app/build.gradle.kts', 'w') as f:
               f.write(content)
-          "
+          PYEOF
+          echo "=== After patch ==="
+          cat android/app/build.gradle.kts
           flutter pub get
           dart run build_runner build --delete-conflicting-outputs 2>/dev/null || true
 
