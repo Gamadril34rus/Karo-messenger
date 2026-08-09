@@ -65,8 +65,11 @@ class E2EEKeyManager {
   }
 
   /// Decrypt with recovery key for account recovery flow (stub)
-  Future<String> decryptWithRecovery(String remoteUserId, Map<String, dynamic> payload) async {
+  Future<String> decryptWithRecovery(String remoteUserId, dynamic payload) async {
     logger.w('E2EE: Decrypt with recovery is stub — returning raw payload');
-    return payload['ciphertext']?.toString() ?? '';
+    if (payload is Map<String, dynamic>) {
+      return payload['ciphertext']?.toString() ?? '';
+    }
+    return payload?.toString() ?? '';
   }
 }

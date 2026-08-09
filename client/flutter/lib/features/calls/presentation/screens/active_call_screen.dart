@@ -351,7 +351,7 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
   void _switchCamera() {
     HapticService.instance.medium();
     // Switch front/back camera
-    _peerConnection?.getSenders().then((senders) {
+    _peerConnection?.getSenders().then((senders) async {
       for (final sender in senders) {
         if (sender.track?.kind == 'video') {
           // Helper method in flutter_webrtc
