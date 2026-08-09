@@ -143,37 +143,43 @@ jobs:
         run: |
           flutter create . --platforms=android
           # Patch build.gradle.kts for core library desugaring (required by flutter_local_notifications)
-          python3 << 'PYEOF'
-          with open('android/app/build.gradle.kts', 'r') as f:
+          python3 -c "
+          import re
+          gradle_file = 'android/app/build.gradle.kts'
+          with open(gradle_file, 'r') as f:
               content = f.read()
-          print("=== build.gradle.kts START ===")
-          print(content[:3000])
-          print("=== build.gradle.kts END ===")
+          print('=== FILE LENGTH: ' + str(len(content)) + ' ===')
           # 1) Enable desugaring in existing compileOptions block
           if 'isCoreLibraryDesugaringEnabled' not in content:
               content = content.replace(
                   'compileOptions {',
                   'compileOptions {\n        isCoreLibraryDesugaringEnabled = true'
               )
+              print('Added isCoreLibraryDesugaringEnabled')
           # 2) Add coreLibraryDesugaring dependency — search for any dependencies block format
           if 'coreLibraryDesugaring' not in content:
-              import re
-              # Match "dependencies {" with possible whitespace
               content = re.sub(
                   r'(dependencies\s*\{)',
-                  r'\1\n    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.12.1")',
+                  r'\1\n    coreLibraryDesugaring(\"com.android.tools:desugar_jdk_libs:2.12.1\")',
                   content,
                   count=1
               )
-          with open('android/app/build.gradle.kts', 'w') as f:
+              print('Added coreLibraryDesugaring dependency')
+          with open(gradle_file, 'w') as f:
               f.write(content)
-          print("Patched build.gradle.kts for desugaring")
-          with open('android/app/build.gradle.kts', 'r') as f:
+          print('Patched build.gradle.kts for desugaring')
+          # Verify
+          with open(gradle_file, 'r') as f:
               content = f.read()
-          print("=== PATCHED START ===")
-          print(content[:3000])
-          print("=== PATCHED END ===")
-          PYEOF
+          if 'isCoreLibraryDesugaringEnabled' in content:
+              print('VERIFIED: desugaring enabled')
+          else:
+              print('ERROR: desugaring NOT enabled!')
+          if 'coreLibraryDesugaring' in content:
+              print('VERIFIED: coreLibraryDesugaring dependency added')
+          else:
+              print('ERROR: coreLibraryDesugaring dependency NOT added!')
+          "
           flutter pub get
           dart run build_runner build --delete-conflicting-outputs 2>/dev/null || true
 
