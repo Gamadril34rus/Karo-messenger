@@ -79,7 +79,7 @@ dependencies:
   sign_in_with_apple: ^8.1.0
 
   # Crash reporting
-  sentry_flutter: ^8.4.0
+  sentry: ^8.4.0
 
   # Utils
   intl: ^0.20.2

@@ -1,11 +1,11 @@
 // © 2024-2026 Бутаев Алексей Юрьевич. All rights reserved. PROPRIETARY AND CONFIDENTIAL.
 import 'package:flutter/foundation.dart';
-import 'package:sentry_flutter/sentry_flutter.dart';
+import 'package:sentry/sentry.dart';
 
 import '../utils/logger.dart';
 
-/// Сервис отчётности о сбоях — Sentry
-/// Отправляет ошибки и crash-отчёты,Breadcrumb для отладки
+/// Сервис отчётности о сбоях — Sentry (Dart SDK)
+/// Отправляет ошибки и crash-отчёты, Breadcrumb для отладки
 class CrashReportingService {
   static CrashReportingService? _instance;
   static CrashReportingService get instance => _instance ??= CrashReportingService._();
@@ -25,7 +25,7 @@ class CrashReportingService {
     }
 
     try {
-      await SentryFlutter.init(
+      await Sentry.init(
         (options) {
           options.dsn = sentryDsn;
           options.tracesSampleRate = kDebugMode ? 0.0 : 1.0;
@@ -35,9 +35,6 @@ class CrashReportingService {
           options.attachStacktrace = true;
           options.sendDefaultPii = false; // GDPR: не отправлять PII по умолчанию
           options.maxBreadcrumbs = 100;
-          options.enableAutoSessionTracking = true;
-          options.reportSilentFlutterErrors = true;
-          options.enableTimeToFullDisplayTracing = true;
         },
       );
       _isInitialized = true;
