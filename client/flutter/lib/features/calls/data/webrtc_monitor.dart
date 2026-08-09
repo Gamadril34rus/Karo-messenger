@@ -219,15 +219,16 @@ class WebRtcMonitor {
             parameters.encodings[0].maxFramerate = fps;
 
             // Enable simulcast: add low/mid/high encodings
-            if (simulcastEnabled && parameters.encodings.length >= 3) {
-              parameters.encodings[0].rid = 'high';
-              parameters.encodings[0].maxBitrate = maxBitrate.toInt();
-              parameters.encodings[1].rid = 'mid';
-              parameters.encodings[1].maxBitrate = (maxBitrate * 0.5).toInt();
-              parameters.encodings[1].maxFramerate = (fps * 0.67).toInt();
-              parameters.encodings[2].rid = 'low';
-              parameters.encodings[2].maxBitrate = (maxBitrate * 0.25).toInt();
-              parameters.encodings[2].maxFramerate = (fps * 0.5).toInt();
+            final encodings = parameters.encodings;
+            if (simulcastEnabled && encodings != null && encodings.length >= 3) {
+              encodings[0].rid = 'high';
+              encodings[0].maxBitrate = maxBitrate.toInt();
+              encodings[1].rid = 'mid';
+              encodings[1].maxBitrate = (maxBitrate * 0.5).toInt();
+              encodings[1].maxFramerate = (fps * 0.67).toInt();
+              encodings[2].rid = 'low';
+              encodings[2].maxBitrate = (maxBitrate * 0.25).toInt();
+              encodings[2].maxFramerate = (fps * 0.5).toInt();
             }
           }
 
@@ -236,8 +237,8 @@ class WebRtcMonitor {
           });
 
           // Apply resolution/fps constraints on the video track
-          sender.track!.setEnabled(true);
-          logger.i('WebRTC: Video settings applied — $codec $width×$height $fpsfps');
+          sender.track!.enabled = true;
+          logger.i('WebRTC: Video settings applied — $codec $width×$height ${fps}fps');
         }
       }
     }).catchError((e) {
@@ -254,7 +255,7 @@ class WebRtcMonitor {
     _peerConnection!.getSenders().then((senders) {
       for (final sender in senders) {
         if (sender.track?.kind == 'video') {
-          sender.track!.setEnabled(false);
+          sender.track!.enabled = false;
           logger.i('WebRTC: Video track disabled');
         }
       }

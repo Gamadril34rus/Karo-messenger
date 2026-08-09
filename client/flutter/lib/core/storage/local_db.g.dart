@@ -292,7 +292,7 @@ class LocalChatsCompanion extends UpdateCompanion<LocalChat> {
     this.isArchived = const Value(false),
     required DateTime updatedAt,
     required DateTime createdAt,
-  }) : this.id = Value(id);
+  }) : this.id = Value(id), this.updatedAt = Value(updatedAt), this.createdAt = Value(createdAt);
 }
 
 class LocalMessagesCompanion extends UpdateCompanion<LocalMessage> {
