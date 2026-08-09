@@ -143,16 +143,26 @@ jobs:
         run: |
           flutter create . --platforms=android
           # Enable core library desugaring (required by flutter_local_notifications)
-          if grep -q 'coreLibraryDesugaring' android/app/build.gradle.kts; then
-            echo "Desugaring already configured"
-          else
-            sed -i '/^dependencies {/a\    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")' android/app/build.gradle.kts
-          fi
-          if grep -q 'isCoreLibraryDesugaringEnabled' android/app/build.gradle.kts; then
-            echo "Desugaring flag already set"
-          else
-            sed -i '/^android {/a\    compileOptions {\n        isCoreLibraryDesugaringEnabled = true\n    }' android/app/build.gradle.kts
-          fi
+          # Patch android/app/build.gradle.kts to add compileOptions and desugaring dependency
+          python3 -c "
+          import re
+          with open('android/app/build.gradle.kts', 'r') as f:
+              content = f.read()
+          # Add isCoreLibraryDesugaringEnabled in compileOptions (inside android block)
+          if 'isCoreLibraryDesugaringEnabled' not in content:
+              content = content.replace(
+                  'compileSdk = flutter.compileSdkVersion',
+                  'compileSdk = flutter.compileSdkVersion\n    compileOptions {\n        isCoreLibraryDesugaringEnabled = true\n    }'
+              )
+          # Add coreLibraryDesugaring dependency
+          if 'coreLibraryDesugaring' not in content:
+              content = content.replace(
+                  'implementation(flutter.embedding)',
+                  'implementation(flutter.embedding)\n    coreLibraryDesugaring(\"com.android.tools:desugar_jdk_libs:2.1.4\")'
+              )
+          with open('android/app/build.gradle.kts', 'w') as f:
+              f.write(content)
+          "
           flutter pub get
           dart run build_runner build --delete-conflicting-outputs 2>/dev/null || true
 
