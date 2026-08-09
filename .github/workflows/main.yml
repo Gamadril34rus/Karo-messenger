@@ -164,8 +164,18 @@ jobs:
           # Also set global compileSdk override via gradle.properties
           gradle_props = 'android/gradle.properties'
           with open(gradle_props, 'a') as f:
-              f.write('\nandroid.useAndroidX=true\nandroid.compileSdk=36\n')
-          print('Set android.compileSdk=36 in gradle.properties')
+              f.write('\nandroid.useAndroidX=true\n')
+          print('Set android.useAndroidX in gradle.properties')
+          # Patch ALL plugin build.gradle.kts files to use compileSdk 36
+          import glob
+          for gfile in glob.glob('android/**/build.gradle.kts', recursive=True):
+              with open(gfile, 'r') as f:
+                  gcontent = f.read()
+              if 'compileSdk' in gcontent and 'compileSdk = 36' not in gcontent:
+                  gcontent = re.sub(r'compileSdk\s*=\s*\d+', 'compileSdk = 36', gcontent)
+                  with open(gfile, 'w') as f:
+                      f.write(gcontent)
+                  print(f'Patched compileSdk=36 in {gfile}')
           # 2) Add coreLibraryDesugaring dependency
           if 'coreLibraryDesugaring' not in content:
               if 'dependencies' in content:
