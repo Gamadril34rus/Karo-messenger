@@ -148,11 +148,15 @@ jobs:
 
       - name: Build APK
         working-directory: client/flutter
-        run: flutter build apk --release --split-per-abi
+        run: |
+          rm -rf android/app/src/main/java/io
+          flutter build apk --release --split-per-abi --no-pub
 
       - name: Build App Bundle
         working-directory: client/flutter
-        run: flutter build appbundle --release
+        run: |
+          rm -rf android/app/src/main/java/io
+          flutter build appbundle --release --no-pub
 
       - name: Upload APK artifacts
         uses: actions/upload-artifact@v4
