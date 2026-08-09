@@ -142,13 +142,17 @@ jobs:
         working-directory: client/flutter
         run: |
           flutter create . --platforms=android
-          # Print current Kotlin config for debugging
-          echo "=== android/settings.gradle.kts ==="
-          cat android/settings.gradle.kts 2>/dev/null || true
-          echo "=== android/build.gradle.kts ==="
-          cat android/build.gradle.kts 2>/dev/null || true
-          echo "=== android/app/build.gradle.kts ==="
-          head -30 android/app/build.gradle.kts 2>/dev/null || true
+          # Enable core library desugaring (required by flutter_local_notifications)
+          if grep -q 'coreLibraryDesugaring' android/app/build.gradle.kts; then
+            echo "Desugaring already configured"
+          else
+            sed -i '/^dependencies {/a\    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")' android/app/build.gradle.kts
+          fi
+          if grep -q 'isCoreLibraryDesugaringEnabled' android/app/build.gradle.kts; then
+            echo "Desugaring flag already set"
+          else
+            sed -i '/^android {/a\    compileOptions {\n        isCoreLibraryDesugaringEnabled = true\n    }' android/app/build.gradle.kts
+          fi
           flutter pub get
           dart run build_runner build --delete-conflicting-outputs 2>/dev/null || true
 
