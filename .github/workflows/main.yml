@@ -143,20 +143,14 @@ jobs:
         run: |
           flutter create . --platforms=android
           flutter pub get
-          rm -rf android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
-          rm -rf android/app/src/main/java/io
 
       - name: Build APK
         working-directory: client/flutter
-        run: |
-          rm -rf android/app/src/main/java/io
-          flutter build apk --release --split-per-abi --no-pub
+        run: flutter build apk --release --split-per-abi --no-pub
 
       - name: Build App Bundle
         working-directory: client/flutter
-        run: |
-          rm -rf android/app/src/main/java/io
-          flutter build appbundle --release --no-pub
+        run: flutter build appbundle --release --no-pub
 
       - name: Upload APK artifacts
         uses: actions/upload-artifact@v4

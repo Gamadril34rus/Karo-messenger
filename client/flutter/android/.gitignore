@@ -1,6 +1,0 @@
-.gradle/
-.idea/
-*.iml
-local.properties
-build/
-app/src/main/java/io/flutter/plugins/
