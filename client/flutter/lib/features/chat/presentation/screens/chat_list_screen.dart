@@ -163,11 +163,11 @@ class _ChatListScreenState extends State<ChatListScreen> {
                           ],
                         ),
                       ),
-                      _PremiumChatTile(chat: chat),
+                      _PremiumChatTile(chat: chat, onSelectChat: _selectChat),
                     ],
                   );
                 }
-                return _PremiumChatTile(chat: chat);
+                return _PremiumChatTile(chat: chat, onSelectChat: _selectChat);
               },
             ),
           );
@@ -319,8 +319,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
 /// Premium chat tile with avatar, online indicator, unread badge, and actions
 class _PremiumChatTile extends StatelessWidget {
   final ChatItem chat;
+  final void Function(String chatId)? onSelectChat;
 
-  const _PremiumChatTile({required this.chat});
+  const _PremiumChatTile({required this.chat, this.onSelectChat});
 
   @override
   Widget build(BuildContext context) {
@@ -338,9 +339,16 @@ class _PremiumChatTile extends StatelessWidget {
           child: InkWell(
             borderRadius: BorderRadius.circular(16),
             onTap: () {
-              context.go('/chat/${chat.id}');
+              final isDesktop = ResponsiveLayout.isDesktop(context);
+              if (isDesktop) {
+                // Desktop: select chat in master-detail
+                onSelectChat?.call(chat.id);
+              } else {
+                // Mobile: navigate to detail
+                context.go('/chat/${chat.id}');
+              }
             },
-            onLongPress: () {},
+            onLongPress: () => _showChatActions(context),
           child: Container(
             margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),

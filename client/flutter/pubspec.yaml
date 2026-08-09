@@ -53,7 +53,7 @@ dependencies:
   video_player: ^2.9.2
   audioplayers: ^6.1.0
   audio_waveforms: ^1.1.1
-  record: ^5.2.0
+  record: ^5.1.2
   photo_manager: ^3.6.2
   image_cropper: ^8.1.0
 

@@ -109,7 +109,7 @@ final class AuthLogoutRequested extends AuthEvent {}
 final class AuthDeleteAccountRequested extends AuthEvent {
   final String confirmation; // Пользователь должен ввести "DELETE"
 
-  AuthDeleteAccountRequested({required this.confirmation});
+  const AuthDeleteAccountRequested({required this.confirmation});
 
   @override
   List<Object?> get props => [confirmation];

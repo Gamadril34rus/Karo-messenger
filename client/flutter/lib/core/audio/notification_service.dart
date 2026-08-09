@@ -61,7 +61,7 @@ class NotificationService {
       requestBadgePermission: true,
       requestSoundPermission: true,
     );
-    const linuxSettings = LinuxInitializationSettings(defaultActionName: 'charo_message');
+    const linuxSettings = LinuxInitializationSettings(defaultActionName: 'Открыть уведомление');
     const macosSettings = DarwinInitializationSettings();
 
     const initSettings = InitializationSettings(
