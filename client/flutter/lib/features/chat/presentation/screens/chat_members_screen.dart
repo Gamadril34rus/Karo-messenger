@@ -185,7 +185,7 @@ class _ChatMembersScreenState extends State<ChatMembersScreen> {
 
   void _viewMemberProfile(ChatMemberInfo member) {
     // Navigate to user profile
-    Navigator.of(context).pushReplacementNamed('profile', pathParameters: {'id': member.userId});
+    Navigator.of(context).pushReplacementNamed('profile', parameters: {'id': member.userId});
   }
 }
 

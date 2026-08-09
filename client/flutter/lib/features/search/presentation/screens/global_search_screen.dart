@@ -49,7 +49,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
     setState(() => _isSearching = true);
 
     try {
-      final repository = GetIt.instance<dynamic>();
+      final repository = GetIt.instance<CharoRepository>();
       final result = await repository.search(query.trim());
 
       final results = <_SearchResult>[];
@@ -59,7 +59,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
           type: 'chat',
           id: chat.id,
           title: chat.title ?? 'Чат',
-          subtitle: Text(chat.lastMessage ?? ''),
+          subtitle: chat.lastMessage ?? '',
           icon: Icons.chat_bubble_outline,
           color: const Color(0xFF2563EB),
         ));
@@ -70,7 +70,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
           type: 'message',
           id: msg.id,
           title: msg.senderName ?? msg.senderId,
-          subtitle: Text(msg.text ?? ''),
+          subtitle: msg.text ?? '',
           icon: Icons.message_outlined,
           color: const Color(0xFF10B981),
           chatId: msg.chatId,
@@ -93,7 +93,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
         _isSearching = false;
       });
     } catch (e) {
-      debugPrint(e('Search failed: $e');
+      debugPrint('Search failed: $e');
       setState(() => _isSearching = false);
     }
   }
