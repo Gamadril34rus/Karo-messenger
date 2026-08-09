@@ -157,6 +157,10 @@ jobs:
                   'compileOptions {\n        isCoreLibraryDesugaringEnabled = true'
               )
               print('Added isCoreLibraryDesugaringEnabled')
+          # 1b) Update compileSdk to 36 (required by flutter_plugin_android_lifecycle)
+          import re
+          content = re.sub(r'compileSdk\s*=\s*\d+', 'compileSdk = 36', content)
+          print('Updated compileSdk to 36')
           # 2) Add coreLibraryDesugaring dependency
           if 'coreLibraryDesugaring' not in content:
               if 'dependencies' in content:
