@@ -192,7 +192,8 @@ jobs:
           flutter pub get
           # NOW patch ALL plugin build.gradle.kts files to use compileSdk 36
           python3 -c "
-          import re, glob
+          import re, glob, os
+          # Patch in android/ tree
           for gfile in glob.glob('android/**/build.gradle.kts', recursive=True):
               with open(gfile, 'r') as f:
                   gcontent = f.read()
@@ -201,6 +202,34 @@ jobs:
                   with open(gfile, 'w') as f:
                       f.write(gcontent)
                   print(f'Patched compileSdk=36 in {gfile}')
+          # Also patch in .pub-cache (where Flutter plugin Gradle files live)
+          pub_cache = os.environ.get('PUB_CACHE', os.path.expanduser('~/.pub-cache'))
+          for gfile in glob.glob(os.path.join(pub_cache, 'hosted/**/*.gradle.kts'), recursive=True):
+              try:
+                  with open(gfile, 'r') as f:
+                      gcontent = f.read()
+                  if 'compileSdk' in gcontent and 'compileSdk = 36' not in gcontent:
+                      gcontent = re.sub(r'compileSdk\s*=\s*\d+', 'compileSdk = 36', gcontent)
+                      with open(gfile, 'w') as f:
+                          f.write(gcontent)
+                      print(f'Patched compileSdk=36 in pub-cache: {gfile}')
+              except Exception as e:
+                  pass
+          # Also try .pub-cache/hosted/pub.dev/
+          for root, dirs, files in os.walk(os.path.join(pub_cache, 'hosted')):
+              for fname in files:
+                  if fname == 'build.gradle.kts':
+                      fpath = os.path.join(root, fname)
+                      try:
+                          with open(fpath, 'r') as f:
+                              gcontent = f.read()
+                          if 'compileSdk' in gcontent and 'compileSdk = 36' not in gcontent:
+                              gcontent = re.sub(r'compileSdk\s*=\s*\d+', 'compileSdk = 36', gcontent)
+                              with open(fpath, 'w') as f:
+                                  f.write(gcontent)
+                              print(f'Patched compileSdk=36 in {fpath}')
+                      except Exception:
+                          pass
           "
           dart run build_runner build --delete-conflicting-outputs 2>/dev/null || true
 
