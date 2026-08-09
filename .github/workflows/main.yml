@@ -140,7 +140,11 @@ jobs:
 
       - name: Regenerate Android project
         working-directory: client/flutter
-        run: flutter create . --platforms=android
+        run: |
+          flutter create . --platforms=android
+          flutter pub get
+          rm -rf android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
+          rm -rf android/app/src/main/java/io
 
       - name: Build APK
         working-directory: client/flutter
