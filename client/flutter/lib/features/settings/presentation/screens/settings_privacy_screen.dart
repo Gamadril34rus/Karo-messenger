@@ -372,10 +372,10 @@ class _SettingsPrivacyScreenState extends State<SettingsPrivacyScreen> {
                 Container(
                   width: 48, height: 48,
                   decoration: BoxDecoration(
-                    color: context.colors.success.withOpacity(0.1),
+                    color: context.success.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: Icon(Icons.enhanced_encryption, color: context.colors.success, size: 24),
+                  child: Icon(Icons.enhanced_encryption, color: context.success, size: 24),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -386,7 +386,7 @@ class _SettingsPrivacyScreenState extends State<SettingsPrivacyScreen> {
               CharoCard(
                 padding: const EdgeInsets.all(16),
                 borderWidth: 1,
-                borderColor: context.colors.success.withOpacity(0.3),
+                borderColor: context.success.withOpacity(0.3),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -394,11 +394,11 @@ class _SettingsPrivacyScreenState extends State<SettingsPrivacyScreen> {
                       fontWeight: FontWeight.w600,
                     )),
                     const SizedBox(height: 12),
-                    _InfoRow(icon: Icons.lock, color: context.colors.success,
+                    _InfoRow(icon: Icons.lock, color: context.success,
                       text: 'Шифрование: протокол Signal (AES-256-CBC + HKDF-SHA256)'),
-                    _InfoRow(icon: Icons.key, color: context.colors.warning,
+                    _InfoRow(icon: Icons.key, color: context.warning,
                       text: 'Ключи: генерируются на устройстве, сервер не имеет доступа'),
-                    _InfoRow(icon: Icons.devices, color: context.colors.info,
+                    _InfoRow(icon: Icons.devices, color: context.info,
                       text: 'Привязка: секретный чат привязан к одному устройству'),
                     _InfoRow(icon: Icons.timer, color: const Color(0xFF8B5CF6),
                       text: 'Исчезание: можно задать таймер автоудаления сообщений'),
@@ -555,11 +555,11 @@ class _SettingsPrivacyScreenState extends State<SettingsPrivacyScreen> {
             CharoCard(
               padding: const EdgeInsets.all(16),
               borderWidth: 2,
-              borderColor: context.colors.success.withOpacity(0.4),
+              borderColor: context.success.withOpacity(0.4),
               child: Column(
                 children: [
                   Text('Код восстановления', style: context.typography.labelMedium?.copyWith(
-                    color: context.colors.success,
+                    color: context.success,
                     fontWeight: FontWeight.w700,
                   )),
                   const SizedBox(height: 8),
@@ -823,11 +823,11 @@ class _ActiveSessionsSheetState extends State<_ActiveSessionsSheet> {
             else
               ..._sessions.map((session) => CharoTile(
                 icon: session.isCurrent ? Icons.phone_android : Icons.devices,
-                iconColor: session.isCurrent ? context.colors.success : const Color(0xFF06B6D4),
+                iconColor: session.isCurrent ? context.success : const Color(0xFF06B6D4),
                 title: session.deviceName,
                 subtitle: '${session.platform} • ${session.ip} • ${session.lastActive}',
                 trailing: session.isCurrent
-                    ? CharoBadge(count: 1, size: 16, color: context.colors.success)
+                    ? CharoBadge(count: 1, size: 16, color: context.success)
                     : IconButton(
                         icon: Icon(Icons.close, color: Colors.red, size: 20),
                         onPressed: () => _terminateSession(session.id),

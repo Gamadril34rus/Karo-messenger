@@ -31,13 +31,13 @@ class _SettingsEnergyScreenState extends State<SettingsEnergyScreen> {
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             padding: const EdgeInsets.all(16),
             gradientColors: _powerSaving
-                ? [context.colors.success.withOpacity(0.1), context.colors.outlineVariant]
+                ? [context.success.withOpacity(0.1), context.colors.outlineVariant]
                 : null,
             borderWidth: _powerSaving ? 1.5 : 0,
-            borderColor: _powerSaving ? context.colors.success.withOpacity(0.5) : null,
+            borderColor: _powerSaving ? context.success.withOpacity(0.5) : null,
             child: CharoSwitchTile(
               icon: Icons.battery_saver,
-              iconColor: _powerSaving ? context.colors.success : context.colors.onSurface.withOpacity(0.7),
+              iconColor: _powerSaving ? context.success : context.colors.onSurface.withOpacity(0.7),
               title: 'Режим экономии',
               subtitle: 'Снижает фоновую активность и частоту синхронизации',
               value: _powerSaving,

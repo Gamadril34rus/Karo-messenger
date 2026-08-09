@@ -88,7 +88,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                           gradient: LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
-                            colors: [context.colors.primary.withOpacity(0.15), context.colors.accentLight.withOpacity(0.1)],
+                            colors: [context.colors.primary.withOpacity(0.15), context.accentLight.withOpacity(0.1)],
                           ),
                           borderRadius: BorderRadius.circular(24),
                         ),

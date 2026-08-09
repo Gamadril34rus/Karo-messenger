@@ -100,7 +100,7 @@ class SettingsAboutScreen extends StatelessWidget {
                 onTap: () => _launchUrl('https://github.com/charo-messenger/charo/issues/new'),
               ),
               CharoTile(
-                icon: Icons.rate_review_outlined,
+                icon: Icons.rate_review,
                 iconColor: const Color(0xFFF59E0B),
                 title: 'Оставить отзыв',
                 onTap: () => _launchUrl('https://charo.chat/feedback'),
@@ -113,7 +113,7 @@ class SettingsAboutScreen extends StatelessWidget {
             title: 'Связаться с нами',
             children: [
               CharoTile(
-                icon: Icons.telegram_outlined,
+                icon: Icons.send_outlined,
                 iconColor: const Color(0xFF2563EB),
                 title: 'Telegram-канал',
                 subtitle: '@charo_messenger',
@@ -121,7 +121,7 @@ class SettingsAboutScreen extends StatelessWidget {
                 onTap: () => _launchUrl('https://t.me/charo_messenger'),
               ),
               CharoTile(
-                icon: Icons.language_outlined,
+                icon: Icons.language,
                 iconColor: const Color(0xFF10B981),
                 title: 'Веб-сайт',
                 subtitle: 'charo.chat',
@@ -140,7 +140,6 @@ class SettingsAboutScreen extends StatelessWidget {
               '© 2024–2026',
               style: context.typography.bodySmall?.copyWith(
                 color: context.colors.onSurface.withOpacity(0.4),
-                textAlign: TextAlign.center,
               ),
               textAlign: TextAlign.center,
             ),

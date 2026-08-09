@@ -335,11 +335,11 @@ class SettingsMainScreen extends StatelessWidget {
             CharoCard(
               padding: const EdgeInsets.all(16),
               borderWidth: 2,
-              borderColor: context.colors.success.withOpacity(0.4),
+              borderColor: context.success.withOpacity(0.4),
               child: Column(
                 children: [
                   Text('Код восстановления', style: context.typography.labelMedium?.copyWith(
-                    color: context.colors.success,
+                    color: context.success,
                     fontWeight: FontWeight.w700,
                   )),
                   const SizedBox(height: 8),

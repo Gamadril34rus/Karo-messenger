@@ -126,7 +126,7 @@ class _NearbyScreenState extends State<NearbyScreen> {
                           )),
                         ],
                       ),
-                      RichAttributionBuilder(
+                      RichAttributionWidget(
                         attributions: [
                           TextSourceAttribution('OpenStreetMap contributors',
                             onTap: () => {},
@@ -184,7 +184,7 @@ class _NearbyScreenState extends State<NearbyScreen> {
             radius: 40,
             fallbackText: user.displayName,
             showRing: true,
-            ringColors: [context.colors.primary, context.colors.success],
+            ringColors: [context.colors.primary, context.success],
           ),
           const SizedBox(height: 8),
           Text(user.displayName, style: context.typography.titleLarge),
@@ -219,6 +219,28 @@ class _NearbyScreenState extends State<NearbyScreen> {
       ),
     );
   }
+
+  /// Calculate position on map from distance string and base position
+  LatLng _userPosition(NearbyUser user, LatLng center) {
+    final distanceStr = user.distance;
+    double distanceMeters = 100;
+
+    if (distanceStr.contains('м')) {
+      distanceMeters = double.tryParse(
+        distanceStr.replaceAll(RegExp(r'[^\d.]'), ''),
+      ) ?? 100;
+    } else if (distanceStr.contains('км')) {
+      distanceMeters = (double.tryParse(
+        distanceStr.replaceAll(RegExp(r'[^\d.]'), ''),
+      ) ?? 0.1) * 1000;
+    }
+
+    final hash = user.userId.hashCode;
+    final latOffset = (distanceMeters / 111320) * (hash % 2 == 0 ? 1 : -1) * 0.5;
+    final lngOffset = (distanceMeters / (111320 * 0.7)) * (hash % 2 == 0 ? 1 : -1) * 0.5;
+
+    return LatLng(center.latitude + latOffset, center.longitude + lngOffset);
+  }
 }
 
 class _NearbyUserTile extends StatelessWidget {
@@ -229,7 +251,7 @@ class _NearbyUserTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return CharoTile(
       icon: Icons.location_on,
-      iconColor: context.colors.success,
+      iconColor: context.success,
       title: user.displayName,
       subtitle: user.status ?? 'Анонимно',
       trailing: Container(
@@ -252,32 +274,5 @@ class _NearbyUserTile extends StatelessWidget {
 
   void _showUserSheet(BuildContext context, NearbyUser user) {
     HapticService.light();
-  }
-
-  /// Calculate position on map from distance string and base position
-  /// Distributes nearby users around the center point based on their distance
-  LatLng _userPosition(NearbyUser user, LatLng center) {
-    final distanceStr = user.distance;
-    double distanceMeters = 100; // default 100m
-
-    if (distanceStr.contains('м')) {
-      distanceMeters = double.tryParse(
-        distanceStr.replaceAll(RegExp(r'[^\d.]'), ''),
-      ) ?? 100;
-    } else if (distanceStr.contains('км')) {
-      distanceMeters = (double.tryParse(
-        distanceStr.replaceAll(RegExp(r'[^\d.]'), ''),
-      ) ?? 0.1) * 1000;
-    }
-
-    // Spread users around center — deterministic angle based on userId hash
-    final hash = user.userId.hashCode;
-    final angle = (hash % 360) * (3.14159265 / 180);
-
-    // Convert distance to lat/lng offset (approximate)
-    final latOffset = (distanceMeters / 111320) * (hash % 2 == 0 ? 1 : -1) * 0.5;
-    final lngOffset = (distanceMeters / (111320 * 0.7)) * (hash % 2 == 0 ? 1 : -1) * 0.5;
-
-    return LatLng(center.latitude + latOffset, center.longitude + lngOffset);
   }
 }

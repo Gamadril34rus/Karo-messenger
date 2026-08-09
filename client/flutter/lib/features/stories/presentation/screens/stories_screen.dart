@@ -168,7 +168,7 @@ class _StoryTile extends StatelessWidget {
             imageUrl: story.avatarUrl,
             fallbackText: story.userName ?? '?',
             showRing: !story.isViewed,
-            ringColors: [context.colors.primary, context.colors.accentLight],
+            ringColors: [context.colors.primary, context.accentLight],
           ),
           const SizedBox(width: 12),
           Expanded(

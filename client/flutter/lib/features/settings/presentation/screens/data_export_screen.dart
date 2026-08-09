@@ -124,14 +124,14 @@ class _DataExportScreenState extends State<DataExportScreen> {
         // Success indicator
         CharoCard(
           borderWidth: 2,
-          borderColor: context.colors.success.withOpacity(0.4),
+          borderColor: context.success.withOpacity(0.4),
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-              Icon(Icons.check_circle, color: context.colors.success, size: 40),
+              Icon(Icons.check_circle, color: context.success, size: 40),
               const SizedBox(height: 8),
               Text('Данные экспортированы', style: context.typography.titleMedium?.copyWith(
-                color: context.colors.success,
+                color: context.success,
                 fontWeight: FontWeight.w600,
               )),
               const SizedBox(height: 4),
@@ -182,7 +182,7 @@ class _DataExportScreenState extends State<DataExportScreen> {
             ),
             CharoTile(
               icon: Icons.check_circle_outline,
-              iconColor: context.colors.success,
+              iconColor: context.success,
               title: 'Записи согласий',
               subtitle: 'ФЗ-152 Art.9, GDPR Art.7 — история согласий',
               trailing: Text('$consentsCount', style: context.typography.labelLarge),
@@ -194,12 +194,12 @@ class _DataExportScreenState extends State<DataExportScreen> {
         // E2EE notice
         CharoCard(
           borderWidth: 1,
-          borderColor: context.colors.warning.withOpacity(0.3),
+          borderColor: context.warning.withOpacity(0.3),
           padding: const EdgeInsets.all(16),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.enhanced_encryption, color: context.colors.warning, size: 20),
+              Icon(Icons.enhanced_encryption, color: context.warning, size: 20),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -273,7 +273,7 @@ class _DataExportScreenState extends State<DataExportScreen> {
   void _shareData() {
     if (_exportData == null) return;
     final jsonStr = const JsonEncoder.withIndent('  ').convert(_exportData!);
-    SharePlus.instance.share(ShareParams(text: jsonStr));
+    Share.share(jsonStr);
   }
 
   Future<void> _downloadToFile() async {
@@ -293,7 +293,7 @@ class _DataExportScreenState extends State<DataExportScreen> {
             action: SnackBarAction(
               label: 'Поделиться',
               onPressed: () {
-                SharePlus.instance.share(ShareParams(text: jsonStr));
+                Share.share(jsonStr);
               },
             ),
           ),
