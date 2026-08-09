@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/domain/charo_repository.dart';
-import '../../../core/utils/logger.dart';
+import '../../../core/utils/debugPrint(dart';
 import '../../../shared/widgets/charo_widgets.dart';
 
 /// ─── Global Search Screen ───────────────────────────────────────
@@ -49,7 +49,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
     setState(() => _isSearching = true);
 
     try {
-      final repository = GetIt.instance<CharoRepository>();
+      final repository = GetIt.instance<Object>();
       final result = await repository.search(query.trim());
 
       final results = <_SearchResult>[];
@@ -59,7 +59,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
           type: 'chat',
           id: chat.id,
           title: chat.title ?? 'Чат',
-          subtitle: chat.lastMessage ?? '',
+          subtitle: Text(chat.lastMessage ?? ''),
           icon: Icons.chat_bubble_outline,
           color: const Color(0xFF2563EB),
         ));
@@ -70,7 +70,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
           type: 'message',
           id: msg.id,
           title: msg.senderName ?? msg.senderId,
-          subtitle: msg.text ?? '',
+          subtitle: Text(msg.text ?? ''),
           icon: Icons.message_outlined,
           color: const Color(0xFF10B981),
           chatId: msg.chatId,
@@ -82,7 +82,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
           type: 'contact',
           id: contact.userId,
           title: contact.displayName ?? contact.username,
-          subtitle: '@${contact.username}',
+          subtitle: Text('@${contact.username}'),
           icon: Icons.person_outline,
           color: const Color(0xFF8B5CF6),
         ));
@@ -93,7 +93,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
         _isSearching = false;
       });
     } catch (e) {
-      logger.e('Search failed: $e');
+      debugPrint(e('Search failed: $e');
       setState(() => _isSearching = false);
     }
   }
@@ -197,7 +197,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
     return ListTile(
       leading: Icon(result.icon, color: result.color),
       title: Text(result.title),
-      subtitle: result.subtitle,
+      subtitle: Text(result.subtitle ?? ''),
       onTap: onTap,
     );
   }

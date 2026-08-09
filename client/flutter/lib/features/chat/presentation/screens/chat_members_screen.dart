@@ -177,7 +177,7 @@ class _ChatMembersScreenState extends State<ChatMembersScreen> {
 
   void _addMember() {
     // Navigate to contact picker screen
-    context.go('/contact-picker/${widget.chatId}', extra: {
+    Navigator.of(context).pushNamed('/contact-picker/${widget.chatId}', extra: {
       'multiSelect': true,
       'title': 'Добавить участников',
     });
@@ -185,7 +185,7 @@ class _ChatMembersScreenState extends State<ChatMembersScreen> {
 
   void _viewMemberProfile(ChatMemberInfo member) {
     // Navigate to user profile
-    context.goNamed('profile', pathParameters: {'id': member.userId});
+    Navigator.of(context).pushReplacementNamed('profile', pathParameters: {'id': member.userId});
   }
 }
 

@@ -49,7 +49,7 @@ class DataChannelService {
   }
 
   /// Подключение к существующему DataChannel (для отвечающего)
-  void connectToDataChannel(RTCDataChannel dataChannel) {
+  Future<void> connectToDataChannel(RTCDataChannel dataChannel) {
     _dataChannel = dataChannel;
     _setupDataChannelHandlers();
     logger.i('📡 DataChannel "charo-chat" connected');

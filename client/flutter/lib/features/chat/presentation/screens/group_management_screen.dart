@@ -52,7 +52,7 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
       final repository = GetIt.instance<CharoRepository>();
       final members = await repository.getChatMembers(widget.chatId);
       setState(() {
-        _members = members.map((m) => GroupMember(
+        _members = members.map((m) => ListTile(
           userId: m.userId,
           username: m.username,
           displayName: m.displayName,
