@@ -221,8 +221,7 @@ class WebRtcMonitor {
             encodings[0].maxFramerate = fps;
 
             // Enable simulcast: add low/mid/high encodings
-            final encodings = parameters.encodings;
-            if (simulcastEnabled && encodings != null && encodings.length >= 3) {
+            if (simulcastEnabled && encodings.length >= 3) {
               encodings[0].rid = 'high';
               encodings[0].maxBitrate = maxBitrate.toInt();
               encodings[1].rid = 'mid';

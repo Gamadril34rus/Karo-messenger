@@ -110,7 +110,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
             hintText: 'Поиск чатов, сообщений, контактов...',
             border: InputBorder.none,
           ),
-          style: context.typography.bodyLarge,
+          style: Theme.of(context).textTheme.bodyLarge,
           onChanged: _onSearch,
         ),
         actions: [
@@ -140,12 +140,12 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.search, size: 64, color: context.colors.outline),
+          Icon(Icons.search, size: 64, color: Theme.of(context).colorScheme.outline),
           const SizedBox(height: 16),
           Text(
             'Начните вводить для поиска',
-            style: context.typography.bodyLarge?.copyWith(
-              color: context.colors.onSurface.withOpacity(0.5),
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
             ),
           ),
         ],
@@ -184,8 +184,8 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
       child: Text(
         '$title ($count)',
-        style: context.typography.labelMedium?.copyWith(
-          color: context.colors.primary,
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+          color: Theme.of(context).colorScheme.primary,
           fontWeight: FontWeight.w700,
           letterSpacing: 0.8,
         ),
@@ -194,10 +194,9 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
   }
 
   Widget _buildResultTile(_SearchResult result, VoidCallback onTap) {
-    return CharoTile(
-      icon: result.icon,
-      iconColor: result.color,
-      title: result.title,
+    return ListTile(
+      leading: Icon(result.icon, color: result.color),
+      title: Text(result.title),
       subtitle: result.subtitle,
       onTap: onTap,
     );

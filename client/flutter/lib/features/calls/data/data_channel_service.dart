@@ -42,7 +42,7 @@ class DataChannelService {
       ..maxRetransmits = 3
       ..protocol = 'charo-chat-v1';
 
-    _dataChannel = peerConnection.createDataChannel('charo-chat', config);
+    _dataChannel = await peerConnection.createDataChannel('charo-chat', config);
     _setupDataChannelHandlers();
 
     logger.i('📡 DataChannel "charo-chat" created (ordered=true, maxRetransmits=3)');
