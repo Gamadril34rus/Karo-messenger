@@ -361,7 +361,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check for legacy name references (Nexus or Aura/Аура)
+      - name: Check for legacy brand remnants
         run: |
           echo "Checking for legacy name remnants in source code (not docs)..."
           legacy_count=$(grep -rnE "Nexus|NEXUS|nexus|Aura|Аура|AURA" --include="*.dart" --include="*.ts" --include="*.prisma" --include="*.yaml" --include="*.json" --include="*.yml" --include="*.conf" --include="*.sh" . | grep -v ".git/" | grep -v "node_modules/" | grep -v "docs/" | grep -v "CHANGELOG.md" | grep -v "STAGE" | grep -v "PROGRESS" | grep -v ".github/workflows/main.yml" | wc -l)
