@@ -21,20 +21,27 @@ cd "$(dirname "$0")/.."
 
 PY="$(command -v python3 || command -v python)"
 
-# Linux: системные зависимости нативной сборки (gstreamer нужен audioplayers_linux)
+# Linux: системные зависимости нативной сборки
+#  - gstreamer нужен audioplayers_linux
+#  - libsecret-1 нужен flutter_secure_storage_linux
 if [[ "$(uname -s)" == "Linux" && -x /usr/bin/apt-get ]]; then
   echo "==> Installing Linux build dependencies"
   sudo apt-get update -qq || true
   sudo apt-get install -y -qq clang cmake ninja-build pkg-config \
     libgtk-3-dev liblzma-dev libstdc++-12-dev \
     libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libunwind-dev \
-    libgcrypt20-dev \
+    libgcrypt20-dev libsecret-1-dev \
     >/dev/null || echo "!! apt install failed (continuing)"
 fi
 
-# CMake 4: старые cmake_minimum_required в firebase_cpp_sdk (Windows)
 if [[ -n "${GITHUB_ENV:-}" ]]; then
+  # CMake 4: старые cmake_minimum_required в firebase_cpp_sdk (Windows)
   echo "CMAKE_POLICY_VERSION_MINIMUM=3.5" >> "$GITHUB_ENV"
+  # MSVC: плагины local_auth_windows/permission_handler_windows используют
+  # устаревший <experimental/coroutine> — подавляем STL1011 через переменную CL
+  if [[ "$(uname -s)" == MINGW* || "$(uname -s)" == MSYS* ]]; then
+    echo 'CL=/_D_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS' >> "$GITHUB_ENV"
+  fi
 fi
 
 # SPM (Swift Package Manager) в связке с --no-codesign ломает iOS-сборку на CI
