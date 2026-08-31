@@ -364,11 +364,11 @@ jobs:
       - name: Check for legacy brand remnants
         run: |
           echo "Checking for legacy name remnants in source code (not docs)..."
-          legacy_count=$(grep -rnE "Nexus|NEXUS|nexus|Aura|Аура|AURA" --include="*.dart" --include="*.ts" --include="*.prisma" --include="*.yaml" --include="*.json" --include="*.yml" --include="*.conf" --include="*.sh" . | grep -v ".git/" | grep -v "node_modules/" | grep -v "docs/" | grep -v "CHANGELOG.md" | grep -v "STAGE" | grep -v "PROGRESS" | grep -v ".github/workflows/main.yml" | wc -l)
+          legacy_count=$(grep -rnE "Ne[x]us|NEX[U]S|ne[x]us|Au[r]a|Аур[а]|AUR[A]" --include="*.dart" --include="*.ts" --include="*.prisma" --include="*.yaml" --include="*.json" --include="*.yml" --include="*.conf" --include="*.sh" . | grep -v ".git/" | grep -v "node_modules/" | grep -v "docs/" | grep -v "CHANGELOG.md" | grep -v "STAGE" | grep -v "PROGRESS" | grep -v ".github/workflows/main.yml" | wc -l)
           echo "Found $legacy_count legacy name references in source code"
           if [ "$legacy_count" -gt "0" ]; then
             echo "❌ Legacy name remnants found in source code! Details:"
-            grep -rnE "Nexus|NEXUS|nexus|Aura|Аура|AURA" --include="*.dart" --include="*.ts" --include="*.prisma" --include="*.yaml" --include="*.json" --include="*.yml" --include="*.conf" --include="*.sh" . | grep -v ".git/" | grep -v "node_modules/" | grep -v "docs/" | grep -v "CHANGELOG.md" | grep -v "STAGE" | grep -v "PROGRESS" | grep -v ".github/workflows/main.yml"
+            grep -rnE "Ne[x]us|NEX[U]S|ne[x]us|Au[r]a|Аур[а]|AUR[A]" --include="*.dart" --include="*.ts" --include="*.prisma" --include="*.yaml" --include="*.json" --include="*.yml" --include="*.conf" --include="*.sh" . | grep -v ".git/" | grep -v "node_modules/" | grep -v "docs/" | grep -v "CHANGELOG.md" | grep -v "STAGE" | grep -v "PROGRESS" | grep -v ".github/workflows/main.yml"
             exit 1
           fi
           echo "✅ Zero legacy name remnants in source code"
