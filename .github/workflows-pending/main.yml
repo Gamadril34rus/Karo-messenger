@@ -299,6 +299,11 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
 
+      - name: Regenerate code & native projects
+        working-directory: client/flutter
+        shell: bash
+        run: ./scripts/regen_native.sh
+
       - name: Build Web
         working-directory: client/flutter
         # Базовый href обязателен: сайт живёт в подкаталоге /Karo-messenger/
