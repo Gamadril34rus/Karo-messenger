@@ -89,6 +89,16 @@ class $LocalChatsTable extends LocalChats
 
   @override
   $LocalChatsTable get asDartTable => this;
+
+  @override
+  String get actualTableName => 'local_chats';
+
+  @override
+  TableInfo<LocalChats, LocalChat> createAlias(String alias) => this;
+
+  @override
+  Future<LocalChat> map(Map<String, dynamic> data, {String? tablePrefix}) async =>
+      createCompanion(data);
 }
 
 class $LocalMessagesTable extends LocalMessages
@@ -133,6 +143,16 @@ class $LocalMessagesTable extends LocalMessages
 
   @override
   $LocalMessagesTable get asDartTable => this;
+
+  @override
+  String get actualTableName => 'local_messages';
+
+  @override
+  TableInfo<LocalMessages, LocalMessage> createAlias(String alias) => this;
+
+  @override
+  Future<LocalMessage> map(Map<String, dynamic> data, {String? tablePrefix}) async =>
+      createCompanion(data);
 }
 
 class $LocalUsersTable extends LocalUsers
@@ -171,6 +191,16 @@ class $LocalUsersTable extends LocalUsers
 
   @override
   $LocalUsersTable get asDartTable => this;
+
+  @override
+  String get actualTableName => 'local_users';
+
+  @override
+  TableInfo<LocalUsers, LocalUser> createAlias(String alias) => this;
+
+  @override
+  Future<LocalUser> map(Map<String, dynamic> data, {String? tablePrefix}) async =>
+      createCompanion(data);
 }
 
 class $LocalContactsTable extends LocalContacts
@@ -205,6 +235,16 @@ class $LocalContactsTable extends LocalContacts
 
   @override
   $LocalContactsTable get asDartTable => this;
+
+  @override
+  String get actualTableName => 'local_contacts';
+
+  @override
+  TableInfo<LocalContacts, LocalContact> createAlias(String alias) => this;
+
+  @override
+  Future<LocalContact> map(Map<String, dynamic> data, {String? tablePrefix}) async =>
+      createCompanion(data);
 }
 
 class $LocalMediaTable extends LocalMedia
@@ -243,6 +283,16 @@ class $LocalMediaTable extends LocalMedia
 
   @override
   $LocalMediaTable get asDartTable => this;
+
+  @override
+  String get actualTableName => 'local_media';
+
+  @override
+  TableInfo<LocalMedia, LocalMediaData> createAlias(String alias) => this;
+
+  @override
+  Future<LocalMediaData> map(Map<String, dynamic> data, {String? tablePrefix}) async =>
+      createCompanion(data);
 }
 
 // ─── Companion classes for table inserts/updates ──────────────────────
