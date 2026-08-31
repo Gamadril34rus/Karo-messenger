@@ -18,14 +18,14 @@
 
 | Платформа | Ссылка | Версия |
 |-----------|--------|--------|
-| 🤖 Android APK | [ Скачать](https://github.com/Gamadril34rus/Karo-messenger/releases/latest) | 1.1.0 |
-| 🍎 iOS | [App Store](https://github.com/Gamadril34rus/Karo-messenger/releases/latest) | 1.1.0 |
-| 🪟 Windows | [ Скачать .exe](https://github.com/Gamadril34rus/Karo-messenger/releases/latest) | 1.1.0 |
-| 🐧 Linux | [ Скачать .deb](https://github.com/Gamadril34rus/Karo-messenger/releases/latest) | 1.1.0 |
-| 🍏 macOS | [ Скачать .dmg](https://github.com/Gamadril34rus/Karo-messenger/releases/latest) | 1.1.0 |
+| 🤖 Android APK | [Скачать .apk](https://github.com/Gamadril34rus/Karo-messenger/releases/latest) | 1.1.0 |
+| 🪟 Windows | [Скачать .zip](https://github.com/Gamadril34rus/Karo-messenger/releases/latest) | 1.1.0 |
+| 🐧 Linux | [Скачать .tar.gz](https://github.com/Gamadril34rus/Karo-messenger/releases/latest) | 1.1.0 |
 | 🌐 Web | [Открыть в браузере](https://gamadril34rus.github.io/Karo-messenger/) | 1.1.0 |
+| 🍎 iOS | Сборка из исходников (Xcode) | 1.1.0 |
+| 🍏 macOS | [Артефакты CI](https://github.com/Gamadril34rus/Karo-messenger/actions/workflows/main.yml) | 1.1.0 |
 
-> ⚠️ Релизы появятся после настройки GitHub Releases. Сейчас сборка артефактов доступна в [Actions](https://github.com/Gamadril34rus/Karo-messenger/actions).
+> 📦 Промежуточные сборки всех 6 платформ доступны в артефактах [GitHub Actions](https://github.com/Gamadril34rus/Karo-messenger/actions/workflows/main.yml), сервер — в виде Docker-образа `ghcr.io/gamadril34rus/karo-messenger-server` [на GHCR](https://github.com/Gamadril34rus/Karo-messenger/pkgs/container/karo-messenger-server).
 
 ---
 
@@ -94,6 +94,8 @@
 ```bash
 cd client/flutter
 flutter pub get
+# один раз: сгенерировать нативные проекты (android/ios/macos/windows/linux)
+./scripts/regen_native.sh
 flutter run
 ```
 
@@ -144,15 +146,17 @@ Karo-messenger/
 
 | Job | Платформа | Статус |
 |-----|-----------|--------|
-| Tests & Coverage | Ubuntu + PG16 + Redis7 | ✅ 122/122 server tests |
+| Tests & Coverage | Ubuntu + PG16 + Redis7 | ✅ server tests |
 | Build Android | Ubuntu + JDK17 | ✅ APK + AAB |
-| Build iOS | macOS | ✅ IPA |
+| Build iOS | macOS | ✅ Runner.app |
 | Build Windows | Windows | ✅ EXE |
-| Build Linux | Ubuntu + GTK3 | ✅ Binary |
+| Build Linux | Ubuntu + GTK3 | ✅ Bundle |
 | Build macOS | macOS | ✅ .app |
-| Deploy Web | Ubuntu → GitHub Pages | ✅ |
-| Build Docker | Ubuntu → Docker Hub | ✅ |
+| Build & Deploy Web | Ubuntu → GitHub Pages | ✅ |
+| Build Docker | Ubuntu → GHCR | ✅ |
 | Legacy Check | Ubuntu | ✅ Zero remnants |
+
+> Нативные проекты платформ генерируются скриптом `client/flutter/scripts/regen_native.sh` (те же шаги выполняет CI). Релизы со сборками создаются автоматически по тегу `v*` — см. [release.yml](./.github/workflows/release.yml).
 
 ---
 
