@@ -31,6 +31,7 @@ if [[ "$(uname -s)" == "Linux" && -x /usr/bin/apt-get ]]; then
     libgtk-3-dev liblzma-dev libstdc++-12-dev \
     libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libunwind-dev \
     libgcrypt20-dev libsecret-1-dev \
+    libayatana-appindicator3-dev libpulse-dev \
     >/dev/null || echo "!! apt install failed (continuing)"
 fi
 
@@ -40,7 +41,7 @@ if [[ -n "${GITHUB_ENV:-}" ]]; then
   # MSVC: плагины local_auth_windows/permission_handler_windows используют
   # устаревший <experimental/coroutine> — подавляем STL1011 через переменную CL
   if [[ "$(uname -s)" == MINGW* || "$(uname -s)" == MSYS* ]]; then
-    echo 'CL=/_D_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS' >> "$GITHUB_ENV"
+    echo 'CL=/D_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS' >> "$GITHUB_ENV"
   fi
 fi
 
