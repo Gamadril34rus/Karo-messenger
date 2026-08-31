@@ -28,7 +28,13 @@ if [[ "$(uname -s)" == "Linux" && -x /usr/bin/apt-get ]]; then
   sudo apt-get install -y -qq clang cmake ninja-build pkg-config \
     libgtk-3-dev liblzma-dev libstdc++-12-dev \
     libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libunwind-dev \
+    libgcrypt20-dev \
     >/dev/null || echo "!! apt install failed (continuing)"
+fi
+
+# CMake 4: старые cmake_minimum_required в firebase_cpp_sdk (Windows)
+if [[ -n "${GITHUB_ENV:-}" ]]; then
+  echo "CMAKE_POLICY_VERSION_MINIMUM=3.5" >> "$GITHUB_ENV"
 fi
 
 # SPM (Swift Package Manager) в связке с --no-codesign ломает iOS-сборку на CI
