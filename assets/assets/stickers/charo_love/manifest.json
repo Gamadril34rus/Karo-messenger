@@ -1,0 +1,87 @@
+{
+  "id": "charo_love",
+  "name": "Charo Love",
+  "source": "CHARO",
+  "description": "Любовь и романтика — сердце, поцелуй, роза",
+  "icon": "heart.png",
+  "isFeatured": true,
+  "stickers": [
+    {
+      "id": "heart",
+      "file": "heart.png",
+      "emoji": "❤️",
+      "label": "Heart",
+      "sortOrder": 1
+    },
+    {
+      "id": "kiss",
+      "file": "kiss.png",
+      "emoji": "💋",
+      "label": "Kiss!",
+      "sortOrder": 2
+    },
+    {
+      "id": "couple",
+      "file": "couple.png",
+      "emoji": "💑",
+      "label": "Couple",
+      "sortOrder": 3
+    },
+    {
+      "id": "rose",
+      "file": "rose.png",
+      "emoji": "🌹",
+      "label": "Rose",
+      "sortOrder": 4
+    },
+    {
+      "id": "ring",
+      "file": "ring.png",
+      "emoji": "💍",
+      "label": "Ring",
+      "sortOrder": 5
+    },
+    {
+      "id": "wedding_day",
+      "file": "wedding_day.png",
+      "emoji": "💕",
+      "label": "Forever",
+      "sortOrder": 6
+    },
+    {
+      "id": "flirt",
+      "file": "flirt.png",
+      "emoji": "😏",
+      "label": "Flirt",
+      "sortOrder": 7
+    },
+    {
+      "id": "hug",
+      "file": "hug.png",
+      "emoji": "🤗",
+      "label": "Hug!",
+      "sortOrder": 8
+    },
+    {
+      "id": "miss_you",
+      "file": "miss_you.png",
+      "emoji": "🥺",
+      "label": "Miss You",
+      "sortOrder": 9
+    },
+    {
+      "id": "romantic",
+      "file": "romantic.png",
+      "emoji": "💜",
+      "label": "Romantic",
+      "sortOrder": 10
+    },
+    {
+      "id": "love_letter",
+      "file": "love_letter.png",
+      "emoji": "💌",
+      "label": "Love Letter",
+      "sortOrder": 11
+    }
+  ]
+}

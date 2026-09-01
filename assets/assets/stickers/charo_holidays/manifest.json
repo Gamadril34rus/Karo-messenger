@@ -1,0 +1,87 @@
+{
+  "id": "charo_holidays",
+  "name": "Charo Holidays",
+  "source": "CHARO",
+  "description": "Праздники — день рождения, Новый год, Рождество",
+  "icon": "birthday.png",
+  "isFeatured": false,
+  "stickers": [
+    {
+      "id": "birthday",
+      "file": "birthday.png",
+      "emoji": "🎂",
+      "label": "Birthday!",
+      "sortOrder": 1
+    },
+    {
+      "id": "new_year",
+      "file": "new_year.png",
+      "emoji": "🎆",
+      "label": "New Year!",
+      "sortOrder": 2
+    },
+    {
+      "id": "christmas",
+      "file": "christmas.png",
+      "emoji": "🎄",
+      "label": "Christmas!",
+      "sortOrder": 3
+    },
+    {
+      "id": "valentine",
+      "file": "valentine.png",
+      "emoji": "💕",
+      "label": "Valentine's!",
+      "sortOrder": 4
+    },
+    {
+      "id": "halloween",
+      "file": "halloween.png",
+      "emoji": "🎃",
+      "label": "Halloween!",
+      "sortOrder": 5
+    },
+    {
+      "id": "spring",
+      "file": "spring.png",
+      "emoji": "🌷",
+      "label": "Spring!",
+      "sortOrder": 6
+    },
+    {
+      "id": "summer",
+      "file": "summer.png",
+      "emoji": "☀️",
+      "label": "Summer!",
+      "sortOrder": 7
+    },
+    {
+      "id": "autumn",
+      "file": "autumn.png",
+      "emoji": "🍂",
+      "label": "Autumn!",
+      "sortOrder": 8
+    },
+    {
+      "id": "wedding",
+      "file": "wedding.png",
+      "emoji": "💒",
+      "label": "Wedding!",
+      "sortOrder": 9
+    },
+    {
+      "id": "graduation",
+      "file": "graduation.png",
+      "emoji": "🎓",
+      "label": "Graduation!",
+      "sortOrder": 10
+    },
+    {
+      "id": "mother_day",
+      "file": "mother_day.png",
+      "emoji": "🌹",
+      "label": "Mother's Day!",
+      "sortOrder": 11
+    }
+  ]
+}

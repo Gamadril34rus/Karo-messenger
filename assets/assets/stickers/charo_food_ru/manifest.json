@@ -1,0 +1,87 @@
+{
+  "id": "charo_food_ru",
+  "name": "Charo Русская Еда",
+  "source": "CHARO",
+  "description": "Русская кухня — борщ, пельмени, блины, шашлык",
+  "icon": "borscht.png",
+  "isFeatured": true,
+  "stickers": [
+    {
+      "id": "borscht",
+      "file": "borscht.png",
+      "emoji": "🥣",
+      "label": "Борщ!",
+      "sortOrder": 1
+    },
+    {
+      "id": "pelmeni",
+      "file": "pelmeni.png",
+      "emoji": "🥟",
+      "label": "Пельмени!",
+      "sortOrder": 2
+    },
+    {
+      "id": "blini",
+      "file": "blini.png",
+      "emoji": "🥞",
+      "label": "Блины!",
+      "sortOrder": 3
+    },
+    {
+      "id": "shashlik",
+      "file": "shashlik.png",
+      "emoji": "🍖",
+      "label": "Шашлык!",
+      "sortOrder": 4
+    },
+    {
+      "id": "kasha",
+      "file": "kasha.png",
+      "emoji": "🥘",
+      "label": "Каша",
+      "sortOrder": 5
+    },
+    {
+      "id": "khachapuri",
+      "file": "khachapuri.png",
+      "emoji": "🧀",
+      "label": "Хачапури",
+      "sortOrder": 6
+    },
+    {
+      "id": "smetana",
+      "file": "smetana.png",
+      "emoji": "🥛",
+      "label": "Сметана",
+      "sortOrder": 7
+    },
+    {
+      "id": "olivier",
+      "file": "olivier.png",
+      "emoji": "🥗",
+      "label": "Оливье!",
+      "sortOrder": 8
+    },
+    {
+      "id": "medovik",
+      "file": "medovik.png",
+      "emoji": "🍰",
+      "label": "Медовик",
+      "sortOrder": 9
+    },
+    {
+      "id": "vodka_shot",
+      "file": "vodka_shot.png",
+      "emoji": "🥃",
+      "label": "🥃",
+      "sortOrder": 10
+    },
+    {
+      "id": "tea_glass",
+      "file": "tea_glass.png",
+      "emoji": "☕",
+      "label": "Чай",
+      "sortOrder": 11
+    }
+  ]
+}

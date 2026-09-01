@@ -1,0 +1,87 @@
+{
+  "id": "charo_meme",
+  "name": "Charo Memes",
+  "source": "CHARO",
+  "description": "Мемы и реакции — facepalm, LOL, shrug, bruh",
+  "icon": "facepalm.png",
+  "isFeatured": true,
+  "stickers": [
+    {
+      "id": "facepalm",
+      "file": "facepalm.png",
+      "emoji": "🤦",
+      "label": "Facepalm",
+      "sortOrder": 1
+    },
+    {
+      "id": "lol",
+      "file": "lol.png",
+      "emoji": "😂",
+      "label": "LOL",
+      "sortOrder": 2
+    },
+    {
+      "id": "shrug",
+      "file": "shrug.png",
+      "emoji": "🤷",
+      "label": "Shrug",
+      "sortOrder": 3
+    },
+    {
+      "id": "thinking",
+      "file": "thinking.png",
+      "emoji": "🤔",
+      "label": "Thinking",
+      "sortOrder": 4
+    },
+    {
+      "id": "deal",
+      "file": "deal.png",
+      "emoji": "🤝",
+      "label": "Deal!",
+      "sortOrder": 5
+    },
+    {
+      "id": "fail",
+      "file": "fail.png",
+      "emoji": "❌",
+      "label": "FAIL",
+      "sortOrder": 6
+    },
+    {
+      "id": "bruh",
+      "file": "bruh.png",
+      "emoji": "🤨",
+      "label": "Bruh",
+      "sortOrder": 7
+    },
+    {
+      "id": "sarcasm",
+      "file": "sarcasm.png",
+      "emoji": "😏",
+      "label": "Sarcasm",
+      "sortOrder": 8
+    },
+    {
+      "id": "wow",
+      "file": "wow.png",
+      "emoji": "😮",
+      "label": "WOW",
+      "sortOrder": 9
+    },
+    {
+      "id": "nope",
+      "file": "nope.png",
+      "emoji": "🙅",
+      "label": "NOPE",
+      "sortOrder": 10
+    },
+    {
+      "id": "cringe",
+      "file": "cringe.png",
+      "emoji": "😬",
+      "label": "Cringe",
+      "sortOrder": 11
+    }
+  ]
+}

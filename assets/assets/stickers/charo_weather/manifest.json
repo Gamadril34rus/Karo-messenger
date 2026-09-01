@@ -1,0 +1,80 @@
+{
+  "id": "charo_weather",
+  "name": "Charo Weather",
+  "source": "CHARO",
+  "description": "Погода — солнце, дождь, снег, шторм",
+  "icon": "sun.png",
+  "isFeatured": false,
+  "stickers": [
+    {
+      "id": "sun",
+      "file": "sun.png",
+      "emoji": "☀️",
+      "label": "Sun",
+      "sortOrder": 1
+    },
+    {
+      "id": "rain",
+      "file": "rain.png",
+      "emoji": "🌧️",
+      "label": "Rain",
+      "sortOrder": 2
+    },
+    {
+      "id": "snow",
+      "file": "snow.png",
+      "emoji": "❄️",
+      "label": "Snow",
+      "sortOrder": 3
+    },
+    {
+      "id": "storm",
+      "file": "storm.png",
+      "emoji": "⛈️",
+      "label": "Storm",
+      "sortOrder": 4
+    },
+    {
+      "id": "cloudy",
+      "file": "cloudy.png",
+      "emoji": "☁️",
+      "label": "Cloudy",
+      "sortOrder": 5
+    },
+    {
+      "id": "wind",
+      "file": "wind.png",
+      "emoji": "💨",
+      "label": "Wind",
+      "sortOrder": 6
+    },
+    {
+      "id": "fog",
+      "file": "fog.png",
+      "emoji": "🌫️",
+      "label": "Fog",
+      "sortOrder": 7
+    },
+    {
+      "id": "hot",
+      "file": "hot.png",
+      "emoji": "🔥",
+      "label": "Hot!",
+      "sortOrder": 8
+    },
+    {
+      "id": "cold",
+      "file": "cold.png",
+      "emoji": "🥶",
+      "label": "Cold!",
+      "sortOrder": 9
+    },
+    {
+      "id": "tornado",
+      "file": "tornado.png",
+      "emoji": "🌪️",
+      "label": "Tornado",
+      "sortOrder": 10
+    }
+  ]
+}

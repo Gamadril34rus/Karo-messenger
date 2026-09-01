@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8"/>
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible"/>
+  <meta name="description" content="ЧАРО — мессенджер нового поколения. Быстрый. Приватный. Мощный."/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ЧАРО</title>
+  <base href="/Karo-messenger/"/>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="icon" type="image/x-icon" href="favicon.ico"/>
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon.png"/>
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png"/>
+  <meta name="theme-color" content="#2563EB"/>
+  <style>
+    body { background-color: #2563EB; margin: 0; }
+    .loading { display: flex; justify-content: center; align-items: center; height: 100vh; color: white; font-family: sans-serif; font-size: 24px; }
+    .loading-logo { width: 64px; height: 64px; margin-right: 16px; }
+  </style>
+  <!-- WebRTC adapter for cross-browser compatibility -->
+  <script src="https://webrtc.github.io/adapter/adapter-latest.js" async></script>
+</head>
+<body>
+  <div class="loading">🚀 ЧАРО загружается…</div>
+  <script>
+    // Заставка снимается, когда Flutter отрисовал первый кадр. Если
+    // приложение падает на старте — заставка остаётся, а ошибка видна
+    // в консоли (см. try/catch в lib/main.dart).
+    window.addEventListener('flutter-first-frame', function () {
+      var splash = document.querySelector('.loading');
+      if (splash) {
+        splash.remove();
+      }
+    });
+  </script>
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>

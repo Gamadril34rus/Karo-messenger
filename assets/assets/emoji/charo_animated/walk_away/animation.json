@@ -1,0 +1,9 @@
+{
+  "id": "walk_away",
+  "name": "\u0423\u0445\u043e\u0434\u0438\u0442",
+  "fps": 10,
+  "frames": 10,
+  "frame_prefix": "frame_",
+  "format": "png",
+  "size": 320
+}

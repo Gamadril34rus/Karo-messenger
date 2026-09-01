@@ -1,0 +1,15 @@
+{
+    "name": "ЧАРО",
+    "short_name": "ЧАРО",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#2563EB",
+    "theme_color": "#2563EB",
+    "description": "ЧАРО — мессенджер нового поколения. Быстрый. Приватный. Мощный.",
+    "icons": [
+        { "src": "icons/Icon-192.png", "sizes": "192x192", "type": "image/png" },
+        { "src": "icons/Icon-512.png", "sizes": "512x512", "type": "image/png" },
+        { "src": "icons/app_icon.png", "sizes": "512x512", "type": "image/png" },
+        { "src": "icons/Icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    ]
+}

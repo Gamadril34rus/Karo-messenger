@@ -1,0 +1,87 @@
+{
+  "id": "charo_animals",
+  "name": "Charo Animals",
+  "source": "CHARO",
+  "description": "Животные — собака, птица, рыба, кролик",
+  "icon": "dog.png",
+  "isFeatured": false,
+  "stickers": [
+    {
+      "id": "dog",
+      "file": "dog.png",
+      "emoji": "🐶",
+      "label": "Dog",
+      "sortOrder": 1
+    },
+    {
+      "id": "bird",
+      "file": "bird.png",
+      "emoji": "🐦",
+      "label": "Bird",
+      "sortOrder": 2
+    },
+    {
+      "id": "fish",
+      "file": "fish.png",
+      "emoji": "🐟",
+      "label": "Fish",
+      "sortOrder": 3
+    },
+    {
+      "id": "rabbit",
+      "file": "rabbit.png",
+      "emoji": "🐰",
+      "label": "Rabbit",
+      "sortOrder": 4
+    },
+    {
+      "id": "owl",
+      "file": "owl.png",
+      "emoji": "🦉",
+      "label": "Owl",
+      "sortOrder": 5
+    },
+    {
+      "id": "frog",
+      "file": "frog.png",
+      "emoji": "🐸",
+      "label": "Frog",
+      "sortOrder": 6
+    },
+    {
+      "id": "bear",
+      "file": "bear.png",
+      "emoji": "🐻",
+      "label": "Bear",
+      "sortOrder": 7
+    },
+    {
+      "id": "penguin",
+      "file": "penguin.png",
+      "emoji": "🐧",
+      "label": "Penguin",
+      "sortOrder": 8
+    },
+    {
+      "id": "turtle",
+      "file": "turtle.png",
+      "emoji": "🐢",
+      "label": "Turtle",
+      "sortOrder": 9
+    },
+    {
+      "id": "dolphin",
+      "file": "dolphin.png",
+      "emoji": "🐬",
+      "label": "Dolphin",
+      "sortOrder": 10
+    },
+    {
+      "id": "butterfly",
+      "file": "butterfly.png",
+      "emoji": "🦋",
+      "label": "Butterfly",
+      "sortOrder": 11
+    }
+  ]
+}

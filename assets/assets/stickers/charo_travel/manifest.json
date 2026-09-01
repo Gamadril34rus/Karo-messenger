@@ -1,0 +1,80 @@
+{
+  "id": "charo_travel",
+  "name": "Charo Travel",
+  "source": "CHARO",
+  "description": "Путешествия — самолёт, пляж, карта, камера",
+  "icon": "plane.png",
+  "isFeatured": false,
+  "stickers": [
+    {
+      "id": "plane",
+      "file": "plane.png",
+      "emoji": "✈️",
+      "label": "Plane",
+      "sortOrder": 1
+    },
+    {
+      "id": "beach",
+      "file": "beach.png",
+      "emoji": "🏖️",
+      "label": "Beach",
+      "sortOrder": 2
+    },
+    {
+      "id": "map",
+      "file": "map.png",
+      "emoji": "🗺️",
+      "label": "Map",
+      "sortOrder": 3
+    },
+    {
+      "id": "camera",
+      "file": "camera.png",
+      "emoji": "📷",
+      "label": "Camera",
+      "sortOrder": 4
+    },
+    {
+      "id": "compass",
+      "file": "compass.png",
+      "emoji": "🧭",
+      "label": "Compass",
+      "sortOrder": 5
+    },
+    {
+      "id": "mountain_hike",
+      "file": "mountain_hike.png",
+      "emoji": "🥾",
+      "label": "Hiking",
+      "sortOrder": 6
+    },
+    {
+      "id": "suitcase",
+      "file": "suitcase.png",
+      "emoji": "🧳",
+      "label": "Suitcase",
+      "sortOrder": 7
+    },
+    {
+      "id": "passport",
+      "file": "passport.png",
+      "emoji": "📕",
+      "label": "Passport",
+      "sortOrder": 8
+    },
+    {
+      "id": "ticket",
+      "file": "ticket.png",
+      "emoji": "🎫",
+      "label": "Ticket",
+      "sortOrder": 9
+    },
+    {
+      "id": "hotel",
+      "file": "hotel.png",
+      "emoji": "🏨",
+      "label": "Hotel",
+      "sortOrder": 10
+    }
+  ]
+}

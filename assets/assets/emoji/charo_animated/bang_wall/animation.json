@@ -1,0 +1,9 @@
+{
+  "id": "bang_wall",
+  "name": "\u0411\u044c\u0451\u0442\u0441\u044f \u043e\u0431 \u0441\u0442\u0435\u043d\u0443",
+  "fps": 10,
+  "frames": 10,
+  "frame_prefix": "frame_",
+  "format": "png",
+  "size": 320
+}

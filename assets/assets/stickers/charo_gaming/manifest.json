@@ -1,0 +1,87 @@
+{
+  "id": "charo_gaming",
+  "name": "Charo Gaming",
+  "source": "CHARO",
+  "description": "Гейминг — WIN, LOSE, respawn, level up",
+  "icon": "win.png",
+  "isFeatured": false,
+  "stickers": [
+    {
+      "id": "win",
+      "file": "win.png",
+      "emoji": "🏆",
+      "label": "WIN!",
+      "sortOrder": 1
+    },
+    {
+      "id": "lose",
+      "file": "lose.png",
+      "emoji": "💀",
+      "label": "LOSE",
+      "sortOrder": 2
+    },
+    {
+      "id": "respawn",
+      "file": "respawn.png",
+      "emoji": "🔄",
+      "label": "Respawn",
+      "sortOrder": 3
+    },
+    {
+      "id": "level_up",
+      "file": "level_up.png",
+      "emoji": "⬆️",
+      "label": "Level Up!",
+      "sortOrder": 4
+    },
+    {
+      "id": "game_over",
+      "file": "game_over.png",
+      "emoji": "🎮",
+      "label": "Game Over",
+      "sortOrder": 5
+    },
+    {
+      "id": "combo",
+      "file": "combo.png",
+      "emoji": "💥",
+      "label": "Combo!",
+      "sortOrder": 6
+    },
+    {
+      "id": "boss",
+      "file": "boss.png",
+      "emoji": "👹",
+      "label": "Boss!",
+      "sortOrder": 7
+    },
+    {
+      "id": "loot",
+      "file": "loot.png",
+      "emoji": "💎",
+      "label": "Loot!",
+      "sortOrder": 8
+    },
+    {
+      "id": "pause",
+      "file": "pause.png",
+      "emoji": "⏸️",
+      "label": "Pause",
+      "sortOrder": 9
+    },
+    {
+      "id": "glitch",
+      "file": "glitch.png",
+      "emoji": "⚠️",
+      "label": "Glitch",
+      "sortOrder": 10
+    },
+    {
+      "id": "rage",
+      "file": "rage.png",
+      "emoji": "😡",
+      "label": "Rage!",
+      "sortOrder": 11
+    }
+  ]
+}
