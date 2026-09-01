@@ -4,6 +4,32 @@ import 'package:drift_flutter/drift_flutter.dart';
 
 part 'local_db.g.dart';
 
+/// Имя локальной БД (файл `$name.sqlite` на нативных платформах,
+/// имя OPFS/IndexedDB-хранилища в браузере)
+const String kLocalDbName = 'charo_messenger';
+
+/// Подключение к локальной БД для текущей платформы.
+///
+/// На вебе drift не может загрузить sqlite3 сам: ему нужны скомпилированный
+/// модуль `sqlite3.wasm` и воркер `drift_worker.js`. Оба файла лежат в
+/// `web/` и попадают в сборку рядом с `index.html`, поэтому пути указываем
+/// относительными — они разрешаются от `<base href>` (для GitHub Pages это
+/// `/Karo-messenger/`).
+///
+/// Важно: без параметра `web` drift_flutter бросает
+/// `ArgumentError('When compiling to the web, the `web` parameter needs to be
+/// set.')` прямо в конструкторе `AppDatabase()`, то есть ещё до `runApp()` —
+/// именно из-за этого веб-версия зависала на заставке загрузки.
+DatabaseConnection _openLocalDb() {
+  return driftDatabase(
+    name: kLocalDbName,
+    web: DriftWebOptions(
+      sqlite3Wasm: Uri.parse('sqlite3.wasm'),
+      driftWorker: Uri.parse('drift_worker.js'),
+    ),
+  );
+}
+
 /// Локальная база данных (Drift/SQLite) — кэш сообщений и чатов
 @DriftDatabase(tables: [
   LocalChats,
@@ -13,7 +39,7 @@ part 'local_db.g.dart';
   LocalMedia,
 ])
 class AppDatabase extends _$AppDatabase {
-  AppDatabase() : super(driftDatabase(name: 'charo_messenger'));
+  AppDatabase() : super(_openLocalDb());
 
   @override
   int get schemaVersion => 1;
