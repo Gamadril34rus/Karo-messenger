@@ -8,7 +8,8 @@ part of 'local_db.dart';
 // ─── Generated database class ───────────────────────────────────────
 
 class _$AppDatabase extends AppDatabase {
-  _$AppDatabase([QueryExecutor? executor]) : super(executor ?? driftDatabase(name: 'charo_messenger'));
+  _$AppDatabase([QueryExecutor? executor]) : super(executor ?? _openLocalDb());
+
 
   @override
   int get schemaVersion => 1;

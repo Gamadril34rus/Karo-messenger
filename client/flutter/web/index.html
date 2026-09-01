@@ -8,6 +8,8 @@
   <title>ЧАРО</title>
   <base href="$FLUTTER_BASE_HREF"/>
   <link rel="manifest" href="manifest.json"/>
+  <link rel="icon" type="image/x-icon" href="favicon.ico"/>
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon.png"/>
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png"/>
   <meta name="theme-color" content="#2563EB"/>
   <style>
@@ -20,6 +22,17 @@
 </head>
 <body>
   <div class="loading">🚀 ЧАРО загружается…</div>
+  <script>
+    // Заставка снимается, когда Flutter отрисовал первый кадр. Если
+    // приложение падает на старте — заставка остаётся, а ошибка видна
+    // в консоли (см. try/catch в lib/main.dart).
+    window.addEventListener('flutter-first-frame', function () {
+      var splash = document.querySelector('.loading');
+      if (splash) {
+        splash.remove();
+      }
+    });
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

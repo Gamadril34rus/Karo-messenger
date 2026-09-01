@@ -58,6 +58,30 @@ flutter pub get
 echo "==> Regenerating drift code (local_db.g.dart) for the resolved drift version"
 dart run build_runner build --delete-conflicting-outputs
 
+# Веб-ассеты drift (sqlite3.wasm + drift_worker.js) должны быть из того же
+# релиза drift, что и зарезолвленный пакет. Скачиваем их здесь, потому что
+# у CI интернет есть, а у песочницы разработчика — не всегда.
+# Если сеть недоступна — остаются файлы из репозитория (запасной вариант).
+echo "==> Syncing drift web assets (sqlite3.wasm + drift_worker.js)"
+./scripts/fetch_drift_web_assets.sh \
+  || echo "!! drift web assets not updated — falling back to files from the repo"
+
+# Веб-сборка без этих файлов либо падает (drift), либо сыпет 404 (иконки)
+echo "==> Verifying web/ assets"
+web_missing=0
+for f in web/sqlite3.wasm web/drift_worker.js web/favicon.ico web/icons/app_icon.png; do
+  if [[ -s "$f" ]]; then
+    echo "    ✅ $f ($(wc -c < "$f") bytes)"
+  else
+    echo "    ❌ $f is missing or empty"
+    web_missing=1
+  fi
+done
+if [[ "$web_missing" -ne 0 ]]; then
+  echo "!! web/ assets are incomplete — the web build would break" >&2
+  exit 1
+fi
+
 echo "==> Applying Charo patches"
 "$PY" <<'EOF'
 import os

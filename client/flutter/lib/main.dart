@@ -1,6 +1,5 @@
 // © 2024-2026 Бутаев Алексей Юрьевич. All rights reserved. PROPRIETARY AND CONFIDENTIAL.
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -54,39 +53,141 @@ final sl = GetIt.instance;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Десктопная инициализация (окно, трей, хоткеи)
-  if (DesktopPlatform.isDesktop) {
-    await DesktopInitializer.instance.initialize();
-    DesktopHotkeys.instance.initialize();
+  // Платформенная инициализация (окно/трей/хоткеи на десктопе, ориентация
+  // и системная строка состояния на мобильных). На вебе всё это no-op,
+  // но ошибка здесь тоже не должна мешать запуску UI.
+  try {
+    // Десктопная инициализация (окно, трей, хоткеи)
+    if (DesktopPlatform.isDesktop) {
+      await DesktopInitializer.instance.initialize();
+      DesktopHotkeys.instance.initialize();
+    }
+
+    // Строгая ориентация для мобильных
+    if (DesktopPlatform.isMobile) {
+      await SystemChrome.setPreferredOrientations([
+        DeviceOrientation.portraitUp,
+        DeviceOrientation.portraitDown,
+      ]);
+    }
+
+    // Строка состояния
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+      ),
+    );
+  } catch (e, st) {
+    logger.e('$e\n$st');
   }
 
-  // Строгая ориентация для мобильных
-  if (!DesktopPlatform.isDesktop) {
-    await SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]);
+  // Инициализация хранилищ и зависимостей.
+  //
+  // Всё, что может упасть на старте (Hive, drift/sqlite3 на вебе, secure
+  // storage, регистрация сервисов), обёрнуто в try/catch: runApp() должен
+  // выполниться в любом случае, иначе пользователь видит бесконечную
+  // заставку загрузки, а причина остаётся безымянным Uncaught Error
+  // в main.dart.js.
+  Object? startupError;
+  StackTrace? startupStackTrace;
+
+  try {
+    await Hive.initFlutter();
+    final secureStorage = SecureStorageHelper();
+    final localDb = AppDatabase();
+
+    // Регистрация зависимостей
+    await _setupDependencies(secureStorage, localDb);
+
+    logger.i('🚀 ЧАРО v${AppConstants.appVersion} запущен');
+  } catch (e, st) {
+    startupError = e;
+    startupStackTrace = st;
+    logger.e('$e\n$st');
   }
 
-  // Строка состояния
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
-    ),
-  );
+  if (startupError == null) {
+    runApp(const AppCharoApp());
+  } else {
+    runApp(StartupErrorApp(
+      error: startupError!,
+      stackTrace: startupStackTrace,
+    ));
+  }
+}
 
-  // Инициализация хранилищ
-  await Hive.initFlutter();
-  final secureStorage = SecureStorageHelper();
-  final localDb = AppDatabase();
+/// Экран критической ошибки запуска.
+///
+/// Показывается вместо белого экрана/вечной заставки, если инициализация
+/// приложения не удалась. Полный текст ошибки продублирован в консоли
+/// (`logger.e`).
+class StartupErrorApp extends StatelessWidget {
+  const StartupErrorApp({
+    super.key,
+    required this.error,
+    this.stackTrace,
+  });
 
-  // Регистрация зависимостей
-  await _setupDependencies(secureStorage, localDb);
+  final Object error;
+  final StackTrace? stackTrace;
 
-  logger.i('🚀 ЧАРО v${AppConstants.appVersion} запущен');
-
-  runApp(const AppCharoApp());
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'ЧАРО',
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        backgroundColor: const Color(0xFF2563EB),
+        body: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'ЧАРО не удалось запустить',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Подробности ошибки также выведены в консоль.',
+                    style: TextStyle(color: Colors.white70, fontSize: 14),
+                  ),
+                  const SizedBox(height: 20),
+                  SelectableText(
+                    '$error',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontFamily: 'monospace',
+                    ),
+                  ),
+                  if (stackTrace != null) ...[
+                    const SizedBox(height: 16),
+                    SelectableText(
+                      '$stackTrace',
+                      style: const TextStyle(
+                        color: Colors.white54,
+                        fontSize: 11,
+                        fontFamily: 'monospace',
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 Future<void> _setupDependencies(
